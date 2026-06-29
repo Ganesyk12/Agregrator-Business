@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["sigyn"]
+}
+
+model User {
+  id_user    Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String
+  full_name  String
+  phone      String?
+  avatar_url String?
+  role       String   @default("customer")
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  vendor Vendor?
+  bookings   Booking[] @relation("CustomerBookings")
+  reviews    Review[]
+
+  @@schema("sigyn")
+}
+
+model Vendor {
+  id_vendor     Int      @id @default(autoincrement())
+  id_user       Int      @unique
+  business_name String
+  description   String?
+  category      String
+  location      String?
+  status        String   @default("pending")
+  verified_at   DateTime?
+  created_at    DateTime @default(now())
+
+  user              User                @relation(fields: [id_user], references: [id_user])
+  portfolios        Portfolio[]
+  packages          Package[]
+  availability      VendorAvailability[]
+  bookings          Booking[]           @relation("VendorBookings")
+  reviews           Review[]
+  payouts           Payout[]
+
+  @@schema("sigyn")
+}
+
+model Portfolio {
+  id_portfolio Int      @id @default(autoincrement())
+  id_vendor    Int
+  media_url    String
+  caption      String?
+  sort_order   Int      @default(0)
+  created_at   DateTime @default(now())
+
+  vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
+
+  @@schema("sigyn")
+}
+
+model Package {
+  id_package     Int      @id @default(autoincrement())
+  id_vendor      Int
+  name           String
+  description    String?
+  price          Float
+  duration       String?
+  whats_included String?
+  status         String   @default("active")
+  created_at     DateTime @default(now())
+
+  vendor  Vendor    @relation(fields: [id_vendor], references: [id_vendor])
+  bookings Booking[]
+
+  @@schema("sigyn")
+}
+
+model VendorAvailability {
+  id_availability Int  @id @default(autoincrement())
+  id_vendor       Int
+  date            DateTime
+  start_time      String?
+  end_time        String?
+  is_available    Boolean @default(true)
+
+  vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
+
+  @@schema("sigyn")
+}
+
+model Booking {
+  id_booking     Int      @id @default(autoincrement())
+  id_user        Int
+  id_vendor      Int
+  id_package     Int
+  event_date     DateTime
+  event_location String?
+  total_price   Float
+  dp_amount     Float    @default(0)
+  status        String   @default("pending")
+  notes         String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  customer    User       @relation("CustomerBookings", fields: [id_user], references: [id_user])
+  vendor      Vendor     @relation("VendorBookings", fields: [id_vendor], references: [id_vendor])
+  package     Package    @relation(fields: [id_package], references: [id_package])
+  payment     Payment?
+  review      Review?
+  commission  Commission?
+  payout      Payout?
+
+  @@schema("sigyn")
+}
+
+model Payment {
+  id_payment        Int       @id @default(autoincrement())
+  id_booking        Int       @unique
+  amount            Float
+  payment_type      String
+  status            String    @default("pending")
+  payment_proof_url String?
+  paid_at           DateTime?
+  released_at       DateTime?
+  created_at        DateTime  @default(now())
+
+  booking Booking @relation(fields: [id_booking], references: [id_booking])
+
+  @@schema("sigyn")
+}
+
+model Review {
+  id_review  Int      @id @default(autoincrement())
+  id_booking Int      @unique
+  id_user    Int
+  id_vendor  Int
+  rating     Int
+  comment    String?
+  created_at DateTime @default(now())
+
+  booking Booking @relation(fields: [id_booking], references: [id_booking])
+  user    User    @relation(fields: [id_user], references: [id_user])
+  vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
+
+  @@schema("sigyn")
+}
+
+model Commission {
+  id_commission Int    @id @default(autoincrement())
+  id_booking    Int    @unique
+  percentage    Float
+  amount        Float
+  status        String @default("pending")
+
+  booking Booking @relation(fields: [id_booking], references: [id_booking])
+
+  @@schema("sigyn")
+}
+
+model Payout {
+  id_payout  Int       @id @default(autoincrement())
+  id_vendor  Int
+  id_booking Int       @unique
+  amount     Float
+  status     String    @default("pending")
+  paid_at    DateTime?
+  created_at DateTime  @default(now())
+
+  vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
+  booking Booking @relation(fields: [id_booking], references: [id_booking])
+
+  @@schema("sigyn")
+}

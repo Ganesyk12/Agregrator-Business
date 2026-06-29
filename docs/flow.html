@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Business Flow - Platform Agregrator Jasa</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f8f9fa;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .mermaid {
+            background: white;
+            padding: 24px 16px;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .phase-note {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin: 20px 0 10px;
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Alur Bisnis Platform Agregrator Jasa</h1>
+    <p class="subtitle">Customer &harr; Platform &harr; Vendor (MUA / Fotografer / WO)</p>
+
+    <div class="mermaid">
+        sequenceDiagram
+            participant C as Customer
+            participant P as Platform SYGN
+            participant V as Vendor
+
+            Note over C,V: 🟦 Customer  |  🟧 Platform  |  🟩 Vendor
+
+            rect rgb(219, 237, 255)
+                Note over C,V: FASE 1 — Pendaftaran & Kurasi Vendor
+                V->>P: 1. Registrasi & Upload Portofolio
+                P->>P: 2. Kurasi & Verifikasi
+                P->>C: 3. Profil & Paket Tayang
+            end
+
+            rect rgb(255, 237, 204)
+                Note over C,V: FASE 2 — Pencarian & Pemesanan
+                C->>P: 4. Cari Jasa & Cek Ketersediaan
+                C->>P: 5. Booking Paket
+                P->>V: 6. Notifikasi Booking Baru
+                V->>P: 7. Konfirmasi Jadwal
+            end
+
+            rect rgb(204, 255, 220)
+                Note over C,V: FASE 3 — Pembayaran (Rekber)
+                C->>P: 8. Bayar DP / Full ke Rekber SYGN
+                P->>P: 9. Dana Diamankan & Jadwal Dikunci
+                P->>V: 10. Notifikasi Pembayaran Sukses
+            end
+
+            rect rgb(230, 219, 255)
+                Note over C,V: FASE 4 — Eksekusi Jasa
+                V->>C: 11. Datang & Eksekusi Jasa di Hari H
+            end
+
+            rect rgb(255, 219, 219)
+                Note over C,V: FASE 5 — Penyelesaian & Pembayaran
+                C->>P: 12. Konfirmasi Selesai & Beri Rating
+                P->>P: 13. Potong Komisi Platform X%
+                P->>V: 14. Transfer Sisa Dana ke Vendor
+            end
+    </div>
+
+</body>
+</html>

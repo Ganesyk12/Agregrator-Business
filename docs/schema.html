@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Schema Database - Platform Agregrator Jasa</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f8f9fa;
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            margin-bottom: 32px;
+            overflow-x: auto;
+        }
+        h2 {
+            margin: 36px 0 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+            gap: 20px;
+        }
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .table-card h3 {
+            margin: 0;
+            padding: 12px 16px;
+            font-size: 15px;
+            background: #2c3e50;
+            color: white;
+        }
+        .table-card table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .table-card th, .table-card td {
+            text-align: left;
+            padding: 8px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .table-card th {
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #6c757d;
+            letter-spacing: 0.3px;
+        }
+        .table-card td:first-child {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 12px;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 7px;
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+        .badge.pk { background: #ffeaa7; color: #856404; }
+        .badge.fk { background: #d5f4e6; color: #155724; }
+        .badge.uk { background: #d6eaf8; color: #1a5276; }
+        .badge.req { background: #fadbd8; color: #922b21; }
+        .badge.enum { background: #e8daef; color: #6c3483; }
+        .relations {
+            margin: 24px 0;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            font-size: 13px;
+        }
+        .relations code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Schema Database</h1>
+    <p class="subtitle">Rancangan struktur data untuk Platform Agregrator Jasa</p>
+
+    <div class="mermaid">
+        erDiagram
+            USERS ||--o| VENDORS : memiliki
+            VENDORS ||--o{ PORTFOLIOS : "punya portofolio"
+            VENDORS ||--o{ PACKAGES : menawarkan
+            VENDORS ||--o{ VENDOR_AVAILABILITY : "jadwal tersedia"
+            USERS ||--o{ BOOKINGS : "memesan (customer)"
+            VENDORS ||--o{ BOOKINGS : "menerima pesanan"
+            PACKAGES ||--o{ BOOKINGS : "dipilih di"
+            BOOKINGS ||--o| PAYMENTS : pembayaran
+            BOOKINGS ||--o| REVIEWS : ulasan
+            BOOKINGS ||--o| COMMISSIONS : komisi
+            BOOKINGS ||--o| PAYOUTS : pencairan
+    </div>
+
+    <h2>Detail Tabel & Kolom</h2>
+    <div class="table-grid">
+
+        <div class="table-card">
+            <h3>users</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_user <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>email <span class="badge uk">UK</span></td><td>VARCHAR(255)</td><td>Unique, login credential</td></tr>
+                <tr><td>password_hash</td><td>VARCHAR(255)</td><td>Bcrypt hash</td></tr>
+                <tr><td>full_name</td><td>VARCHAR(100)</td><td></td></tr>
+                <tr><td>phone</td><td>VARCHAR(20)</td><td></td></tr>
+                <tr><td>avatar_url</td><td>TEXT</td><td></td></tr>
+                <tr><td>role <span class="badge enum">enum</span></td><td>ENUM</td><td>'customer', 'vendor', 'admin'</td></tr>
+                <tr><td>is_active</td><td>BOOLEAN</td><td>Default TRUE</td></tr>
+                <tr><td>created_at</td><td>DATETIME</td><td></td></tr>
+                <tr><td>updated_at</td><td>DATETIME</td><td></td></tr>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h3>vendors</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_vendor <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>id_user <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; users.id_user</td></tr>
+                <tr><td>business_name</td><td>VARCHAR(150)</td><td>Nama usaha</td></tr>
+                <tr><td>description</td><td>TEXT</td><td>Deskripsi vendor</td></tr>
+                <tr><td>category <span class="badge enum">enum</span></td><td>ENUM</td><td>'mua', 'fotografer', 'wo'</td></tr>
+                <tr><td>location</td><td>VARCHAR(255)</td><td>Area operasi</td></tr>
+                <tr><td>status <span class="badge enum">enum</span></td><td>ENUM</td><td>'pending', 'approved', 'rejected'</td></tr>
+                <tr><td>verified_at</td><td>DATETIME</td><td>NULL sebelum diverifikasi</td></tr>
+                <tr><td>created_at</td><td>DATETIME</td><td></td></tr>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h3>portfolios</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_portfolio <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>id_vendor <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; vendors.id_vendor</td></tr>
+                <tr><td>media_url</td><td>VARCHAR(500)</td><td>Foto/video hasil kerja</td></tr>
+                <tr><td>caption</td><td>TEXT</td><td></td></tr>
+                <tr><td>sort_order</td><td>INT</td><td>Urutan tampil</td></tr>
+                <tr><td>created_at</td><td>DATETIME</td><td></td></tr>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h3>packages</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_package <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>id_vendor <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; vendors.id_vendor</td></tr>
+                <tr><td>name</td><td>VARCHAR(150)</td><td>Nama paket (Basic, Premium, etc)</td></tr>
+                <tr><td>description</td><td>TEXT</td><td></td></tr>
+                <tr><td>price</td><td>DECIMAL(12,2)</td><td>Harga paket</td></tr>
+                <tr><td>duration</td><td>VARCHAR(50)</td><td>Misal: "4 jam", "1 hari"</td></tr>
+                <tr><td>whats_included</td><td>TEXT</td><td>Fitur/include dalam paket</td></tr>
+                <tr><td>status <span class="badge enum">enum</span></td><td>ENUM</td><td>'active', 'inactive'</td></tr>
+                <tr><td>created_at</td><td>DATETIME</td><td></td></tr>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h3>vendor_availability</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_availability <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>id_vendor <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; vendors.id_vendor</td></tr>
+                <tr><td>date</td><td>DATE</td><td></td></tr>
+                <tr><td>start_time</td><td>TIME</td><td>Jam mulai tersedia</td></tr>
+                <tr><td>end_time</td><td>TIME</td><td>Jam selesai</td></tr>
+                <tr><td>is_available</td><td>BOOLEAN</td><td>Default TRUE</td></tr>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h3>bookings</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_booking <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>id_user <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; users.id_user</td></tr>
+                <tr><td>id_vendor <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; vendors.id_vendor</td></tr>
+                <tr><td>id_package <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; packages.id_package</td></tr>
+                <tr><td>event_date</td><td>DATE</td><td>Tanggal acara</td></tr>
+                <tr><td>event_location</td><td>TEXT</td><td>Lokasi acara</td></tr>
+                <tr><td>total_price</td><td>DECIMAL(12,2)</td><td></td></tr>
+                <tr><td>dp_amount</td><td>DECIMAL(12,2)</td><td>Jumlah DP yg dibayar</td></tr>
+                <tr><td>status <span class="badge enum">enum</span></td><td>ENUM</td><td>'pending', 'confirmed', 'in_progress', 'completed', 'cancelled'</td></tr>
+                <tr><td>notes</td><td>TEXT</td><td>Catatan customer</td></tr>
+                <tr><td>created_at</td><td>DATETIME</td><td></td></tr>
+                <tr><td>updated_at</td><td>DATETIME</td><td></td></tr>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h3>payments</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_payment <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>id_booking <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; bookings.id_booking</td></tr>
+                <tr><td>amount</td><td>DECIMAL(12,2)</td><td></td></tr>
+                <tr><td>payment_type <span class="badge enum">enum</span></td><td>ENUM</td><td>'dp', 'full'</td></tr>
+                <tr><td>status <span class="badge enum">enum</span></td><td>ENUM</td><td>'pending', 'held', 'released', 'refunded'</td></tr>
+                <tr><td>payment_proof_url</td><td>TEXT</td><td>Bukti transfer</td></tr>
+                <tr><td>paid_at</td><td>DATETIME</td><td></td></tr>
+                <tr><td>released_at</td><td>DATETIME</td><td>Saat dana dicairkan ke vendor</td></tr>
+                <tr><td>created_at</td><td>DATETIME</td><td></td></tr>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h3>reviews</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_review <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>id_booking <span class="badge fk">FK</span> <span class="badge uk">UK</span></td><td>INT</td><td>&rarr; bookings.id_booking, 1 booking hanya 1 review</td></tr>
+                <tr><td>id_user <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; users.id_user</td></tr>
+                <tr><td>id_vendor <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; vendors.id_vendor</td></tr>
+                <tr><td>rating</td><td>TINYINT</td><td>1 &ndash; 5</td></tr>
+                <tr><td>comment</td><td>TEXT</td><td></td></tr>
+                <tr><td>created_at</td><td>DATETIME</td><td></td></tr>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h3>commissions</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_commission <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>id_booking <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; bookings.id_booking</td></tr>
+                <tr><td>percentage</td><td>DECIMAL(5,2)</td><td>Persentase komisi (misal 10.00)</td></tr>
+                <tr><td>amount</td><td>DECIMAL(12,2)</td><td>Jumlah komisi dalam rupiah</td></tr>
+                <tr><td>status <span class="badge enum">enum</span></td><td>ENUM</td><td>'pending', 'deducted'</td></tr>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <h3>payouts</h3>
+            <table>
+                <tr><th>Kolom</th><th>Tipe</th><th>Ket</th></tr>
+                <tr><td>id_payout <span class="badge pk">PK</span></td><td>INT</td><td>Auto increment</td></tr>
+                <tr><td>id_vendor <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; vendors.id_vendor</td></tr>
+                <tr><td>id_booking <span class="badge fk">FK</span></td><td>INT</td><td>&rarr; bookings.id_booking</td></tr>
+                <tr><td>amount</td><td>DECIMAL(12,2)</td><td>Jumlah yg dicairkan</td></tr>
+                <tr><td>status <span class="badge enum">enum</span></td><td>ENUM</td><td>'pending', 'paid'</td></tr>
+                <tr><td>paid_at</td><td>DATETIME</td><td></td></tr>
+                <tr><td>created_at</td><td>DATETIME</td><td></td></tr>
+            </table>
+        </div>
+
+    </div>
+
+    <h2>Relasi Antar Tabel</h2>
+    <div class="relations">
+        <ul style="list-style: none; padding: 0; line-height: 2;">
+            <li><code>users.id_user</code> <strong>1:1</strong> <code>vendors.id_user</code> — Satu user bisa jadi vendor</li>
+            <li><code>vendors.id_vendor</code> <strong>1:N</strong> <code>portfolios.id_vendor</code> — Vendor punya banyak portofolio</li>
+            <li><code>vendors.id_vendor</code> <strong>1:N</strong> <code>packages.id_vendor</code> — Vendor punya banyak paket</li>
+            <li><code>vendors.id_vendor</code> <strong>1:N</strong> <code>vendor_availability.id_vendor</code> — Jadwal per vendor</li>
+            <li><code>users.id_user</code> <strong>1:N</strong> <code>bookings.id_user</code> — Customer punya banyak booking</li>
+            <li><code>vendors.id_vendor</code> <strong>1:N</strong> <code>bookings.id_vendor</code> — Vendor terima banyak booking</li>
+            <li><code>packages.id_package</code> <strong>1:N</strong> <code>bookings.id_package</code> — Paket bisa dipesan berkali-kali</li>
+            <li><code>bookings.id_booking</code> <strong>1:1</strong> <code>payments.id_booking</code> — Satu booking punya 1 pembayaran</li>
+            <li><code>bookings.id_booking</code> <strong>1:1</strong> <code>reviews.id_booking</code> — Satu booking maks 1 review</li>
+            <li><code>bookings.id_booking</code> <strong>1:1</strong> <code>commissions.id_booking</code> — Satu booking 1 catatan komisi</li>
+            <li><code>bookings.id_booking</code> <strong>1:1</strong> <code>payouts.id_booking</code> — Satu booking 1 pencairan dana</li>
+        </ul>
+    </div>
+
+    <div class="note">
+        <strong>Catatan:</strong> Status pembayaran menggunakan sistem <em>rekber (rekening bersama)</em> &mdash;
+        dana customer ditahan platform sampai pekerjaan selesai dan dikonfirmasi, baru dicairkan ke vendor
+        setelah dipotong komisi.
+    </div>
+
+</body>
+</html>
