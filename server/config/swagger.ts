@@ -13,6 +13,19 @@ const options: swaggerJsdoc.Options = {
     ],
     components: {
       schemas: {
+        Role: {
+          type: 'object',
+          properties: {
+            id_role: { type: 'integer' },
+            role_code: { type: 'string' },
+            name: { type: 'string' },
+            status: { type: 'string' },
+            date_created: { type: 'string', format: 'date-time' },
+            date_modified: { type: 'string', format: 'date-time' },
+            user_created: { type: 'string', nullable: true },
+            user_modified: { type: 'string', nullable: true },
+          },
+        },
         User: {
           type: 'object',
           properties: {
@@ -21,9 +34,14 @@ const options: swaggerJsdoc.Options = {
             full_name: { type: 'string' },
             phone: { type: 'string', nullable: true },
             avatar_url: { type: 'string', nullable: true },
-            role: { type: 'string', enum: ['customer', 'vendor', 'admin'] },
+            role_code: { type: 'string' },
+            role: { $ref: '#/components/schemas/Role' },
             is_active: { type: 'boolean' },
-            created_at: { type: 'string', format: 'date-time' },
+            status: { type: 'string' },
+            date_created: { type: 'string', format: 'date-time' },
+            date_modified: { type: 'string', format: 'date-time' },
+            user_created: { type: 'string', nullable: true },
+            user_modified: { type: 'string', nullable: true },
           },
         },
         Vendor: {
@@ -37,7 +55,10 @@ const options: swaggerJsdoc.Options = {
             location: { type: 'string', nullable: true },
             status: { type: 'string', enum: ['pending', 'approved', 'rejected'] },
             verified_at: { type: 'string', format: 'date-time', nullable: true },
-            created_at: { type: 'string', format: 'date-time' },
+            date_created: { type: 'string', format: 'date-time' },
+            date_modified: { type: 'string', format: 'date-time' },
+            user_created: { type: 'string', nullable: true },
+            user_modified: { type: 'string', nullable: true },
           },
         },
         Package: {
@@ -51,7 +72,10 @@ const options: swaggerJsdoc.Options = {
             duration:       { type: 'string', nullable: true },
             whats_included: { type: 'string', nullable: true },
             status:         { type: 'string', enum: ['active', 'inactive'] },
-            created_at:     { type: 'string', format: 'date-time' },
+            date_created:     { type: 'string', format: 'date-time' },
+            date_modified:    { type: 'string', format: 'date-time' },
+            user_created:     { type: 'string', nullable: true },
+            user_modified:    { type: 'string', nullable: true },
           },
         },
         Error: {

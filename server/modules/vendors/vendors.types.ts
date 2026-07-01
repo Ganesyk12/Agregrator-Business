@@ -7,5 +7,8 @@ export interface Vendor {
   location: string | null
   status: string
   verified_at: Date | null
-  created_at: Date
+  date_created: Date
+  date_modified: Date
+  user_created: string | null
+  user_modified: string | null
 }

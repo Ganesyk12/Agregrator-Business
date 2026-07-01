@@ -2,7 +2,7 @@ import prisma from '../../db'
 import type { Vendor } from './vendors.types'
 
 export async function findAll(): Promise<Vendor[]> {
-  return prisma.vendor.findMany({ orderBy: { created_at: 'desc' } }) as unknown as Vendor[]
+  return prisma.vendor.findMany({ orderBy: { date_created: 'desc' } }) as unknown as Vendor[]
 }
 
 export async function findById(id: number): Promise<Vendor | null> {

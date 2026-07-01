@@ -73,8 +73,9 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@prisma/engines",
-      "prisma",
-      "esbuild"
+      "@scarf/scarf",
+      "esbuild",
+      "prisma"
     ]
   },
   "engines": {

@@ -7,5 +7,8 @@ export interface Package {
   duration: string | null
   whats_included: string | null
   status: string
-  created_at: Date
+  date_created: Date
+  date_modified: Date
+  user_created: string | null
+  user_modified: string | null
 }

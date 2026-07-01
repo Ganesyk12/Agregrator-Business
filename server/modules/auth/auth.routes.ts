@@ -20,7 +20,7 @@ const router = Router()
  *               email:     { type: string }
  *               password:  { type: string }
  *               full_name: { type: string }
- *               role:      { type: string, enum: [customer, vendor, admin], default: customer }
+ *               role_code: { type: string, enum: [customer, vendor, admin], default: customer }
  *     responses:
  *       201:
  *         description: User berhasil dibuat
@@ -70,6 +70,7 @@ router.post('/register', authCtrl.register)
  *                     email:     { type: string }
  *                     full_name: { type: string }
  *                     role:      { type: string }
+ *                     role_code: { type: string }
  *       401:
  *         description: Email atau password salah
  *         content:

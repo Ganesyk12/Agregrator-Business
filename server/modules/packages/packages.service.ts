@@ -2,7 +2,7 @@ import prisma from '../../db'
 import type { Package } from './packages.types'
 
 export async function findAll(): Promise<Package[]> {
-  return prisma.package.findMany({ orderBy: { created_at: 'desc' } }) as unknown as Package[]
+  return prisma.package.findMany({ orderBy: { date_created: 'desc' } }) as unknown as Package[]
 }
 
 export async function findById(id: number): Promise<Package | null> {
@@ -12,7 +12,7 @@ export async function findById(id: number): Promise<Package | null> {
 export async function findByVendor(vendorId: number): Promise<Package[]> {
   return prisma.package.findMany({
     where: { id_vendor: vendorId },
-    orderBy: { created_at: 'desc' },
+    orderBy: { date_created: 'desc' },
   }) as unknown as Package[]
 }
 

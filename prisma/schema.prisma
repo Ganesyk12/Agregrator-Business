@@ -7,21 +7,40 @@ datasource db {
   schemas  = ["sigyn"]
 }
 
-model User {
-  id_user    Int      @id @default(autoincrement())
-  email      String   @unique
-  password   String
-  full_name  String
-  phone      String?
-  avatar_url String?
-  role       String   @default("customer")
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+model Role {
+  id_role       Int      @id @default(autoincrement())
+  role_code     String   @unique
+  name          String
+  status        String   @default("active")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
 
-  vendor Vendor?
-  bookings   Booking[] @relation("CustomerBookings")
-  reviews    Review[]
+  users User[]
+
+  @@schema("sigyn")
+}
+
+model User {
+  id_user       Int      @id @default(autoincrement())
+  email         String   @unique
+  password      String
+  full_name     String
+  phone         String?
+  avatar_url    String?
+  role_code     String   @default("customer")
+  is_active     Boolean  @default(true)
+  status        String   @default("active")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
+
+  role      Role      @relation(fields: [role_code], references: [role_code])
+  vendor    Vendor?
+  bookings  Booking[] @relation("CustomerBookings")
+  reviews   Review[]
 
   @@schema("sigyn")
 }
@@ -35,26 +54,33 @@ model Vendor {
   location      String?
   status        String   @default("pending")
   verified_at   DateTime?
-  created_at    DateTime @default(now())
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
 
-  user              User                @relation(fields: [id_user], references: [id_user])
-  portfolios        Portfolio[]
-  packages          Package[]
-  availability      VendorAvailability[]
-  bookings          Booking[]           @relation("VendorBookings")
-  reviews           Review[]
-  payouts           Payout[]
+  user         User                @relation(fields: [id_user], references: [id_user])
+  portfolios   Portfolio[]
+  packages     Package[]
+  availability VendorAvailability[]
+  bookings     Booking[]           @relation("VendorBookings")
+  reviews      Review[]
+  payouts      Payout[]
 
   @@schema("sigyn")
 }
 
 model Portfolio {
-  id_portfolio Int      @id @default(autoincrement())
-  id_vendor    Int
-  media_url    String
-  caption      String?
-  sort_order   Int      @default(0)
-  created_at   DateTime @default(now())
+  id_portfolio  Int      @id @default(autoincrement())
+  id_vendor     Int
+  media_url     String
+  caption       String?
+  sort_order    Int      @default(0)
+  status        String   @default("active")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
 
   vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
 
@@ -70,21 +96,29 @@ model Package {
   duration       String?
   whats_included String?
   status         String   @default("active")
-  created_at     DateTime @default(now())
+  date_created   DateTime @default(now())
+  date_modified  DateTime @updatedAt
+  user_created   String?
+  user_modified  String?
 
-  vendor  Vendor    @relation(fields: [id_vendor], references: [id_vendor])
+  vendor   Vendor    @relation(fields: [id_vendor], references: [id_vendor])
   bookings Booking[]
 
   @@schema("sigyn")
 }
 
 model VendorAvailability {
-  id_availability Int  @id @default(autoincrement())
+  id_availability Int      @id @default(autoincrement())
   id_vendor       Int
   date            DateTime
   start_time      String?
   end_time        String?
-  is_available    Boolean @default(true)
+  is_available    Boolean  @default(true)
+  status          String   @default("active")
+  date_created    DateTime @default(now())
+  date_modified   DateTime @updatedAt
+  user_created    String?
+  user_modified   String?
 
   vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
 
@@ -98,20 +132,22 @@ model Booking {
   id_package     Int
   event_date     DateTime
   event_location String?
-  total_price   Float
-  dp_amount     Float    @default(0)
-  status        String   @default("pending")
-  notes         String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  total_price    Float
+  dp_amount      Float    @default(0)
+  status         String   @default("pending")
+  notes          String?
+  date_created   DateTime @default(now())
+  date_modified  DateTime @updatedAt
+  user_created   String?
+  user_modified  String?
 
-  customer    User       @relation("CustomerBookings", fields: [id_user], references: [id_user])
-  vendor      Vendor     @relation("VendorBookings", fields: [id_vendor], references: [id_vendor])
-  package     Package    @relation(fields: [id_package], references: [id_package])
-  payment     Payment?
-  review      Review?
-  commission  Commission?
-  payout      Payout?
+  customer   User       @relation("CustomerBookings", fields: [id_user], references: [id_user])
+  vendor     Vendor     @relation("VendorBookings", fields: [id_vendor], references: [id_vendor])
+  package    Package    @relation(fields: [id_package], references: [id_package])
+  payment    Payment?
+  review     Review?
+  commission Commission?
+  payout     Payout?
 
   @@schema("sigyn")
 }
@@ -125,7 +161,10 @@ model Payment {
   payment_proof_url String?
   paid_at           DateTime?
   released_at       DateTime?
-  created_at        DateTime  @default(now())
+  date_created      DateTime  @default(now())
+  date_modified     DateTime  @updatedAt
+  user_created      String?
+  user_modified     String?
 
   booking Booking @relation(fields: [id_booking], references: [id_booking])
 
@@ -133,27 +172,35 @@ model Payment {
 }
 
 model Review {
-  id_review  Int      @id @default(autoincrement())
-  id_booking Int      @unique
-  id_user    Int
-  id_vendor  Int
-  rating     Int
-  comment    String?
-  created_at DateTime @default(now())
+  id_review     Int      @id @default(autoincrement())
+  id_booking    Int      @unique
+  id_user       Int
+  id_vendor     Int
+  rating        Int
+  comment       String?
+  status        String   @default("active")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
 
   booking Booking @relation(fields: [id_booking], references: [id_booking])
   user    User    @relation(fields: [id_user], references: [id_user])
-  vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
+  vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
 
   @@schema("sigyn")
 }
 
 model Commission {
-  id_commission Int    @id @default(autoincrement())
-  id_booking    Int    @unique
+  id_commission Int      @id @default(autoincrement())
+  id_booking    Int      @unique
   percentage    Float
   amount        Float
-  status        String @default("pending")
+  status        String   @default("pending")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
 
   booking Booking @relation(fields: [id_booking], references: [id_booking])
 
@@ -161,13 +208,16 @@ model Commission {
 }
 
 model Payout {
-  id_payout  Int       @id @default(autoincrement())
-  id_vendor  Int
-  id_booking Int       @unique
-  amount     Float
-  status     String    @default("pending")
-  paid_at    DateTime?
-  created_at DateTime  @default(now())
+  id_payout     Int       @id @default(autoincrement())
+  id_vendor     Int
+  id_booking    Int       @unique
+  amount        Float
+  status        String    @default("pending")
+  paid_at       DateTime?
+  date_created  DateTime  @default(now())
+  date_modified DateTime  @updatedAt
+  user_created  String?
+  user_modified String?
 
   vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
   booking Booking @relation(fields: [id_booking], references: [id_booking])
