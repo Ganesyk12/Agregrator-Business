@@ -8,6 +8,7 @@ import { errorHandler } from './middleware/error-handler'
 import authRoutes from './modules/auth/auth.routes'
 import userRoutes from './modules/users/users.routes'
 import vendorRoutes from './modules/vendors/vendors.routes'
+import packageRoutes from './modules/packages/packages.routes'
 
 const app = express()
 
@@ -28,6 +29,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/vendors', vendorRoutes)
+app.use('/api/packages', packageRoutes)
 
 app.use(errorHandler)
 

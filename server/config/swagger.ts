@@ -40,6 +40,20 @@ const options: swaggerJsdoc.Options = {
             created_at: { type: 'string', format: 'date-time' },
           },
         },
+        Package: {
+          type: 'object',
+          properties: {
+            id_package:     { type: 'integer' },
+            id_vendor:      { type: 'integer' },
+            name:           { type: 'string' },
+            description:    { type: 'string', nullable: true },
+            price:          { type: 'number' },
+            duration:       { type: 'string', nullable: true },
+            whats_included: { type: 'string', nullable: true },
+            status:         { type: 'string', enum: ['active', 'inactive'] },
+            created_at:     { type: 'string', format: 'date-time' },
+          },
+        },
         Error: {
           type: 'object',
           properties: {
