@@ -11,4 +11,7 @@ export interface Package {
   date_modified: Date
   user_created: string | null
   user_modified: string | null
+  vendor?: {
+    business_name: string
+  }
 }

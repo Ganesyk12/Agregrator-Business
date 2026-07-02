@@ -5,7 +5,7 @@ import { createError } from '../../middleware/error-handler'
 export async function getAll(_req: Request, res: Response, next: NextFunction) {
   try {
     const packages = await packageService.findAll()
-    res.json({ data: packages })
+    res.json({ data: packages.length === 0 ? null : packages })
   } catch (err) {
     next(err)
   }
@@ -27,7 +27,7 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 export async function getByVendor(req: Request, res: Response, next: NextFunction) {
   try {
     const packages = await packageService.findByVendor(Number(req.params.vendorId))
-    res.json({ data: packages })
+    res.json({ data: packages.length === 0 ? null : packages })
   } catch (err) {
     next(err)
   }
