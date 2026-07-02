@@ -53,4 +53,8 @@ router.get('/', vendorCtrl.getAll)
  */
 router.get('/:id', vendorCtrl.getById)
 
+router.post('/', vendorCtrl.create)
+router.put('/:id', vendorCtrl.update)
+router.delete('/:id', vendorCtrl.remove)
+
 export default router

@@ -25,14 +25,18 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "bootstrap": "^3.4.1",
+    "chart.js": "^4.5.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "font-awesome": "^4.7.0",
     "jsonwebtoken": "^9.0.3",
     "pinia": "^3.0.4",
     "prisma": "^7.8.0",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
+    "sweetalert2": "^11.26.25",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0"
   },
