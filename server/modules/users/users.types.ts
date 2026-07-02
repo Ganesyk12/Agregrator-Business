@@ -7,7 +7,7 @@ export interface User {
   avatar_url: string | null
   role_code: string
   role?: { id_role: number; role_code: string; name: string }
-  is_active: number
+  is_active: boolean
   status: string
   date_created: string
   date_modified: string

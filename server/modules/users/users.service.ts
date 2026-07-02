@@ -30,14 +30,51 @@ export async function findById(id: number): Promise<User | null> {
   }) as unknown as User | null
 }
 
-export async function create(data: Pick<User, 'email' | 'password' | 'full_name' | 'role_code'>): Promise<User> {
+export async function create(
+  data: Pick<User, 'email' | 'password' | 'full_name' | 'role_code'> &
+    Partial<Pick<User, 'phone' | 'avatar_url' | 'user_created' | 'user_modified'>>
+): Promise<User> {
   return prisma.user.create({
     data: {
       email: data.email,
-      password: data.password,
+      password: data.password || '123456',
       full_name: data.full_name,
       role_code: data.role_code,
+      phone: data.phone || null,
+      avatar_url: data.avatar_url || null,
+      user_created: data.user_created ?? 'SYSTEM',
+      user_modified: data.user_modified ?? 'SYSTEM',
     },
     select: { ...userSelect, role: { select: { id_role: true, role_code: true, name: true } } },
   }) as unknown as User
+}
+
+export async function update(
+  id: number,
+  data: Partial<Pick<User, 'email' | 'password' | 'full_name' | 'phone' | 'avatar_url' | 'role_code' | 'is_active' | 'status' | 'user_modified'>>
+): Promise<User | null> {
+  const existing = await prisma.user.findUnique({ where: { id_user: id } })
+  if (!existing) return null
+
+  const payload = {
+    ...data,
+    user_modified: data.user_modified ?? 'SYSTEM',
+  }
+
+  return prisma.user.update({
+    where: { id_user: id },
+    data: payload,
+    select: { ...userSelect, role: { select: { id_role: true, role_code: true, name: true } } },
+  }) as unknown as User
+}
+
+export async function remove(id: number): Promise<boolean> {
+  const existing = await prisma.user.findUnique({ where: { id_user: id } })
+  if (!existing) return false
+
+  // Delete vendor if user is a vendor
+  await prisma.vendor.deleteMany({ where: { id_user: id } })
+
+  await prisma.user.delete({ where: { id_user: id } })
+  return true
 }

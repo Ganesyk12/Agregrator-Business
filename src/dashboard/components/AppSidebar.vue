@@ -30,28 +30,6 @@ const menuSections: MenuSection[] = [
           { label: 'Dashboard', icon: '', to: '/' },
         ],
       },
-      {
-        label: 'Forms',
-        icon: 'fa-edit',
-        children: [
-          { label: 'General Form', icon: '', to: '/forms/general' },
-        ],
-      },
-      {
-        label: 'UI Elements',
-        icon: 'fa-desktop',
-        children: [
-          { label: 'Typography', icon: '', to: '/ui/typography' },
-          { label: 'Icons', icon: '', to: '/ui/icons' },
-        ],
-      },
-      {
-        label: 'Tables',
-        icon: 'fa-table',
-        children: [
-          { label: 'Tables', icon: '', to: '/tables' },
-        ],
-      },
     ],
   },
   {
