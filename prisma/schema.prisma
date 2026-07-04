@@ -19,6 +19,7 @@ model Role {
 
   user_roles User_Role[]
 
+  @@index([status])
   @@schema("sigyn")
 }
 
@@ -41,6 +42,7 @@ model User {
   reviews    Review[]
   user_roles User_Role[]
 
+  @@index([status])
   @@schema("sigyn")
 }
 
@@ -58,6 +60,7 @@ model User_Role {
   role Role @relation(fields: [role_code], references: [role_code])
 
   @@unique([email, role_code])
+  @@index([status])
   @@schema("sigyn")
 }
 
@@ -83,6 +86,7 @@ model Vendor {
   reviews      Review[]
   payouts      Payout[]
 
+  @@index([status])
   @@schema("sigyn")
 }
 
@@ -100,6 +104,7 @@ model Portfolio {
 
   vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
 
+  @@index([id_vendor])
   @@schema("sigyn")
 }
 
@@ -120,6 +125,8 @@ model Package {
   vendor   Vendor    @relation(fields: [id_vendor], references: [id_vendor])
   bookings Booking[]
 
+  @@index([id_vendor])
+  @@index([status])
   @@schema("sigyn")
 }
 
@@ -138,6 +145,7 @@ model VendorAvailability {
 
   vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
 
+  @@index([id_vendor])
   @@schema("sigyn")
 }
 
@@ -165,6 +173,9 @@ model Booking {
   commission Commission?
   payout     Payout?
 
+  @@index([id_user])
+  @@index([id_vendor])
+  @@index([id_package])
   @@schema("sigyn")
 }
 
@@ -204,6 +215,8 @@ model Review {
   user    User    @relation(fields: [id_user], references: [id_user])
   vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
 
+  @@index([id_user])
+  @@index([id_vendor])
   @@schema("sigyn")
 }
 
@@ -238,5 +251,6 @@ model Payout {
   vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
   booking Booking @relation(fields: [id_booking], references: [id_booking])
 
+  @@index([id_vendor])
   @@schema("sigyn")
 }

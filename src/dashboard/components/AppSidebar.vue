@@ -44,9 +44,9 @@ const menuSections: MenuSection[] = [
     items: [
       { label: 'Vendors', icon: 'fa-building', to: '/vendors' },
       { label: 'Packages', icon: 'fa-cube', to: '/packages' },
-      { label: 'Roles', icon: 'fa-lock', to: '/roles' },
-      { label: 'User Roles', icon: 'fa-tag', to: '/user-roles' },
       { label: 'Users', icon: 'fa-users', to: '/users' },
+      { label: 'Roles', icon: 'fa-lock', to: '/roles' },
+      { label: 'User Access', icon: 'fa-tag', to: '/user-roles' },
     ],
   },
 ]

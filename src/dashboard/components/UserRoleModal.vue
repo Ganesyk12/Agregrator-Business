@@ -79,6 +79,17 @@ watch(() => props.visible, async (val) => {
         email: props.userRole.email,
         role_codes: [props.userRole.role_code],
       }
+      try {
+        const res = await fetch(`${apiUrl}/api/user-roles/email/${props.userRole.email}`)
+        if (res.ok) {
+          const json = await res.json()
+          if (json.data && Array.isArray(json.data)) {
+            form.value.role_codes = json.data.map((ur: any) => ur.role_code)
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching user roles:', err)
+      }
     }
   }
 })
@@ -106,36 +117,40 @@ function save() {
           <template v-if="mode === 'detail' && userRole">
             <div class="form">
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Email</label>
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Full Name</label>
+                    <input class="form-control" :value="userRole.user?.full_name || '-'" readonly />
+                  </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Email Address</label>
                     <input class="form-control" :value="userRole.email" readonly />
                   </div>
                   <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Role Code</label>
-                    <input class="form-control" :value="userRole.role_code" readonly />
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Role Name</label>
-                    <input class="form-control" :value="userRole.role?.name || userRole.role_code" readonly />
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Status</label>
+                    <input class="form-control" :value="userRole.status" readonly style="text-transform: capitalize;" />
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">User Created</label>
-                    <input class="form-control" :value="userRole.user_created || '-'" readonly />
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">User Modified</label>
-                    <input class="form-control" :value="userRole.user_modified || '-'" readonly />
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Created</label>
-                    <input class="form-control" :value="userRole.date_created ? new Date(userRole.date_created).toLocaleDateString() : '-'" readonly />
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Modified</label>
-                    <input class="form-control" :value="userRole.date_modified ? new Date(userRole.date_modified).toLocaleDateString() : '-'" readonly />
+                
+                <div class="col-md-7">
+                  <label class="control-label" style="font-weight: bold; display: block; text-align: left; margin-bottom: 8px;">Assigned Roles</label>
+                  <div class="table-responsive">
+                    <table class="table table-striped table-bordered" style="margin-bottom: 0;">
+                      <thead>
+                        <tr>
+                          <th>Role Code</th>
+                          <th>Role Name</th>
+                          <th>Assigned Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="r in userRole.roles" :key="r.role_code">
+                          <td><span class="label label-default" style="font-family: monospace; font-size: 13px;">{{ r.role_code }}</span></td>
+                          <td>{{ r.role?.name || r.name || r.role_code }}</td>
+                          <td>{{ new Date(r.date_created).toLocaleDateString() }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>

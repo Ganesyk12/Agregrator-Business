@@ -13,9 +13,9 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log('Seeding database roles...')
   const roles = [
-    { role_code: 'admin', name: 'Administrator' },
-    { role_code: 'vendor', name: 'Vendor' },
-    { role_code: 'customer', name: 'Customer' },
+    { role_code: 'eUser-Admin', name: 'Admin' },
+    { role_code: 'eUser-Vendor', name: 'Vendor' },
+    { role_code: 'eUser-Customer', name: 'Customer' },
   ]
   for (const r of roles) {
     await prisma.role.upsert({

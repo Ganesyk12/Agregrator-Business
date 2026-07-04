@@ -19,11 +19,22 @@ export async function findByCode(code: string): Promise<Role | null> {
   }) as unknown as Role | null
 }
 
-export async function create(data: Pick<Role, 'role_code' | 'name'>): Promise<Role> {
-  return prisma.role.create({ data }) as unknown as Role
+export async function create(
+  data: Pick<Role, 'role_code' | 'name'> &
+    Partial<Pick<Role, 'user_created' | 'user_modified'>>
+): Promise<Role> {
+  const payload = {
+    ...data,
+    user_created: data.user_created ?? 'SYSTEM',
+    user_modified: data.user_modified ?? 'SYSTEM',
+  }
+  return prisma.role.create({ data: payload }) as unknown as Role
 }
 
-export async function update(code: string, data: Partial<Pick<Role, 'name' | 'status'>>): Promise<Role | null> {
+export async function update(
+  code: string,
+  data: Partial<Pick<Role, 'name' | 'status' | 'user_modified'>>
+): Promise<Role | null> {
   const existing = await prisma.role.findFirst({
     where: {
       role_code: code,
@@ -31,7 +42,12 @@ export async function update(code: string, data: Partial<Pick<Role, 'name' | 'st
     },
   })
   if (!existing) return null
-  return prisma.role.update({ where: { role_code: code }, data }) as unknown as Role
+
+  const payload = {
+    ...data,
+    user_modified: data.user_modified ?? 'SYSTEM',
+  }
+  return prisma.role.update({ where: { role_code: code }, data: payload }) as unknown as Role
 }
 
 export async function remove(code: string): Promise<boolean> {

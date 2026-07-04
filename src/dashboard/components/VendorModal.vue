@@ -57,11 +57,14 @@ async function fetchUsers() {
     const res = await fetch(`${apiUrl}/api/users`)
     if (!res.ok) throw new Error('Failed to fetch users')
     const json = await res.json()
-    users.value = (json.data || []).map((u: any) => ({
-      id_user: u.id_user,
-      email: u.email,
-      full_name: u.full_name,
-    }))
+    // Filter users who have the role 'eUser-Vendor'
+    users.value = (json.data || [])
+      .filter((u: any) => u.user_roles?.some((ur: any) => ur.role?.role_code === 'eUser-Vendor'))
+      .map((u: any) => ({
+        id_user: u.id_user,
+        email: u.email,
+        full_name: u.full_name,
+      }))
   } catch (err) {
     console.error('Error fetching users:', err)
     users.value = []

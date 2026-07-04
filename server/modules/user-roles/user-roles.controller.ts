@@ -84,3 +84,23 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
     next(err)
   }
 }
+
+export async function syncByEmail(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email } = req.params
+    const { role_codes } = req.body
+    if (!Array.isArray(role_codes)) {
+      throw createError(400, 'role_codes must be an array')
+    }
+
+    const user = await userService.findByEmail(email)
+    if (!user) {
+      throw createError(404, 'User not found')
+    }
+
+    const userRoles = await userRoleService.syncRolesByEmail(email, role_codes)
+    res.json({ data: userRoles })
+  } catch (err) {
+    next(err)
+  }
+}

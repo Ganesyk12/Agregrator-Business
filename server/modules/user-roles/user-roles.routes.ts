@@ -78,6 +78,7 @@ router.post('/', userRoleCtrl.create)
  *                     $ref: '#/components/schemas/UserRole'
  */
 router.get('/email/:email', userRoleCtrl.getByEmail)
+router.put('/email/:email', userRoleCtrl.syncByEmail)
 
 /**
  * @openapi

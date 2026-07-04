@@ -59,12 +59,12 @@ export async function create(req: Request, res: Response, next: NextFunction) {
       where: {
         email_role_code: {
           email: user.email,
-          role_code: 'vendor'
+          role_code: 'eUser-Vendor'
         }
       }
     })
     if (!existingRole) {
-      await userRoleService.create({ email: user.email, role_code: 'vendor' })
+      await userRoleService.create({ email: user.email, role_code: 'eUser-Vendor' })
     }
 
     const vendor = await vendorService.create({

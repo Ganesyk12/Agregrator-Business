@@ -374,7 +374,7 @@ const pageNumbers = computed(() => {
       <div class="row">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <p>
-            Showing {{ ((currentPage - 1) * perPage) + 1 }}
+            Showing {{ filtered.length > 0 ? ((currentPage - 1) * perPage) + 1 : 0 }}
             to {{ Math.min(currentPage * perPage, filtered.length) }}
             of {{ filtered.length }} entries
           </p>

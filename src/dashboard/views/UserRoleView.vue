@@ -64,14 +64,18 @@ function openAdd() {
   modalVisible.value = true
 }
 
-function openEdit(ur: UserRole) {
-  selectedUserRole.value = { ...ur }
+function openEdit(ur: any) {
+  selectedUserRole.value = {
+    email: ur.email,
+    role_code: ur.role_codes[0],
+    iduser_role: ur.iduser_role,
+  } as any
   modalMode.value = 'edit'
   modalVisible.value = true
 }
 
-function openDetail(ur: UserRole) {
-  selectedUserRole.value = { ...ur }
+function openDetail(ur: any) {
+  selectedUserRole.value = { ...ur } as any
   modalMode.value = 'detail'
   modalVisible.value = true
 }
@@ -109,83 +113,108 @@ async function handleSave(data: UserRoleForm) {
     }
   } else if (modalMode.value === 'edit' && selectedUserRole.value) {
     try {
-      const res = await fetch(`${apiUrl}/api/user-roles/${selectedUserRole.value.iduser_role}`, {
+      const res = await fetch(`${apiUrl}/api/user-roles/email/${selectedUserRole.value.email}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          role_code: data.role_codes[0],
+          role_codes: data.role_codes,
         })
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to update user role')
+        throw new Error(errBody?.error?.message || 'Failed to update user roles')
       }
       await fetchUserRoles()
       Toast.fire({
         icon: 'success',
-        title: 'User role updated successfully'
+        title: 'User roles updated successfully'
       })
     } catch (err) {
-      console.error('Error updating user role:', err)
+      console.error('Error updating user roles:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to update user role'
+        title: 'Failed to update user roles'
       })
     }
   }
   modalVisible.value = false
 }
 
-async function handleDelete(id: number) {
+async function handleDelete(ur: any) {
   const result = await Swal.fire({
     title: 'Are you sure?',
-    text: "You won't be able to revert this!",
+    text: `This will remove all role assignments for ${ur.email}!`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
     cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Yes, delete it!'
+    confirmButtonText: 'Yes, delete all!'
   })
 
   if (result.isConfirmed) {
     try {
-      const res = await fetch(`${apiUrl}/api/user-roles/${id}`, {
-        method: 'DELETE',
+      const res = await fetch(`${apiUrl}/api/user-roles/email/${ur.email}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role_codes: [] })
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to delete user role')
+        throw new Error(errBody?.error?.message || 'Failed to delete user roles')
       }
       await fetchUserRoles()
       Toast.fire({
         icon: 'success',
-        title: 'User role has been deleted.'
+        title: 'User roles deleted successfully.'
       })
     } catch (err) {
-      console.error('Error deleting user role:', err)
+      console.error('Error deleting user roles:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete user role'
+        title: 'Failed to delete user roles'
       })
     }
   }
 }
 
 const search = ref('')
-const sortColumn = ref<keyof UserRole | 'role_name' | 'user_name'>('email')
+const sortColumn = ref<keyof UserRole | 'role_name' | 'user_name' | 'role_code'>('email')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const currentPage = ref(1)
 const perPage = ref(5)
 
+const groupedUserRoles = computed(() => {
+  const map: Record<string, any> = {}
+  for (const ur of userRoles.value) {
+    if (!map[ur.email]) {
+      map[ur.email] = {
+        email: ur.email,
+        user: ur.user ? { full_name: ur.user.full_name } : undefined,
+        role_codes: [],
+        role_names: [],
+        roles: [],
+        iduser_role: ur.iduser_role,
+        status: ur.status,
+        user_created: ur.user_created || '',
+        date_created: ur.date_created,
+      }
+    }
+    map[ur.email].role_codes.push(ur.role_code)
+    map[ur.email].role_names.push(ur.role?.name || ur.role_code)
+    map[ur.email].roles.push(ur)
+  }
+  return Object.values(map)
+})
+
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
-  let result = userRoles.value
+  let result = groupedUserRoles.value
   if (q) {
     result = result.filter(ur =>
       (ur.email?.toLowerCase() || '').includes(q) ||
-      (ur.role_code?.toLowerCase() || '').includes(q) ||
-      (ur.role?.name?.toLowerCase() || '').includes(q) ||
-      (ur.status?.toLowerCase() || '').includes(q)
+      ur.role_codes.some((code: string) => code.toLowerCase().includes(q)) ||
+      ur.role_names.some((name: string) => name.toLowerCase().includes(q)) ||
+      (ur.user?.full_name?.toLowerCase() || '').includes(q)
     )
   }
   const col = sortColumn.value
@@ -194,14 +223,17 @@ const filtered = computed(() => {
     let va = ''
     let vb = ''
     if (col === 'role_name') {
-      va = (a.role?.name || a.role_code || '').toLowerCase()
-      vb = (b.role?.name || b.role_code || '').toLowerCase()
+      va = (a.role_names.join(', ')).toLowerCase()
+      vb = (b.role_names.join(', ')).toLowerCase()
+    } else if (col === 'role_code') {
+      va = (a.role_codes.join(', ')).toLowerCase()
+      vb = (b.role_codes.join(', ')).toLowerCase()
     } else if (col === 'user_name') {
       va = (a.user?.full_name || a.email || '').toLowerCase()
       vb = (b.user?.full_name || b.email || '').toLowerCase()
     } else {
-      va = String(a[col] ?? '').toLowerCase()
-      vb = String(b[col] ?? '').toLowerCase()
+      va = String(a[col as any] ?? '').toLowerCase()
+      vb = String(b[col as any] ?? '').toLowerCase()
     }
     return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
   })
@@ -247,7 +279,7 @@ const pageNumbers = computed(() => {
 <template>
   <div class="x_panel">
     <div class="x_title">
-      <h2>User Roles Management</h2>
+      <h2>User Access Management</h2>
       <div class="clearfix"></div>
     </div>
 
@@ -282,7 +314,6 @@ const pageNumbers = computed(() => {
                 { key: 'role_name', label: 'Role' },
                 { key: 'role_code', label: 'Role Code' },
                 { key: 'status', label: 'Status' },
-                { key: 'user_created', label: 'Created By' },
                 { key: 'date_created', label: 'Created' },
               ] as { key: string; label: string }[])"
               :key="col.key"
@@ -300,27 +331,35 @@ const pageNumbers = computed(() => {
           </tr>
         </thead>
         <tbody>
-           <tr v-for="ur in paginated" :key="ur.iduser_role">
-            <td>{{ ur.user?.full_name || ur.email }}</td>
-            <td>{{ ur.email }}</td>
-            <td>{{ ur.role?.name || ur.role_code }}</td>
-            <td>{{ ur.role_code }}</td>
-            <td>
-              <span
-                :class="{
-                  'label label-success': ur.status === 'active',
-                  'label label-danger': ur.status === 'inactive',
-                }"
-              >{{ ur.status }}</span>
-            </td>
-            <td>{{ ur.user_created || '-' }}</td>
-            <td>{{ new Date(ur.date_created).toLocaleDateString() }}</td>
-            <td style="white-space: nowrap;">
-              <button class="btn btn-primary" @click="openDetail(ur)"><i class="fa fa-eye"></i></button>
-              <button class="btn btn-info" @click="openEdit(ur)"><i class="fa fa-pencil"></i></button>
-              <button class="btn btn-danger" @click="handleDelete(ur.iduser_role)"><i class="fa fa-trash"></i></button>
-            </td>
-          </tr>
+            <tr v-for="ur in paginated" :key="ur.email">
+             <td>{{ ur.user?.full_name || ur.email }}</td>
+             <td>{{ ur.email }}</td>
+             <td>
+               <span v-for="rname in ur.role_names" :key="rname" class="label label-primary" style="margin-right: 4px; font-size: 13px;">
+                 {{ rname }}
+               </span>
+             </td>
+             <td>
+               <span v-for="rcode in ur.role_codes" :key="rcode" class="label label-default" style="margin-right: 4px; font-family: monospace; font-size: 13px;">
+                 {{ rcode }}
+               </span>
+             </td>
+             <td>
+               <span
+                 :class="{
+                   'label label-success': ur.status === 'active',
+                   'label label-danger': ur.status === 'inactive' || ur.status === 'deleted',
+                 }"
+                 style="font-size: 13px;"
+               >{{ ur.status }}</span>
+             </td>
+             <td>{{ new Date(ur.date_created).toLocaleDateString() }}</td>
+             <td style="white-space: nowrap;">
+               <button class="btn btn-primary" @click="openDetail(ur)"><i class="fa fa-eye"></i></button>
+               <button class="btn btn-info" @click="openEdit(ur)"><i class="fa fa-pencil"></i></button>
+               <button class="btn btn-danger" @click="handleDelete(ur)"><i class="fa fa-trash"></i></button>
+             </td>
+           </tr>
           <tr v-if="paginated.length === 0">
             <td colspan="8" style="text-align: center;">No user roles found.</td>
           </tr>
@@ -331,7 +370,7 @@ const pageNumbers = computed(() => {
       <div class="row">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <p>
-            Showing {{ ((currentPage - 1) * perPage) + 1 }}
+            Showing {{ filtered.length > 0 ? ((currentPage - 1) * perPage) + 1 : 0 }}
             to {{ Math.min(currentPage * perPage, filtered.length) }}
             of {{ filtered.length }} entries
           </p>

@@ -77,14 +77,6 @@ function save() {
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Modified</label>
                     <input class="form-control" :value="role.date_modified ? new Date(role.date_modified).toLocaleDateString() : '-'" readonly />
                   </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">User Created</label>
-                    <input class="form-control" :value="role.user_created || '-'" readonly />
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">User Modified</label>
-                    <input class="form-control" :value="role.user_modified || '-'" readonly />
-                  </div>
                 </div>
               </div>
             </div>

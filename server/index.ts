@@ -12,6 +12,7 @@ import vendorRoutes from './modules/vendors/vendors.routes'
 import packageRoutes from './modules/packages/packages.routes'
 import roleRoutes from './modules/roles/roles.routes'
 import locationRoutes from './modules/locations/locations.routes'
+import bookingRoutes from './modules/bookings/bookings.routes'
 
 const app = express()
 
@@ -36,6 +37,7 @@ app.use('/api/vendors', vendorRoutes)
 app.use('/api/packages', packageRoutes)
 app.use('/api/roles', roleRoutes)
 app.use('/api/locations', locationRoutes)
+app.use('/api/bookings', bookingRoutes)
 
 app.use(errorHandler)
 

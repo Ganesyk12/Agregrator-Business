@@ -109,3 +109,57 @@ export async function findByEmailAndRole(email: string, role_code: string): Prom
     },
   }) as unknown as UserRole | null
 }
+
+export async function syncRolesByEmail(email: string, roleCodes: string[]): Promise<UserRole[]> {
+  // 1. Get all active roles currently assigned to this email
+  const currentRoles = await prisma.user_Role.findMany({
+    where: { email, status: { not: 'deleted' } }
+  })
+  const currentRoleCodes = currentRoles.map(r => r.role_code)
+
+  // 2. Soft-delete roles that are no longer selected
+  const rolesToDelete = currentRoleCodes.filter(rc => !roleCodes.includes(rc))
+  if (rolesToDelete.length > 0) {
+    await prisma.user_Role.updateMany({
+      where: {
+        email,
+        role_code: { in: rolesToDelete }
+      },
+      data: {
+        status: 'deleted'
+      }
+    })
+  }
+
+  // 3. Create or restore roles that are selected
+  for (const rc of roleCodes) {
+    const existing = await prisma.user_Role.findFirst({
+      where: { email, role_code: rc }
+    })
+    if (existing) {
+      if (existing.status === 'deleted') {
+        await prisma.user_Role.update({
+          where: { iduser_role: existing.iduser_role },
+          data: { status: 'active', user_modified: 'SYSTEM' }
+        })
+      }
+    } else {
+      await prisma.user_Role.create({
+        data: {
+          email,
+          role_code: rc,
+          user_created: 'SYSTEM',
+          user_modified: 'SYSTEM'
+        }
+      })
+    }
+  }
+
+  // 4. Return updated active roles
+  return prisma.user_Role.findMany({
+    where: { email, status: { not: 'deleted' } },
+    include: {
+      role: { select: { id_role: true, role_code: true, name: true } }
+    }
+  }) as unknown as UserRole[]
+}
