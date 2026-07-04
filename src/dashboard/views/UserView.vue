@@ -20,18 +20,12 @@ interface User {
   email: string
   full_name: string
   phone: string | null
-  role_code: string
   is_active: boolean
   status: string
   date_created: string
   date_modified: string
   user_created: string | null
   user_modified: string | null
-  role?: {
-    id_role: number
-    role_code: string
-    name: string
-  }
 }
 
 const users = ref<User[]>([])
@@ -84,11 +78,13 @@ async function handleSave(data: UserForm) {
           email: data.email,
           password: data.password || undefined,
           full_name: data.full_name,
-          role_code: data.role_code,
           phone: data.phone || undefined,
         })
       })
-      if (!res.ok) throw new Error('Failed to create user')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to create user')
+      }
       await fetchUsers()
       Toast.fire({
         icon: 'success',
@@ -109,12 +105,14 @@ async function handleSave(data: UserForm) {
         body: JSON.stringify({
           email: data.email,
           full_name: data.full_name,
-          role_code: data.role_code,
           phone: data.phone || null,
           is_active: data.is_active,
         })
       })
-      if (!res.ok) throw new Error('Failed to update user')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to update user')
+      }
       await fetchUsers()
       Toast.fire({
         icon: 'success',
@@ -147,7 +145,10 @@ async function handleDelete(id: number) {
       const res = await fetch(`${apiUrl}/api/users/${id}`, {
         method: 'DELETE',
       })
-      if (!res.ok) throw new Error('Failed to delete user')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to delete user')
+      }
       await fetchUsers()
       Toast.fire({
         icon: 'success',
@@ -157,7 +158,7 @@ async function handleDelete(id: number) {
       console.error('Error deleting user:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete user.'
+        title: 'Failed to delete user'
       })
     }
   }
@@ -177,7 +178,6 @@ const filtered = computed(() => {
       (u.full_name?.toLowerCase() || '').includes(q) ||
       (u.email?.toLowerCase() || '').includes(q) ||
       (u.phone?.toLowerCase() || '').includes(q) ||
-      (u.role?.name?.toLowerCase() || u.role_code?.toLowerCase() || '').includes(q) ||
       (u.status?.toLowerCase() || '').includes(q)
     )
   }
@@ -186,13 +186,8 @@ const filtered = computed(() => {
   result = [...result].sort((a, b) => {
     let va = ''
     let vb = ''
-    if (col === 'role') {
-      va = (a.role?.name || a.role_code || '').toLowerCase()
-      vb = (b.role?.name || b.role_code || '').toLowerCase()
-    } else {
-      va = String(a[col] ?? '').toLowerCase()
-      vb = String(b[col] ?? '').toLowerCase()
-    }
+    va = String(a[col] ?? '').toLowerCase()
+    vb = String(b[col] ?? '').toLowerCase()
     return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
   })
   return result
@@ -270,7 +265,6 @@ const pageNumbers = computed(() => {
                   { key: 'full_name', label: 'Full Name' },
                   { key: 'email', label: 'Email' },
                   { key: 'phone', label: 'Phone' },
-                  { key: 'role', label: 'Role' },
                   { key: 'status', label: 'Status' },
                   { key: 'user_modified', label: 'Modified By' },
                   { key: 'date_created', label: 'Created' },
@@ -294,7 +288,6 @@ const pageNumbers = computed(() => {
               <td>{{ u.full_name }}</td>
               <td>{{ u.email }}</td>
               <td>{{ u.phone || '-' }}</td>
-              <td>{{ u.role?.name || u.role_code }}</td>
               <td>
                 <span
                   :class="{
@@ -312,7 +305,7 @@ const pageNumbers = computed(() => {
               </td>
             </tr>
             <tr v-if="paginated.length === 0">
-              <td colspan="8" style="text-align: center;">No users found.</td>
+              <td colspan="7" style="text-align: center;">No users found.</td>
             </tr>
           </tbody>
         </table>

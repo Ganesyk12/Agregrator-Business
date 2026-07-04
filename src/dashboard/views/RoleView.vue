@@ -81,7 +81,10 @@ async function handleSave(data: RoleForm) {
           name: data.name,
         })
       })
-      if (!res.ok) throw new Error('Failed to create role')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to create role')
+      }
       await fetchRoles()
       Toast.fire({
         icon: 'success',
@@ -103,7 +106,10 @@ async function handleSave(data: RoleForm) {
           name: data.name,
         })
       })
-      if (!res.ok) throw new Error('Failed to update role')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to update role')
+      }
       await fetchRoles()
       Toast.fire({
         icon: 'success',
@@ -138,7 +144,10 @@ async function handleDelete(code: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'deleted' }),
       })
-      if (!res.ok) throw new Error('Failed to delete role')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to delete role')
+      }
       await fetchRoles()
       Toast.fire({
         icon: 'success',
@@ -148,7 +157,7 @@ async function handleDelete(code: string) {
       console.error('Error deleting role:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete role.'
+        title: 'Failed to delete role'
       })
     }
   }

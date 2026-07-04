@@ -2,16 +2,23 @@
 import { ref, watch } from 'vue'
 
 export interface VendorForm {
+  id_user: number | ''
   business_name: string
   description: string
   category: string
   location: string
 }
 
+interface UserOption {
+  id_user: number
+  email: string
+  full_name: string
+}
+
 const props = defineProps<{
   visible: boolean
   mode: 'add' | 'edit' | 'detail'
-  vendor: VendorForm & { id_vendor?: number; verified_at?: string | null; user_modified?: string | null; date_created?: string; status?: string } | null
+  vendor: any | null
 }>()
 
 const emit = defineEmits<{
@@ -20,31 +27,69 @@ const emit = defineEmits<{
 }>()
 
 const categories = ['mua', 'fotografer', 'wo', 'catering', 'dekorasi', 'venue', 'hiburan', 'transportasi']
+const locations = ref<string[]>([])
+const users = ref<UserOption[]>([])
 
 const form = ref<VendorForm>({
+  id_user: '',
   business_name: '',
   description: '',
   category: '',
   location: '',
 })
 
-watch(() => props.visible, (val) => {
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+async function fetchLocations() {
+  try {
+    const res = await fetch(`${apiUrl}/api/locations`)
+    if (!res.ok) throw new Error('Failed to fetch locations')
+    const json = await res.json()
+    locations.value = json.data || []
+  } catch (err) {
+    console.error('Error fetching locations:', err)
+    locations.value = []
+  }
+}
+
+async function fetchUsers() {
+  try {
+    const res = await fetch(`${apiUrl}/api/users`)
+    if (!res.ok) throw new Error('Failed to fetch users')
+    const json = await res.json()
+    users.value = (json.data || []).map((u: any) => ({
+      id_user: u.id_user,
+      email: u.email,
+      full_name: u.full_name,
+    }))
+  } catch (err) {
+    console.error('Error fetching users:', err)
+    users.value = []
+  }
+}
+
+watch(() => props.visible, async (val) => {
   if (val) {
+    await Promise.all([fetchUsers(), fetchLocations()])
     if (props.mode === 'add') {
-      form.value = { business_name: '', description: '', category: '', location: '' }
+      form.value = { id_user: '', business_name: '', description: '', category: '', location: '' }
     } else if (props.vendor) {
+      if (props.vendor.location && !locations.value.includes(props.vendor.location)) {
+        locations.value.push(props.vendor.location)
+      }
       form.value = {
+        id_user: props.vendor.id_user || '',
         business_name: props.vendor.business_name,
-        description: props.vendor.description,
+        description: props.vendor.description || '',
         category: props.vendor.category,
-        location: props.vendor.location,
+        location: props.vendor.location || '',
       }
     }
   }
 })
 
 function save() {
-  if (!form.value.business_name || !form.value.category) return
+  if (!form.value.id_user || !form.value.business_name || !form.value.category) return
   emit('save', { ...form.value })
 }
 </script>
@@ -68,6 +113,10 @@ function save() {
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Owner (User)</label>
+                    <input class="form-control" :value="vendor.user ? `${vendor.user.full_name} (${vendor.user.email})` : vendor.id_user" readonly />
+                  </div>
+                  <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Business Name</label>
                     <input class="form-control" :value="vendor.business_name" readonly />
                   </div>
@@ -83,7 +132,7 @@ function save() {
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Description</label>
-                    <textarea class="form-control" :value="vendor.description || '-'" readonly rows="4" style="resize: none;"></textarea>
+                    <textarea class="form-control" :value="vendor.description || '-'" readonly rows="4"></textarea>
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Verified At</label>
@@ -107,6 +156,18 @@ function save() {
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">
+                      Owner (User) <span v-if="mode === 'add'" class="text-danger">*</span>
+                    </label>
+                    <select v-if="mode === 'add'" class="form-control" v-model="form.id_user">
+                      <option value="" disabled>Select owner user</option>
+                      <option v-for="u in users" :key="u.id_user" :value="u.id_user">
+                        {{ u.full_name }} ({{ u.email }})
+                      </option>
+                    </select>
+                    <input v-else class="form-control" :value="vendor?.user ? `${vendor.user.full_name} (${vendor.user.email})` : form.id_user" readonly />
+                  </div>
+                  <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Business Name <span class="text-danger">*</span></label>
                     <input class="form-control" v-model="form.business_name" placeholder="Business name" />
                   </div>
@@ -117,15 +178,18 @@ function save() {
                       <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
                     </select>
                   </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Location</label>
-                    <input class="form-control" v-model="form.location" placeholder="City / Region" />
-                  </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Location</label>
+                    <select class="form-control" v-model="form.location">
+                      <option value="">Select location</option>
+                      <option v-for="loc in locations" :key="loc" :value="loc">{{ loc }}</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Description</label>
-                    <textarea class="form-control" v-model="form.description" placeholder="Description" rows="4" style="resize: none;"></textarea>
+                    <textarea class="form-control" v-model="form.description" placeholder="Description" rows="4"></textarea>
                   </div>
                 </div>
               </div>

@@ -11,4 +11,9 @@ export interface Vendor {
   date_modified: Date
   user_created: string | null
   user_modified: string | null
+  user?: {
+    id_user: number
+    email: string
+    full_name: string
+  }
 }

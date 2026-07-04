@@ -115,11 +115,11 @@ function save() {
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">What's Included</label>
-                    <textarea class="form-control" :value="pkg.whats_included || '-'" readonly rows="3" style="resize: none;"></textarea>
+                    <textarea class="form-control" :value="pkg.whats_included || '-'" readonly rows="4"></textarea>
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Description</label>
-                    <textarea class="form-control" :value="pkg.description || '-'" readonly rows="3" style="resize: none;"></textarea>
+                    <textarea class="form-control" :value="pkg.description || '-'" readonly rows="5"></textarea>
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Modified By</label>
@@ -153,7 +153,18 @@ function save() {
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Price *</label>
-                    <input v-model="displayPrice" class="form-control" placeholder="Price" required />
+                    <input 
+                      v-model="displayPrice" 
+                      class="form-control" 
+                      placeholder="Price" 
+                      required 
+                      @keypress="(e) => { if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault() }"
+                      @input="(e) => {
+                        const target = e.target as HTMLInputElement;
+                        const clean = target.value.replace(/\D/g, '');
+                        target.value = clean ? parseInt(clean, 10).toLocaleString('id-ID') : '';
+                      }"
+                    />
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Duration</label>
@@ -163,11 +174,11 @@ function save() {
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">What's Included</label>
-                    <textarea v-model="form.whats_included" class="form-control" placeholder="Describe inclusions (e.g. Album, Videography)" rows="3" style="resize: none;"></textarea>
+                    <textarea v-model="form.whats_included" class="form-control" placeholder="Describe inclusions (e.g. Album, Videography)" rows="4"></textarea>
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Description</label>
-                    <textarea v-model="form.description" class="form-control" placeholder="General description of the package" rows="3" style="resize: none;"></textarea>
+                    <textarea v-model="form.description" class="form-control" placeholder="General description of the package" rows="5"></textarea>
                   </div>
                 </div>
               </div>

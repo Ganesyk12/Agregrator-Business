@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as vendorService from './vendors.service'
 import * as userRoleService from '../user-roles/user-roles.service'
+import { createError } from '../../middleware/error-handler'
 import prisma from '../../db'
 
 export async function getAll(_req: Request, res: Response, next: NextFunction) {
@@ -31,23 +32,43 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { business_name, description, category, location } = req.body
+    const { id_user, business_name, description, category, location } = req.body
 
-    // Create a unique user for this vendor to satisfy FK constraint
-    const email = `vendor_${Date.now()}_${Math.floor(Math.random() * 1000)}@sigyn.com`
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: 'vendor123password',
-        full_name: business_name,
+    if (!id_user) {
+      throw createError(400, 'id_user is required')
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id_user: Number(id_user) }
+    })
+    if (!user) {
+      throw createError(404, 'User not found')
+    }
+
+    // Check if user is already a vendor
+    const existingVendor = await prisma.vendor.findUnique({
+      where: { id_user: Number(id_user) }
+    })
+    if (existingVendor) {
+      throw createError(409, 'This user is already linked to another vendor')
+    }
+
+    // Assign vendor role to the user if they don't already have it
+    const existingRole = await prisma.user_Role.findUnique({
+      where: {
+        email_role_code: {
+          email: user.email,
+          role_code: 'vendor'
+        }
       }
     })
-
-    // Assign vendor role to the created user
-    await userRoleService.create({ email, role_code: 'vendor' })
+    if (!existingRole) {
+      await userRoleService.create({ email: user.email, role_code: 'vendor' })
+    }
 
     const vendor = await vendorService.create({
-      id_user: user.id_user,
+      id_user: Number(id_user),
       business_name,
       description: description ?? null,
       category,
@@ -93,6 +114,33 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
       return
     }
     res.json({ data: { success: true } })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function approve(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const existing = await prisma.vendor.findUnique({ where: { id_vendor: id } })
+    if (!existing) {
+      res.status(404).json({ error: { message: 'Vendor not found' } })
+      return
+    }
+
+    const vendor = await prisma.vendor.update({
+      where: { id_vendor: id },
+      data: {
+        status: 'active',
+        verified_at: new Date(),
+        user_modified: 'SYSTEM',
+      },
+      include: {
+        user: { select: { id_user: true, email: true, full_name: true } }
+      }
+    })
+
+    res.json({ data: vendor })
   } catch (err) {
     next(err)
   }

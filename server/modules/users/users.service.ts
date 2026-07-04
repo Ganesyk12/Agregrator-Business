@@ -13,27 +13,28 @@ const userSelect = {
   date_modified: true,
   user_created: true,
   user_modified: true,
-} as const
-
-const userInclude = {
   user_roles: {
-    include: { role: { select: { id_role: true, role_code: true, name: true } } },
+    select: { role: { select: { id_role: true, role_code: true, name: true } } },
   },
 } as const
 
 export async function findAll(): Promise<User[]> {
   return prisma.user.findMany({
+    where: {
+      status: { not: 'deleted' },
+    },
     select: userSelect,
-    include: userInclude,
     orderBy: { date_created: 'desc' },
   }) as unknown as User[]
 }
 
 export async function findById(id: number): Promise<User | null> {
-  return prisma.user.findUnique({
-    where: { id_user: id },
+  return prisma.user.findFirst({
+    where: {
+      id_user: id,
+      status: { not: 'deleted' },
+    },
     select: userSelect,
-    include: userInclude,
   }) as unknown as User | null
 }
 
@@ -52,7 +53,6 @@ export async function create(
       user_modified: data.user_modified ?? 'SYSTEM',
     },
     select: userSelect,
-    include: userInclude,
   }) as unknown as User
 }
 
@@ -60,7 +60,12 @@ export async function update(
   id: number,
   data: Partial<Pick<User, 'email' | 'password' | 'full_name' | 'phone' | 'avatar_url' | 'is_active' | 'status' | 'user_modified'>>
 ): Promise<User | null> {
-  const existing = await prisma.user.findUnique({ where: { id_user: id } })
+  const existing = await prisma.user.findFirst({
+    where: {
+      id_user: id,
+      status: { not: 'deleted' },
+    },
+  })
   if (!existing) return null
 
   const payload = {
@@ -72,25 +77,38 @@ export async function update(
     where: { id_user: id },
     data: payload,
     select: userSelect,
-    include: userInclude,
   }) as unknown as User
 }
 
 export async function findByEmail(email: string): Promise<User | null> {
-  return prisma.user.findUnique({
-    where: { email },
+  return prisma.user.findFirst({
+    where: {
+      email,
+      status: { not: 'deleted' },
+    },
     select: userSelect,
-    include: userInclude,
   }) as unknown as User | null
 }
 
 export async function remove(id: number): Promise<boolean> {
-  const existing = await prisma.user.findUnique({ where: { id_user: id } })
+  const existing = await prisma.user.findFirst({
+    where: {
+      id_user: id,
+      status: { not: 'deleted' },
+    },
+  })
   if (!existing) return false
 
-  // Delete vendor if user is a vendor
-  await prisma.vendor.deleteMany({ where: { id_user: id } })
+  // Soft delete vendor if user is a vendor
+  await prisma.vendor.updateMany({
+    where: { id_user: id },
+    data: { status: 'deleted' },
+  })
 
-  await prisma.user.delete({ where: { id_user: id } })
+  // Soft delete user
+  await prisma.user.update({
+    where: { id_user: id },
+    data: { status: 'deleted' },
+  })
   return true
 }

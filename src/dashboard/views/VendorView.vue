@@ -17,6 +17,7 @@ const Toast = Swal.mixin({
 
 interface Vendor {
   id_vendor: number
+  id_user: number
   business_name: string
   description: string
   category: string
@@ -25,6 +26,11 @@ interface Vendor {
   verified_at: string | null
   user_modified: string | null
   date_created: string
+  user?: {
+    id_user: number
+    email: string
+    full_name: string
+  }
 }
 
 const modalVisible = ref(false)
@@ -79,13 +85,17 @@ async function handleSave(data: VendorForm) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id_user: data.id_user,
           business_name: data.business_name,
           description: data.description,
           category: data.category,
           location: data.location,
         })
       })
-      if (!res.ok) throw new Error('Failed to create vendor')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to create vendor')
+      }
       await fetchVendors()
       Toast.fire({
         icon: 'success',
@@ -110,7 +120,10 @@ async function handleSave(data: VendorForm) {
           location: data.location,
         })
       })
-      if (!res.ok) throw new Error('Failed to update vendor')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to update vendor')
+      }
       await fetchVendors()
       Toast.fire({
         icon: 'success',
@@ -143,7 +156,10 @@ async function handleDelete(id: number) {
       const res = await fetch(`${apiUrl}/api/vendors/${id}`, {
         method: 'DELETE',
       })
-      if (!res.ok) throw new Error('Failed to delete vendor')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to delete vendor')
+      }
       await fetchVendors()
       Toast.fire({
         icon: 'success',
@@ -153,14 +169,49 @@ async function handleDelete(id: number) {
       console.error('Error deleting vendor:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete vendor.'
+        title: 'Failed to delete vendor'
+      })
+    }
+  }
+}
+
+async function handleApprove(id: number) {
+  const result = await Swal.fire({
+    title: 'Approve Vendor?',
+    text: 'This will set the status to active and verify this vendor.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#26B99A',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Yes, approve it!'
+  })
+
+  if (result.isConfirmed) {
+    try {
+      const res = await fetch(`${apiUrl}/api/vendors/${id}/approve`, {
+        method: 'PATCH',
+      })
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to approve vendor')
+      }
+      await fetchVendors()
+      Toast.fire({
+        icon: 'success',
+        title: 'Vendor approved successfully'
+      })
+    } catch (err: any) {
+      console.error('Error approving vendor:', err)
+      Toast.fire({
+        icon: 'error',
+        title: err.message || 'Failed to approve vendor'
       })
     }
   }
 }
 
 const search = ref('')
-const sortColumn = ref<keyof Vendor>('id_vendor')
+const sortColumn = ref<keyof Vendor | 'owner_name'>('id_vendor')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const currentPage = ref(1)
 const perPage = ref(5)
@@ -180,8 +231,15 @@ const filtered = computed(() => {
   const col = sortColumn.value
   const dir = sortDirection.value
   result = [...result].sort((a, b) => {
-    const va = String(a[col] ?? '').toLowerCase()
-    const vb = String(b[col] ?? '').toLowerCase()
+    let va = ''
+    let vb = ''
+    if (col === 'owner_name') {
+      va = (a.user?.full_name || '').toLowerCase()
+      vb = (b.user?.full_name || '').toLowerCase()
+    } else {
+      va = String(a[col] ?? '').toLowerCase()
+      vb = String(b[col] ?? '').toLowerCase()
+    }
     return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
   })
   return result
@@ -194,7 +252,7 @@ const paginated = computed(() => {
   return filtered.value.slice(start, start + perPage.value)
 })
 
-function setSort(col: keyof Vendor) {
+function setSort(col: keyof Vendor | 'owner_name') {
   if (sortColumn.value === col) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
@@ -257,6 +315,7 @@ const pageNumbers = computed(() => {
             <th
               v-for="col in ([
                 { key: 'business_name', label: 'Business Name' },
+                { key: 'owner_name', label: 'Owner (User)' },
                 { key: 'description', label: 'Description' },
                 { key: 'category', label: 'Category' },
                 { key: 'location', label: 'Location' },
@@ -264,7 +323,7 @@ const pageNumbers = computed(() => {
                 { key: 'status', label: 'Status' },
                 { key: 'user_modified', label: 'Modified By' },
                 { key: 'date_created', label: 'Created' },
-              ] as { key: keyof Vendor; label: string }[])"
+              ] as { key: keyof Vendor | 'owner_name'; label: string }[])"
               :key="col.key"
               @click="setSort(col.key)"
               style="cursor: pointer; user-select: none;"
@@ -282,6 +341,7 @@ const pageNumbers = computed(() => {
         <tbody>
            <tr v-for="v in paginated" :key="v.id_vendor">
             <td>{{ v.business_name }}</td>
+            <td>{{ v.user ? `${v.user.full_name} (${v.user.email})` : v.id_user }}</td>
             <td>{{ v.description || '-' }}</td>
             <td>{{ v.category }}</td>
             <td>{{ v.location || '-' }}</td>
@@ -289,7 +349,7 @@ const pageNumbers = computed(() => {
             <td>
               <span
                 :class="{
-                  'label label-success': v.status === 'approved',
+                  'label label-success': v.status === 'approved' || v.status === 'active',
                   'label label-warning': v.status === 'pending',
                   'label label-danger': v.status === 'rejected',
                 }"
@@ -298,6 +358,7 @@ const pageNumbers = computed(() => {
             <td>{{ v.user_modified || '-' }}</td>
             <td>{{ new Date(v.date_created).toLocaleDateString() }}</td>
             <td style="white-space: nowrap;">
+              <button v-if="v.status === 'pending'" class="btn btn-success" @click="handleApprove(v.id_vendor)" title="Approve Vendor"><i class="fa fa-check"></i></button>
               <button class="btn btn-primary" @click="openDetail(v)"><i class="fa fa-eye"></i></button>
               <button class="btn btn-info" @click="openEdit(v)"><i class="fa fa-pencil"></i></button>
               <button class="btn btn-danger" @click="handleDelete(v.id_vendor)"><i class="fa fa-trash"></i></button>

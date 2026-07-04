@@ -98,6 +98,8 @@ function save() {
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Role Code <span class="text-danger">*</span></label>
                     <input class="form-control" v-model="form.role_code" placeholder="e.g. admin, manager" :readonly="mode === 'edit'" />
                   </div>
+                </div>
+                <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Name <span class="text-danger">*</span></label>
                     <input class="form-control" v-model="form.name" placeholder="Role name" />

@@ -105,7 +105,10 @@ async function handleSave(data: PackageForm) {
           whats_included: data.whats_included,
         })
       })
-      if (!res.ok) throw new Error('Failed to create package')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to create package')
+      }
       await fetchPackages()
       Toast.fire({
         icon: 'success',
@@ -131,7 +134,10 @@ async function handleSave(data: PackageForm) {
           whats_included: data.whats_included,
         })
       })
-      if (!res.ok) throw new Error('Failed to update package')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to update package')
+      }
       await fetchPackages()
       Toast.fire({
         icon: 'success',
@@ -164,7 +170,10 @@ async function handleDelete(id: number) {
       const res = await fetch(`${apiUrl}/api/packages/${id}`, {
         method: 'DELETE',
       })
-      if (!res.ok) throw new Error('Failed to delete package')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to delete package')
+      }
       await fetchPackages()
       Toast.fire({
         icon: 'success',
@@ -174,7 +183,7 @@ async function handleDelete(id: number) {
       console.error('Error deleting package:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete package.'
+        title: 'Failed to delete package'
       })
     }
   }

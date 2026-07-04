@@ -6,7 +6,6 @@ export interface UserForm {
   password?: string
   full_name: string
   phone: string
-  role_code: string
   is_active: boolean
 }
 
@@ -21,12 +20,13 @@ const emit = defineEmits<{
   save: [data: UserForm]
 }>()
 
+const showPassword = ref(false)
+
 const form = ref<UserForm>({
   email: '',
   password: '',
   full_name: '',
   phone: '',
-  role_code: 'customer',
   is_active: true,
 })
 
@@ -38,7 +38,6 @@ watch(() => props.visible, (val) => {
         password: '',
         full_name: '',
         phone: '',
-        role_code: 'customer',
         is_active: true,
       }
     } else if (props.user) {
@@ -47,7 +46,6 @@ watch(() => props.visible, (val) => {
         password: '',
         full_name: props.user.full_name,
         phone: props.user.phone || '',
-        role_code: props.user.role_code,
         is_active: props.user.is_active,
       }
     }
@@ -87,13 +85,9 @@ function save() {
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Email</label>
                     <input class="form-control" :value="user.email" readonly />
                   </div>
-                  <div class="form-group" style="text-align: left;">
+                    <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Phone</label>
                     <input class="form-control" :value="user.phone || '-'" readonly />
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Role</label>
-                    <input class="form-control" :value="user.role?.name || user.role_code" readonly />
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -123,16 +117,23 @@ function save() {
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Email *</label>
                     <input v-model="form.email" type="email" class="form-control" placeholder="Email address" required />
                   </div>
+                </div>
+                <div class="col-md-6">
                   <div class="form-group" style="text-align: left;" v-if="mode === 'add'">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Password</label>
-                    <input v-model="form.password" type="password" class="form-control" placeholder="Defaults to 123456" />
+                    <div class="input-group">
+                      <input v-model="form.password" :type="showPassword ? 'text' : 'password'" class="form-control" placeholder="Defaults to 123456" />
+                      <span class="input-group-btn">
+                        <button class="btn btn-default" type="button" @click="showPassword = !showPassword">
+                          <i :class="showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+                        </button>
+                      </span>
+                    </div>
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Phone</label>
-                    <input v-model="form.phone" class="form-control" placeholder="Phone number" />
+                    <input v-model="form.phone" class="form-control" placeholder="Phone number" @input="form.phone = ($event.target as HTMLInputElement).value.replace(/\D/g, '')" />
                   </div>
-                </div>
-                <div class="col-md-6">
                 </div>
               </div>
             </form>

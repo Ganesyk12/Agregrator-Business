@@ -11,6 +11,7 @@ import userRoleRoutes from './modules/user-roles/user-roles.routes'
 import vendorRoutes from './modules/vendors/vendors.routes'
 import packageRoutes from './modules/packages/packages.routes'
 import roleRoutes from './modules/roles/roles.routes'
+import locationRoutes from './modules/locations/locations.routes'
 
 const app = express()
 
@@ -34,6 +35,7 @@ app.use('/api/user-roles', userRoleRoutes)
 app.use('/api/vendors', vendorRoutes)
 app.use('/api/packages', packageRoutes)
 app.use('/api/roles', roleRoutes)
+app.use('/api/locations', locationRoutes)
 
 app.use(errorHandler)
 

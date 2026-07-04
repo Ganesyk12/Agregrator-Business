@@ -78,26 +78,33 @@ function openDetail(ur: UserRole) {
 
 async function handleSave(data: UserRoleForm) {
   if (modalMode.value === 'add') {
-    try {
-      const res = await fetch(`${apiUrl}/api/user-roles`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: data.email,
-          role_code: data.role_code,
+    let success = true
+    for (const rc of data.role_codes) {
+      try {
+        const res = await fetch(`${apiUrl}/api/user-roles`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: data.email, role_code: rc })
         })
-      })
-      if (!res.ok) throw new Error('Failed to assign role')
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}))
+          throw new Error(errBody?.error?.message || `Failed to assign role ${rc}`)
+        }
+      } catch (err) {
+        console.error(`Error assigning role ${rc}:`, err)
+        success = false
+      }
+    }
+    if (success) {
       await fetchUserRoles()
       Toast.fire({
         icon: 'success',
-        title: 'Role assigned successfully'
+        title: 'Roles assigned successfully'
       })
-    } catch (err) {
-      console.error('Error assigning role:', err)
+    } else {
       Toast.fire({
         icon: 'error',
-        title: 'Failed to assign role'
+        title: 'Failed to assign some roles'
       })
     }
   } else if (modalMode.value === 'edit' && selectedUserRole.value) {
@@ -106,10 +113,13 @@ async function handleSave(data: UserRoleForm) {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          role_code: data.role_code,
+          role_code: data.role_codes[0],
         })
       })
-      if (!res.ok) throw new Error('Failed to update user role')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to update user role')
+      }
       await fetchUserRoles()
       Toast.fire({
         icon: 'success',
@@ -142,7 +152,10 @@ async function handleDelete(id: number) {
       const res = await fetch(`${apiUrl}/api/user-roles/${id}`, {
         method: 'DELETE',
       })
-      if (!res.ok) throw new Error('Failed to delete user role')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error?.message || 'Failed to delete user role')
+      }
       await fetchUserRoles()
       Toast.fire({
         icon: 'success',
@@ -152,14 +165,14 @@ async function handleDelete(id: number) {
       console.error('Error deleting user role:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete user role.'
+        title: 'Failed to delete user role'
       })
     }
   }
 }
 
 const search = ref('')
-const sortColumn = ref<keyof UserRole>('email')
+const sortColumn = ref<keyof UserRole | 'role_name' | 'user_name'>('email')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const currentPage = ref(1)
 const perPage = ref(5)
@@ -206,7 +219,7 @@ function setSort(col: string) {
   if (sortColumn.value === col) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
-    sortColumn.value = col as keyof UserRole
+    sortColumn.value = col as keyof UserRole | 'role_name' | 'user_name'
     sortDirection.value = 'asc'
   }
   currentPage.value = 1

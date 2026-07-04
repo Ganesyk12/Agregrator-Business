@@ -56,5 +56,6 @@ router.get('/:id', vendorCtrl.getById)
 router.post('/', vendorCtrl.create)
 router.put('/:id', vendorCtrl.update)
 router.delete('/:id', vendorCtrl.remove)
+router.patch('/:id/approve', vendorCtrl.approve)
 
 export default router
