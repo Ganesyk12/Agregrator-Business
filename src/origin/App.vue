@@ -1,9 +1,5 @@
-<script setup lang="ts">
-const title = import.meta.env.VITE_APP_TITLE
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <h1>{{ title }}</h1>
+  <router-view />
 </template>
-
-<style scoped></style>

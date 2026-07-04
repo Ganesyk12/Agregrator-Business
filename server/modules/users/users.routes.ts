@@ -52,5 +52,8 @@ router.get('/', userCtrl.getAll)
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/:id', userCtrl.getById)
+router.post('/', userCtrl.create)
+router.put('/:id', userCtrl.update)
+router.delete('/:id', userCtrl.remove)
 
 export default router

@@ -7,7 +7,12 @@ import { errorHandler } from './middleware/error-handler'
 
 import authRoutes from './modules/auth/auth.routes'
 import userRoutes from './modules/users/users.routes'
+import userRoleRoutes from './modules/user-roles/user-roles.routes'
 import vendorRoutes from './modules/vendors/vendors.routes'
+import packageRoutes from './modules/packages/packages.routes'
+import roleRoutes from './modules/roles/roles.routes'
+import locationRoutes from './modules/locations/locations.routes'
+import bookingRoutes from './modules/bookings/bookings.routes'
 
 const app = express()
 
@@ -27,7 +32,12 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/user-roles', userRoleRoutes)
 app.use('/api/vendors', vendorRoutes)
+app.use('/api/packages', packageRoutes)
+app.use('/api/roles', roleRoutes)
+app.use('/api/locations', locationRoutes)
+app.use('/api/bookings', bookingRoutes)
 
 app.use(errorHandler)
 
