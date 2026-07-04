@@ -109,7 +109,7 @@ watch(() => form.value.id_package, (newPkgId) => {
 })
 
 // Reset package selection if vendor changes
-watch(() => form.value.id_vendor, (newVendorId, oldVendorId) => {
+watch(() => form.value.id_vendor, (_, oldVendorId) => {
   if (props.mode === 'add' && oldVendorId !== undefined && oldVendorId !== 0) {
     form.value.id_package = 0
     form.value.total_price = 0
