@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import PackageModal, { type PackageForm } from '../components/PackageModal.vue'
+import CategoryModal, { type CategoryForm } from '../components/CategoryModal.vue'
 import Swal from 'sweetalert2'
 
 const Toast = Swal.mixin({
@@ -15,160 +15,109 @@ const Toast = Swal.mixin({
   }
 })
 
-interface Package {
-  id_package: number
-  id_vendor: number
-  id_category: number | null
-  name: string
-  description: string | null
-  price: number
-  duration: string | null
-  whats_included: string | null
+interface Category {
+  id_category: number
+  category_name: string
   status: string
   date_created: string
   date_modified: string
   user_created: string | null
   user_modified: string | null
-  vendor?: {
-    business_name: string
-  }
-  category?: {
-    category_name: string
-  }
 }
 
-const packages = ref<Package[]>([])
-const vendors = ref<Array<{ id_vendor: number; business_name: string }>>([])
-const categories = ref<Array<{ id_category: number; category_name: string }>>([])
+const modalVisible = ref(false)
+const modalMode = ref<'add' | 'edit' | 'detail'>('add')
+const selectedCategory = ref<Category | null>(null)
+const categories = ref<Category[]>([])
+
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-
-async function fetchPackages() {
-  try {
-    const res = await fetch(`${apiUrl}/api/packages`)
-    if (!res.ok) throw new Error('Failed to fetch packages')
-    const json = await res.json()
-    packages.value = json.data || []
-  } catch (err) {
-    console.error('Error fetching packages:', err)
-  }
-}
-
-async function fetchVendors() {
-  try {
-    const res = await fetch(`${apiUrl}/api/vendors`)
-    if (!res.ok) throw new Error('Failed to fetch vendors')
-    const json = await res.json()
-    vendors.value = (json.data || []).map((v: any) => ({
-      id_vendor: v.id_vendor,
-      business_name: v.business_name
-    }))
-  } catch (err) {
-    console.error('Error fetching vendors:', err)
-  }
-}
 
 async function fetchCategories() {
   try {
     const res = await fetch(`${apiUrl}/api/categories`)
-    if (!res.ok) throw new Error('Failed to fetch categories')
     const json = await res.json()
-    categories.value = (json.data || []).map((c: any) => ({
-      id_category: c.id_category,
-      category_name: c.category_name
-    }))
+    if (!json.data) {
+      categories.value = []
+    } else {
+      categories.value = json.data
+    }
   } catch (err) {
     console.error('Error fetching categories:', err)
+    categories.value = []
   }
 }
 
 onMounted(() => {
-  fetchPackages()
-  fetchVendors()
   fetchCategories()
 })
 
-const modalVisible = ref(false)
-const modalMode = ref<'add' | 'edit' | 'detail'>('add')
-const selectedPackage = ref<Package | null>(null)
-
 function openAdd() {
+  selectedCategory.value = null
   modalMode.value = 'add'
-  selectedPackage.value = null
   modalVisible.value = true
 }
 
-function openEdit(pkg: Package) {
+function openEdit(c: Category) {
+  selectedCategory.value = { ...c }
   modalMode.value = 'edit'
-  selectedPackage.value = pkg
   modalVisible.value = true
 }
 
-function openDetail(pkg: Package) {
+function openDetail(c: Category) {
+  selectedCategory.value = { ...c }
   modalMode.value = 'detail'
-  selectedPackage.value = pkg
   modalVisible.value = true
 }
 
-async function handleSave(data: PackageForm) {
+async function handleSave(data: CategoryForm) {
   if (modalMode.value === 'add') {
     try {
-      const res = await fetch(`${apiUrl}/api/packages`, {
+      const res = await fetch(`${apiUrl}/api/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id_vendor: Number(data.id_vendor),
-          id_category: data.id_category ? Number(data.id_category) : null,
-          name: data.name,
-          price: Number(data.price),
-          description: data.description,
-          duration: data.duration,
-          whats_included: data.whats_included,
+          category_name: data.category_name,
         })
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to create package')
+        throw new Error(errBody?.error?.message || 'Failed to create category')
       }
-      await fetchPackages()
+      await fetchCategories()
       Toast.fire({
         icon: 'success',
-        title: 'Package created successfully'
+        title: 'Category created successfully'
       })
     } catch (err: any) {
-      console.error('Error creating package:', err)
+      console.error('Error creating category:', err)
       Toast.fire({
         icon: 'error',
-        title: err.message || 'Failed to create package'
+        title: err.message || 'Failed to create category'
       })
     }
-  } else if (modalMode.value === 'edit' && selectedPackage.value) {
+  } else if (modalMode.value === 'edit' && selectedCategory.value) {
     try {
-      const res = await fetch(`${apiUrl}/api/packages/${selectedPackage.value.id_package}`, {
+      const res = await fetch(`${apiUrl}/api/categories/${selectedCategory.value.id_category}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id_category: data.id_category ? Number(data.id_category) : null,
-          name: data.name,
-          price: Number(data.price),
-          description: data.description,
-          duration: data.duration,
-          whats_included: data.whats_included,
+          category_name: data.category_name,
         })
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to update package')
+        throw new Error(errBody?.error?.message || 'Failed to update category')
       }
-      await fetchPackages()
+      await fetchCategories()
       Toast.fire({
         icon: 'success',
-        title: 'Package updated successfully'
+        title: 'Category updated successfully'
       })
     } catch (err: any) {
-      console.error('Error updating package:', err)
+      console.error('Error updating category:', err)
       Toast.fire({
         icon: 'error',
-        title: err.message || 'Failed to update package'
+        title: err.message || 'Failed to update category'
       })
     }
   }
@@ -188,63 +137,48 @@ async function handleDelete(id: number) {
 
   if (result.isConfirmed) {
     try {
-      const res = await fetch(`${apiUrl}/api/packages/${id}`, {
+      const res = await fetch(`${apiUrl}/api/categories/${id}`, {
         method: 'DELETE',
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to delete package')
+        throw new Error(errBody?.error?.message || 'Failed to delete category')
       }
-      await fetchPackages()
+      await fetchCategories()
       Toast.fire({
         icon: 'success',
-        title: 'Package has been deleted.'
+        title: 'Category has been deleted.'
       })
     } catch (err: any) {
-      console.error('Error deleting package:', err)
+      console.error('Error deleting category:', err)
       Toast.fire({
         icon: 'error',
-        title: err.message || 'Failed to delete package'
+        title: err.message || 'Failed to delete category'
       })
     }
   }
 }
 
 const search = ref('')
-const sortColumn = ref<keyof Package | 'vendor' | 'category'>('name')
+const sortColumn = ref<keyof Category>('category_name')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const currentPage = ref(1)
 const perPage = ref(5)
 
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
-  let result = packages.value
+  let result = categories.value
   if (q) {
-    result = result.filter(p =>
-      (p.name?.toLowerCase() || '').includes(q) ||
-      (p.vendor?.business_name?.toLowerCase() || '').includes(q) ||
-      (p.category?.category_name?.toLowerCase() || '').includes(q) ||
-      (p.description?.toLowerCase() || '').includes(q) ||
-      (p.duration?.toLowerCase() || '').includes(q) ||
-      (p.status?.toLowerCase() || '').includes(q) ||
-      String(p.price).includes(q)
+    result = result.filter(c =>
+      (c.category_name?.toLowerCase() || '').includes(q) ||
+      (c.status?.toLowerCase() || '').includes(q)
     )
   }
   const col = sortColumn.value
   const dir = sortDirection.value
   result = [...result].sort((a, b) => {
-    let va = ''
-    let vb = ''
-    if (col === 'vendor') {
-      va = (a.vendor?.business_name || '').toLowerCase()
-      vb = (b.vendor?.business_name || '').toLowerCase()
-    } else if (col === 'category') {
-      va = (a.category?.category_name || '').toLowerCase()
-      vb = (b.category?.category_name || '').toLowerCase()
-    } else {
-      va = String(a[col as keyof Package] ?? '').toLowerCase()
-      vb = String(b[col as keyof Package] ?? '').toLowerCase()
-    }
+    const va = String(a[col] ?? '').toLowerCase()
+    const vb = String(b[col] ?? '').toLowerCase()
     return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
   })
   return result
@@ -257,7 +191,7 @@ const paginated = computed(() => {
   return filtered.value.slice(start, start + perPage.value)
 })
 
-function setSort(col: any) {
+function setSort(col: keyof Category) {
   if (sortColumn.value === col) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
@@ -284,16 +218,12 @@ const pageNumbers = computed(() => {
   for (let i = start; i <= end; i++) pages.push(i)
   return pages
 })
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value)
-}
 </script>
 
 <template>
   <div class="x_panel">
     <div class="x_title">
-      <h2>Packages Management</h2>
+      <h2>Categories Management</h2>
       <div class="clearfix"></div>
     </div>
 
@@ -301,7 +231,7 @@ function formatCurrency(value: number) {
       <div class="row" style="margin-bottom: 12px;">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <button class="btn btn-success" @click="openAdd">
-            <i class="fa fa-plus"></i> Add Package
+            <i class="fa fa-plus"></i> Add Category
           </button>
         </div>
         <div class="col-md-6 col-sm-6 col-xs-12">
@@ -310,7 +240,7 @@ function formatCurrency(value: number) {
             <input
               type="text"
               class="form-control"
-              placeholder="Search packages..."
+              placeholder="Search categories..."
               v-model="search"
             />
           </div>
@@ -323,15 +253,11 @@ function formatCurrency(value: number) {
             <tr>
               <th
                 v-for="col in ([
-                  { key: 'name', label: 'Package Name' },
-                  { key: 'vendor', label: 'Vendor' },
-                  { key: 'category', label: 'Category' },
-                  { key: 'price', label: 'Price' },
-                  { key: 'duration', label: 'Duration' },
+                  { key: 'category_name', label: 'Category Name' },
                   { key: 'status', label: 'Status' },
                   { key: 'user_modified', label: 'Modified By' },
                   { key: 'date_created', label: 'Created' },
-                ] as { key: any; label: string }[])"
+                ] as { key: keyof Category; label: string }[])"
                 :key="col.key"
                 @click="setSort(col.key)"
                 style="cursor: pointer; user-select: none;"
@@ -347,30 +273,26 @@ function formatCurrency(value: number) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in paginated" :key="p.id_package">
-              <td>{{ p.name }}</td>
-              <td>{{ p.vendor?.business_name || '-' }}</td>
-              <td>{{ p.category?.category_name || '-' }}</td>
-              <td>{{ formatCurrency(p.price) }}</td>
-              <td>{{ p.duration || '-' }}</td>
+            <tr v-for="c in paginated" :key="c.id_category">
+              <td>{{ c.category_name }}</td>
               <td>
                 <span
                   :class="{
-                    'label label-success': p.status === 'active',
-                    'label label-danger': p.status === 'inactive',
+                    'label label-success': c.status === 'active',
+                    'label label-danger': c.status === 'deleted' || c.status === 'inactive',
                   }"
-                >{{ p.status }}</span>
+                >{{ c.status }}</span>
               </td>
-              <td>{{ p.user_modified || '-' }}</td>
-              <td>{{ new Date(p.date_created).toLocaleDateString() }}</td>
+              <td>{{ c.user_modified || '-' }}</td>
+              <td>{{ new Date(c.date_created).toLocaleDateString() }}</td>
               <td style="white-space: nowrap;">
-                <button class="btn btn-primary" @click="openDetail(p)"><i class="fa fa-eye"></i></button>
-                <button class="btn btn-info" @click="openEdit(p)"><i class="fa fa-pencil"></i></button>
-                <button class="btn btn-danger" @click="handleDelete(p.id_package)"><i class="fa fa-trash"></i></button>
+                <button class="btn btn-primary" @click="openDetail(c)"><i class="fa fa-eye"></i></button>
+                <button class="btn btn-info" @click="openEdit(c)"><i class="fa fa-pencil"></i></button>
+                <button class="btn btn-danger" @click="handleDelete(c.id_category)"><i class="fa fa-trash"></i></button>
               </td>
             </tr>
             <tr v-if="paginated.length === 0">
-              <td colspan="9" style="text-align: center;">No packages found.</td>
+              <td colspan="5" style="text-align: center;">No categories found.</td>
             </tr>
           </tbody>
         </table>
@@ -413,22 +335,28 @@ function formatCurrency(value: number) {
     </div>
   </div>
 
-  <PackageModal
+  <CategoryModal
     :visible="modalVisible"
     :mode="modalMode"
-    :pkg="selectedPackage"
-    :vendors="vendors"
-    :categories="categories"
+    :category="selectedCategory"
     @close="modalVisible = false"
     @save="handleSave"
   />
 </template>
 
 <style scoped>
-.table-wrap th {
-  background: #f5f7fa;
+.input-group-addon {
+  background: #fff;
+  border-right: none;
 }
-.table-wrap td {
-  vertical-align: middle;
+.input-group-addon + .form-control {
+  border-left: none;
+}
+.table > thead > tr > th {
+  white-space: nowrap;
+}
+.table-wrap {
+  overflow-x: auto;
+  width: 100%;
 }
 </style>

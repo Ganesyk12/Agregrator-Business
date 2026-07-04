@@ -1,8 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory('/dashboard/'),
   routes: [
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/dashboard/views/LoginView.vue'),
+    },
     {
       path: '/',
       component: () => import('@/dashboard/layouts/AppLayout.vue'),
@@ -21,6 +26,11 @@ const router = createRouter({
           path: 'vendors',
           name: 'vendors',
           component: () => import('@/dashboard/views/VendorView.vue'),
+        },
+        {
+          path: 'categories',
+          name: 'categories',
+          component: () => import('@/dashboard/views/CategoryView.vue'),
         },
         {
           path: 'packages',
@@ -45,6 +55,18 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+router.beforeEach((to, _, next) => {
+  const token = localStorage.getItem('sigyn_token')
+  const isAuthenticated = !!token && token !== 'undefined' && token !== 'null'
+  if (to.name !== 'login' && !isAuthenticated) {
+    next({ name: 'login' })
+  } else if (to.name === 'login' && isAuthenticated) {
+    next({ name: 'dashboard' })
+  } else {
+    next()
+  }
 })
 
 export default router

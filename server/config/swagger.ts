@@ -77,6 +77,7 @@ const options: swaggerJsdoc.Options = {
           properties: {
             id_package:     { type: 'integer' },
             id_vendor:      { type: 'integer' },
+            id_category:    { type: 'integer', nullable: true },
             name:           { type: 'string' },
             description:    { type: 'string', nullable: true },
             price:          { type: 'number' },
@@ -102,6 +103,18 @@ const options: swaggerJsdoc.Options = {
             dp_amount: { type: 'number' },
             status: { type: 'string', enum: ['pending', 'confirmed', 'completed', 'cancelled'] },
             notes: { type: 'string', nullable: true },
+            date_created: { type: 'string', format: 'date-time' },
+            date_modified: { type: 'string', format: 'date-time' },
+            user_created: { type: 'string', nullable: true },
+            user_modified: { type: 'string', nullable: true },
+          },
+        },
+        Category: {
+          type: 'object',
+          properties: {
+            id_category: { type: 'integer' },
+            category_name: { type: 'string' },
+            status: { type: 'string' },
             date_created: { type: 'string', format: 'date-time' },
             date_modified: { type: 'string', format: 'date-time' },
             user_created: { type: 'string', nullable: true },

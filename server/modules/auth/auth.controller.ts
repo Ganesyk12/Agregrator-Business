@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express'
 import * as authService from './auth.service'
 import * as userService from '../users/users.service'
 import { createError } from '../../middleware/error-handler'
+import { signToken } from '../../config/jwt'
 
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
@@ -33,12 +34,20 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       name: ur.role?.name ?? ur.role_code,
     })) ?? []
 
+    const token = signToken({
+      id_user: user.id_user,
+      email: user.email,
+      full_name: user.full_name,
+      role_codes: roles.map(r => r.role_code),
+    })
+
     res.json({
       data: {
         id_user: user.id_user,
         email: user.email,
         full_name: user.full_name,
         roles,
+        token,
       },
     })
   } catch (err) {
