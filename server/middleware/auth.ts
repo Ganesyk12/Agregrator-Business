@@ -32,7 +32,7 @@ export function authorize(...roleCodes: string[]) {
       return next(createError(401, 'Not authenticated'))
     }
 
-    if (roleCodes.length > 0 && !roleCodes.includes(req.user.role_code)) {
+    if (roleCodes.length > 0 && !roleCodes.some(r => req.user!.role_codes.includes(r))) {
       return next(createError(403, 'Forbidden'))
     }
 

@@ -27,6 +27,16 @@ const router = createRouter({
           name: 'users',
           component: () => import('@/dashboard/views/UserView.vue'),
         },
+        {
+          path: 'roles',
+          name: 'roles',
+          component: () => import('@/dashboard/views/RoleView.vue'),
+        },
+        {
+          path: 'user-roles',
+          name: 'user-roles',
+          component: () => import('@/dashboard/views/UserRoleView.vue'),
+        },
       ],
     },
   ],

@@ -8,40 +8,56 @@ datasource db {
 }
 
 model Role {
-  id_role       Int      @id @default(autoincrement())
-  role_code     String   @unique
+  id_role       Int         @id @default(autoincrement())
+  role_code     String      @unique
   name          String
-  status        String   @default("active")
-  date_created  DateTime @default(now())
-  date_modified DateTime @updatedAt
+  status        String      @default("active")
+  date_created  DateTime    @default(now())
+  date_modified DateTime    @updatedAt
   user_created  String?
   user_modified String?
 
-  users User[]
+  user_roles User_Role[]
 
   @@schema("sigyn")
 }
 
 model User {
-  id_user       Int      @id @default(autoincrement())
-  email         String   @unique
+  id_user       Int         @id @default(autoincrement())
+  email         String      @unique
   password      String
   full_name     String
   phone         String?
   avatar_url    String?
-  role_code     String   @default("customer")
-  is_active     Boolean  @default(true)
+  is_active     Boolean     @default(true)
+  status        String      @default("active")
+  date_created  DateTime    @default(now())
+  date_modified DateTime    @updatedAt
+  user_created  String?
+  user_modified String?
+
+  vendor     Vendor?
+  bookings   Booking[] @relation("CustomerBookings")
+  reviews    Review[]
+  user_roles User_Role[]
+
+  @@schema("sigyn")
+}
+
+model User_Role {
+  iduser_role   Int      @id @default(autoincrement())
+  email         String
+  role_code     String
   status        String   @default("active")
   date_created  DateTime @default(now())
   date_modified DateTime @updatedAt
   user_created  String?
   user_modified String?
 
-  role      Role      @relation(fields: [role_code], references: [role_code])
-  vendor    Vendor?
-  bookings  Booking[] @relation("CustomerBookings")
-  reviews   Review[]
+  user User @relation(fields: [email], references: [email])
+  role Role @relation(fields: [role_code], references: [role_code])
 
+  @@unique([email, role_code])
   @@schema("sigyn")
 }
 

@@ -30,7 +30,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
       res.status(400).json({ error: { message: 'email and full_name are required' } })
       return
     }
-    const user = await userService.create({ email, password, full_name, role_code: 'customer', phone })
+    const user = await userService.create({ email, password, full_name, phone })
     res.status(201).json({ data: user })
   } catch (err) {
     next(err)

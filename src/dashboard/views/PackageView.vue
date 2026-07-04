@@ -129,7 +129,6 @@ async function handleSave(data: PackageForm) {
           description: data.description,
           duration: data.duration,
           whats_included: data.whats_included,
-          status: data.status,
         })
       })
       if (!res.ok) throw new Error('Failed to update package')

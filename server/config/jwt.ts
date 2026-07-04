@@ -5,7 +5,7 @@ export interface JwtPayload {
   id_user: number
   email: string
   full_name: string
-  role_code: string
+  role_codes: string[]
 }
 
 export function signToken(payload: JwtPayload): string {

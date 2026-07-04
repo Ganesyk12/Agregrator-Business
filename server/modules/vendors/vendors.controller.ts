@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as vendorService from './vendors.service'
+import * as userRoleService from '../user-roles/user-roles.service'
 import prisma from '../../db'
 
 export async function getAll(_req: Request, res: Response, next: NextFunction) {
@@ -39,9 +40,11 @@ export async function create(req: Request, res: Response, next: NextFunction) {
         email,
         password: 'vendor123password',
         full_name: business_name,
-        role_code: 'vendor',
       }
     })
+
+    // Assign vendor role to the created user
+    await userRoleService.create({ email, role_code: 'vendor' })
 
     const vendor = await vendorService.create({
       id_user: user.id_user,

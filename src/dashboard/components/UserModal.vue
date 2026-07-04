@@ -7,7 +7,6 @@ export interface UserForm {
   full_name: string
   phone: string
   role_code: string
-  status: string
   is_active: boolean
 }
 
@@ -22,15 +21,12 @@ const emit = defineEmits<{
   save: [data: UserForm]
 }>()
 
-const statuses = ['active', 'inactive']
-
 const form = ref<UserForm>({
   email: '',
   password: '',
   full_name: '',
   phone: '',
   role_code: 'customer',
-  status: 'active',
   is_active: true,
 })
 
@@ -43,7 +39,6 @@ watch(() => props.visible, (val) => {
         full_name: '',
         phone: '',
         role_code: 'customer',
-        status: 'active',
         is_active: true,
       }
     } else if (props.user) {
@@ -53,7 +48,6 @@ watch(() => props.visible, (val) => {
         full_name: props.user.full_name,
         phone: props.user.phone || '',
         role_code: props.user.role_code,
-        status: props.user.status,
         is_active: props.user.is_active,
       }
     }
@@ -62,8 +56,6 @@ watch(() => props.visible, (val) => {
 
 function save() {
   if (!form.value.email || !form.value.full_name) return
-  // Map status matching is_active boolean
-  form.value.is_active = form.value.status === 'active'
   emit('save', { ...form.value })
 }
 </script>
@@ -106,10 +98,6 @@ function save() {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Status</label>
-                    <input class="form-control" :value="user.status" readonly />
-                  </div>
-                  <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Modified By</label>
                     <input class="form-control" :value="user.user_modified || '-'" readonly />
                   </div>
@@ -145,13 +133,6 @@ function save() {
                   </div>
                 </div>
                 <div class="col-md-6">
-
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Status</label>
-                    <select v-model="form.status" class="form-control">
-                      <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
-                    </select>
-                  </div>
                 </div>
               </div>
             </form>

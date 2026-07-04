@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import UserModal, { type UserForm } from '../components/UserModal.vue'
+import UserRoleModal, { type UserRoleForm } from '../components/UserRoleModal.vue'
 import Swal from 'sweetalert2'
 
 const Toast = Swal.mixin({
@@ -15,18 +15,20 @@ const Toast = Swal.mixin({
   }
 })
 
-interface User {
-  id_user: number
+interface UserRole {
+  iduser_role: number
   email: string
-  full_name: string
-  phone: string | null
   role_code: string
-  is_active: boolean
   status: string
   date_created: string
   date_modified: string
   user_created: string | null
   user_modified: string | null
+  user?: {
+    id_user: number
+    email: string
+    full_name: string
+  }
   role?: {
     id_role: number
     role_code: string
@@ -34,97 +36,90 @@ interface User {
   }
 }
 
-const users = ref<User[]>([])
+const modalVisible = ref(false)
+const modalMode = ref<'add' | 'edit' | 'detail'>('add')
+const selectedUserRole = ref<UserRole | null>(null)
+const userRoles = ref<UserRole[]>([])
+
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
-async function fetchUsers() {
+async function fetchUserRoles() {
   try {
-    const res = await fetch(`${apiUrl}/api/users`)
-    if (!res.ok) throw new Error('Failed to fetch users')
+    const res = await fetch(`${apiUrl}/api/user-roles`)
     const json = await res.json()
-    users.value = json.data || []
+    userRoles.value = json.data || []
   } catch (err) {
-    console.error('Error fetching users:', err)
+    console.error('Error fetching user roles:', err)
+    userRoles.value = []
   }
 }
 
 onMounted(() => {
-  fetchUsers()
+  fetchUserRoles()
 })
 
-const modalVisible = ref(false)
-const modalMode = ref<'add' | 'edit' | 'detail'>('add')
-const selectedUser = ref<User | null>(null)
-
 function openAdd() {
+  selectedUserRole.value = null
   modalMode.value = 'add'
-  selectedUser.value = null
   modalVisible.value = true
 }
 
-function openEdit(u: User) {
+function openEdit(ur: UserRole) {
+  selectedUserRole.value = { ...ur }
   modalMode.value = 'edit'
-  selectedUser.value = u
   modalVisible.value = true
 }
 
-function openDetail(u: User) {
+function openDetail(ur: UserRole) {
+  selectedUserRole.value = { ...ur }
   modalMode.value = 'detail'
-  selectedUser.value = u
   modalVisible.value = true
 }
 
-async function handleSave(data: UserForm) {
+async function handleSave(data: UserRoleForm) {
   if (modalMode.value === 'add') {
     try {
-      const res = await fetch(`${apiUrl}/api/users`, {
+      const res = await fetch(`${apiUrl}/api/user-roles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: data.email,
-          password: data.password || undefined,
-          full_name: data.full_name,
           role_code: data.role_code,
-          phone: data.phone || undefined,
         })
       })
-      if (!res.ok) throw new Error('Failed to create user')
-      await fetchUsers()
+      if (!res.ok) throw new Error('Failed to assign role')
+      await fetchUserRoles()
       Toast.fire({
         icon: 'success',
-        title: 'User created successfully'
+        title: 'Role assigned successfully'
       })
     } catch (err) {
-      console.error('Error creating user:', err)
+      console.error('Error assigning role:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to create user'
+        title: 'Failed to assign role'
       })
     }
-  } else if (modalMode.value === 'edit' && selectedUser.value) {
+  } else if (modalMode.value === 'edit' && selectedUserRole.value) {
     try {
-      const res = await fetch(`${apiUrl}/api/users/${selectedUser.value.id_user}`, {
+      const res = await fetch(`${apiUrl}/api/user-roles/${selectedUserRole.value.iduser_role}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: data.email,
-          full_name: data.full_name,
           role_code: data.role_code,
-          phone: data.phone || null,
-          is_active: data.is_active,
         })
       })
-      if (!res.ok) throw new Error('Failed to update user')
-      await fetchUsers()
+      if (!res.ok) throw new Error('Failed to update user role')
+      await fetchUserRoles()
       Toast.fire({
         icon: 'success',
-        title: 'User updated successfully'
+        title: 'User role updated successfully'
       })
     } catch (err) {
-      console.error('Error updating user:', err)
+      console.error('Error updating user role:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to update user'
+        title: 'Failed to update user role'
       })
     }
   }
@@ -134,7 +129,7 @@ async function handleSave(data: UserForm) {
 async function handleDelete(id: number) {
   const result = await Swal.fire({
     title: 'Are you sure?',
-    text: "You won't be able to revert this! If this user is a vendor, their vendor profile will also be deleted.",
+    text: "You won't be able to revert this!",
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
@@ -144,41 +139,40 @@ async function handleDelete(id: number) {
 
   if (result.isConfirmed) {
     try {
-      const res = await fetch(`${apiUrl}/api/users/${id}`, {
+      const res = await fetch(`${apiUrl}/api/user-roles/${id}`, {
         method: 'DELETE',
       })
-      if (!res.ok) throw new Error('Failed to delete user')
-      await fetchUsers()
+      if (!res.ok) throw new Error('Failed to delete user role')
+      await fetchUserRoles()
       Toast.fire({
         icon: 'success',
-        title: 'User has been deleted.'
+        title: 'User role has been deleted.'
       })
     } catch (err) {
-      console.error('Error deleting user:', err)
+      console.error('Error deleting user role:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete user.'
+        title: 'Failed to delete user role.'
       })
     }
   }
 }
 
 const search = ref('')
-const sortColumn = ref<keyof User>('full_name')
+const sortColumn = ref<keyof UserRole>('email')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const currentPage = ref(1)
 const perPage = ref(5)
 
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
-  let result = users.value
+  let result = userRoles.value
   if (q) {
-    result = result.filter(u =>
-      (u.full_name?.toLowerCase() || '').includes(q) ||
-      (u.email?.toLowerCase() || '').includes(q) ||
-      (u.phone?.toLowerCase() || '').includes(q) ||
-      (u.role?.name?.toLowerCase() || u.role_code?.toLowerCase() || '').includes(q) ||
-      (u.status?.toLowerCase() || '').includes(q)
+    result = result.filter(ur =>
+      (ur.email?.toLowerCase() || '').includes(q) ||
+      (ur.role_code?.toLowerCase() || '').includes(q) ||
+      (ur.role?.name?.toLowerCase() || '').includes(q) ||
+      (ur.status?.toLowerCase() || '').includes(q)
     )
   }
   const col = sortColumn.value
@@ -186,9 +180,12 @@ const filtered = computed(() => {
   result = [...result].sort((a, b) => {
     let va = ''
     let vb = ''
-    if (col === 'role') {
+    if (col === 'role_name') {
       va = (a.role?.name || a.role_code || '').toLowerCase()
       vb = (b.role?.name || b.role_code || '').toLowerCase()
+    } else if (col === 'user_name') {
+      va = (a.user?.full_name || a.email || '').toLowerCase()
+      vb = (b.user?.full_name || b.email || '').toLowerCase()
     } else {
       va = String(a[col] ?? '').toLowerCase()
       vb = String(b[col] ?? '').toLowerCase()
@@ -205,11 +202,11 @@ const paginated = computed(() => {
   return filtered.value.slice(start, start + perPage.value)
 })
 
-function setSort(col: keyof User) {
+function setSort(col: string) {
   if (sortColumn.value === col) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
-    sortColumn.value = col
+    sortColumn.value = col as keyof UserRole
     sortDirection.value = 'asc'
   }
   currentPage.value = 1
@@ -237,7 +234,7 @@ const pageNumbers = computed(() => {
 <template>
   <div class="x_panel">
     <div class="x_title">
-      <h2>Users Management</h2>
+      <h2>User Roles Management</h2>
       <div class="clearfix"></div>
     </div>
 
@@ -245,7 +242,7 @@ const pageNumbers = computed(() => {
       <div class="row" style="margin-bottom: 12px;">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <button class="btn btn-success" @click="openAdd">
-            <i class="fa fa-plus"></i> Add User
+            <i class="fa fa-plus"></i> Assign Role
           </button>
         </div>
         <div class="col-md-6 col-sm-6 col-xs-12">
@@ -254,7 +251,7 @@ const pageNumbers = computed(() => {
             <input
               type="text"
               class="form-control"
-              placeholder="Search users..."
+              placeholder="Search user roles..."
               v-model="search"
             />
           </div>
@@ -262,66 +259,66 @@ const pageNumbers = computed(() => {
       </div>
 
       <div class="table-responsive table-wrap">
-        <table class="table table-striped table-bordered">
-          <thead>
-            <tr>
-              <th
-                v-for="col in ([
-                  { key: 'full_name', label: 'Full Name' },
-                  { key: 'email', label: 'Email' },
-                  { key: 'phone', label: 'Phone' },
-                  { key: 'role', label: 'Role' },
-                  { key: 'status', label: 'Status' },
-                  { key: 'user_modified', label: 'Modified By' },
-                  { key: 'date_created', label: 'Created' },
-                ] as { key: any; label: string }[])"
-                :key="col.key"
-                @click="setSort(col.key)"
-                style="cursor: pointer; user-select: none;"
-              >
-                {{ col.label }}
-                <i
-                  v-if="sortColumn === col.key"
-                  :class="sortDirection === 'asc' ? 'fa fa-sort-asc' : 'fa fa-sort-desc'"
-                ></i>
-                <i v-else class="fa fa-sort" style="color: #ccc;"></i>
-              </th>
-              <th style="width: 120px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="u in paginated" :key="u.id_user">
-              <td>{{ u.full_name }}</td>
-              <td>{{ u.email }}</td>
-              <td>{{ u.phone || '-' }}</td>
-              <td>{{ u.role?.name || u.role_code }}</td>
-              <td>
-                <span
-                  :class="{
-                    'label label-success': u.status === 'active',
-                    'label label-danger': u.status === 'inactive',
-                  }"
-                >{{ u.status }}</span>
-              </td>
-              <td>{{ u.user_modified || '-' }}</td>
-              <td>{{ new Date(u.date_created).toLocaleDateString() }}</td>
-              <td style="white-space: nowrap;">
-                <button class="btn btn-primary" @click="openDetail(u)"><i class="fa fa-eye"></i></button>
-                <button class="btn btn-info" @click="openEdit(u)"><i class="fa fa-pencil"></i></button>
-                <button class="btn btn-danger" @click="handleDelete(u.id_user)"><i class="fa fa-trash"></i></button>
-              </td>
-            </tr>
-            <tr v-if="paginated.length === 0">
-              <td colspan="8" style="text-align: center;">No users found.</td>
-            </tr>
-          </tbody>
-        </table>
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th
+              v-for="col in ([
+                { key: 'user_name', label: 'User' },
+                { key: 'email', label: 'Email' },
+                { key: 'role_name', label: 'Role' },
+                { key: 'role_code', label: 'Role Code' },
+                { key: 'status', label: 'Status' },
+                { key: 'user_created', label: 'Created By' },
+                { key: 'date_created', label: 'Created' },
+              ] as { key: string; label: string }[])"
+              :key="col.key"
+              @click="setSort(col.key)"
+              style="cursor: pointer; user-select: none;"
+            >
+              {{ col.label }}
+              <i
+                v-if="sortColumn === col.key"
+                :class="sortDirection === 'asc' ? 'fa fa-sort-asc' : 'fa fa-sort-desc'"
+              ></i>
+              <i v-else class="fa fa-sort" style="color: #ccc;"></i>
+            </th>
+            <th style="width: 120px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+           <tr v-for="ur in paginated" :key="ur.iduser_role">
+            <td>{{ ur.user?.full_name || ur.email }}</td>
+            <td>{{ ur.email }}</td>
+            <td>{{ ur.role?.name || ur.role_code }}</td>
+            <td>{{ ur.role_code }}</td>
+            <td>
+              <span
+                :class="{
+                  'label label-success': ur.status === 'active',
+                  'label label-danger': ur.status === 'inactive',
+                }"
+              >{{ ur.status }}</span>
+            </td>
+            <td>{{ ur.user_created || '-' }}</td>
+            <td>{{ new Date(ur.date_created).toLocaleDateString() }}</td>
+            <td style="white-space: nowrap;">
+              <button class="btn btn-primary" @click="openDetail(ur)"><i class="fa fa-eye"></i></button>
+              <button class="btn btn-info" @click="openEdit(ur)"><i class="fa fa-pencil"></i></button>
+              <button class="btn btn-danger" @click="handleDelete(ur.iduser_role)"><i class="fa fa-trash"></i></button>
+            </td>
+          </tr>
+          <tr v-if="paginated.length === 0">
+            <td colspan="8" style="text-align: center;">No user roles found.</td>
+          </tr>
+        </tbody>
+      </table>
       </div>
 
       <div class="row">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <p>
-            Showing {{ filtered.length > 0 ? ((currentPage - 1) * perPage) + 1 : 0 }}
+            Showing {{ ((currentPage - 1) * perPage) + 1 }}
             to {{ Math.min(currentPage * perPage, filtered.length) }}
             of {{ filtered.length }} entries
           </p>
@@ -355,20 +352,28 @@ const pageNumbers = computed(() => {
     </div>
   </div>
 
-  <UserModal
+  <UserRoleModal
     :visible="modalVisible"
     :mode="modalMode"
-    :user="selectedUser"
+    :userRole="selectedUserRole"
     @close="modalVisible = false"
     @save="handleSave"
   />
 </template>
 
 <style scoped>
-.table-wrap th {
-  background: #f5f7fa;
+.input-group-addon {
+  background: #fff;
+  border-right: none;
 }
-.table-wrap td {
-  vertical-align: middle;
+.input-group-addon + .form-control {
+  border-left: none;
+}
+.table > thead > tr > th {
+  white-space: nowrap;
+}
+.table-wrap {
+  overflow-x: auto;
+  width: 100%;
 }
 </style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import VendorModal, { type VendorForm } from '../components/VendorModal.vue'
+import RoleModal, { type RoleForm } from '../components/RoleModal.vue'
 import Swal from 'sweetalert2'
 
 const Toast = Swal.mixin({
@@ -15,119 +15,112 @@ const Toast = Swal.mixin({
   }
 })
 
-interface Vendor {
-  id_vendor: number
-  business_name: string
-  description: string
-  category: string
-  location: string
+interface Role {
+  id_role: number
+  role_code: string
+  name: string
   status: string
-  verified_at: string | null
-  user_modified: string | null
   date_created: string
+  date_modified: string
+  user_created: string | null
+  user_modified: string | null
 }
 
 const modalVisible = ref(false)
 const modalMode = ref<'add' | 'edit' | 'detail'>('add')
-const selectedVendor = ref<Vendor | null>(null)
-const vendors = ref<Vendor[]>([])
+const selectedRole = ref<Role | null>(null)
+const roles = ref<Role[]>([])
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
-async function fetchVendors() {
+async function fetchRoles() {
   try {
-    const res = await fetch(`${apiUrl}/api/vendors`)
+    const res = await fetch(`${apiUrl}/api/roles`)
     const json = await res.json()
-    // Handle return null jika blm ada data
     if (!json.data) {
-      vendors.value = []
+      roles.value = []
     } else {
-      vendors.value = json.data
+      roles.value = json.data
     }
   } catch (err) {
-    console.error('Error fetching vendors:', err)
-    vendors.value = []
+    console.error('Error fetching roles:', err)
+    roles.value = []
   }
 }
 
 onMounted(() => {
-  fetchVendors()
+  fetchRoles()
 })
 
 function openAdd() {
-  selectedVendor.value = null
+  selectedRole.value = null
   modalMode.value = 'add'
   modalVisible.value = true
 }
 
-function openEdit(v: Vendor) {
-  selectedVendor.value = { ...v }
+function openEdit(r: Role) {
+  selectedRole.value = { ...r }
   modalMode.value = 'edit'
   modalVisible.value = true
 }
 
-function openDetail(v: Vendor) {
-  selectedVendor.value = { ...v }
+function openDetail(r: Role) {
+  selectedRole.value = { ...r }
   modalMode.value = 'detail'
   modalVisible.value = true
 }
 
-async function handleSave(data: VendorForm) {
+async function handleSave(data: RoleForm) {
   if (modalMode.value === 'add') {
     try {
-      const res = await fetch(`${apiUrl}/api/vendors`, {
+      const res = await fetch(`${apiUrl}/api/roles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          business_name: data.business_name,
-          description: data.description,
-          category: data.category,
-          location: data.location,
+          role_code: data.role_code,
+          name: data.name,
         })
       })
-      if (!res.ok) throw new Error('Failed to create vendor')
-      await fetchVendors()
+      if (!res.ok) throw new Error('Failed to create role')
+      await fetchRoles()
       Toast.fire({
         icon: 'success',
-        title: 'Vendor created successfully'
+        title: 'Role created successfully'
       })
     } catch (err) {
-      console.error('Error creating vendor:', err)
+      console.error('Error creating role:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to create vendor'
+        title: 'Failed to create role'
       })
     }
-  } else if (modalMode.value === 'edit' && selectedVendor.value) {
+  } else if (modalMode.value === 'edit' && selectedRole.value) {
     try {
-      const res = await fetch(`${apiUrl}/api/vendors/${selectedVendor.value.id_vendor}`, {
+      const res = await fetch(`${apiUrl}/api/roles/${selectedRole.value.role_code}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          business_name: data.business_name,
-          description: data.description,
-          category: data.category,
-          location: data.location,
+          name: data.name,
         })
       })
-      if (!res.ok) throw new Error('Failed to update vendor')
-      await fetchVendors()
+      if (!res.ok) throw new Error('Failed to update role')
+      await fetchRoles()
       Toast.fire({
         icon: 'success',
-        title: 'Vendor updated successfully'
+        title: 'Role updated successfully'
       })
     } catch (err) {
-      console.error('Error updating vendor:', err)
+      console.error('Error updating role:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to update vendor'
+        title: 'Failed to update role'
       })
     }
   }
   modalVisible.value = false
 }
 
-async function handleDelete(id: number) {
+async function handleDelete(code: string) {
   const result = await Swal.fire({
     title: 'Are you sure?',
     text: "You won't be able to revert this!",
@@ -140,41 +133,41 @@ async function handleDelete(id: number) {
 
   if (result.isConfirmed) {
     try {
-      const res = await fetch(`${apiUrl}/api/vendors/${id}`, {
-        method: 'DELETE',
+      const res = await fetch(`${apiUrl}/api/roles/${code}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'deleted' }),
       })
-      if (!res.ok) throw new Error('Failed to delete vendor')
-      await fetchVendors()
+      if (!res.ok) throw new Error('Failed to delete role')
+      await fetchRoles()
       Toast.fire({
         icon: 'success',
-        title: 'Vendor has been deleted.'
+        title: 'Role has been deleted.'
       })
     } catch (err) {
-      console.error('Error deleting vendor:', err)
+      console.error('Error deleting role:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete vendor.'
+        title: 'Failed to delete role.'
       })
     }
   }
 }
 
 const search = ref('')
-const sortColumn = ref<keyof Vendor>('id_vendor')
+const sortColumn = ref<keyof Role>('role_code')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const currentPage = ref(1)
 const perPage = ref(5)
 
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
-  let result = vendors.value
+  let result = roles.value
   if (q) {
-    result = result.filter(v =>
-      (v.business_name?.toLowerCase() || '').includes(q) ||
-      (v.description?.toLowerCase() || '').includes(q) ||
-      (v.category?.toLowerCase() || '').includes(q) ||
-      (v.location?.toLowerCase() || '').includes(q) ||
-      (v.status?.toLowerCase() || '').includes(q)
+    result = result.filter(r =>
+      (r.role_code?.toLowerCase() || '').includes(q) ||
+      (r.name?.toLowerCase() || '').includes(q) ||
+      (r.status?.toLowerCase() || '').includes(q)
     )
   }
   const col = sortColumn.value
@@ -194,7 +187,7 @@ const paginated = computed(() => {
   return filtered.value.slice(start, start + perPage.value)
 })
 
-function setSort(col: keyof Vendor) {
+function setSort(col: keyof Role) {
   if (sortColumn.value === col) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
@@ -226,7 +219,7 @@ const pageNumbers = computed(() => {
 <template>
   <div class="x_panel">
     <div class="x_title">
-      <h2>Vendors Management</h2>
+      <h2>Roles Management</h2>
       <div class="clearfix"></div>
     </div>
 
@@ -234,7 +227,7 @@ const pageNumbers = computed(() => {
       <div class="row" style="margin-bottom: 12px;">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <button class="btn btn-success" @click="openAdd">
-            <i class="fa fa-plus"></i> Add Vendor
+            <i class="fa fa-plus"></i> Add Role
           </button>
         </div>
         <div class="col-md-6 col-sm-6 col-xs-12">
@@ -243,7 +236,7 @@ const pageNumbers = computed(() => {
             <input
               type="text"
               class="form-control"
-              placeholder="Search vendors..."
+              placeholder="Search roles..."
               v-model="search"
             />
           </div>
@@ -256,15 +249,13 @@ const pageNumbers = computed(() => {
           <tr>
             <th
               v-for="col in ([
-                { key: 'business_name', label: 'Business Name' },
-                { key: 'description', label: 'Description' },
-                { key: 'category', label: 'Category' },
-                { key: 'location', label: 'Location' },
-                { key: 'verified_at', label: 'Verified At' },
+                { key: 'role_code', label: 'Role Code' },
+                { key: 'name', label: 'Name' },
                 { key: 'status', label: 'Status' },
+                { key: 'user_created', label: 'Created By' },
                 { key: 'user_modified', label: 'Modified By' },
                 { key: 'date_created', label: 'Created' },
-              ] as { key: keyof Vendor; label: string }[])"
+              ] as { key: keyof Role; label: string }[])"
               :key="col.key"
               @click="setSort(col.key)"
               style="cursor: pointer; user-select: none;"
@@ -280,31 +271,28 @@ const pageNumbers = computed(() => {
           </tr>
         </thead>
         <tbody>
-           <tr v-for="v in paginated" :key="v.id_vendor">
-            <td>{{ v.business_name }}</td>
-            <td>{{ v.description || '-' }}</td>
-            <td>{{ v.category }}</td>
-            <td>{{ v.location || '-' }}</td>
-            <td>{{ v.verified_at ? new Date(v.verified_at).toLocaleDateString() : '-' }}</td>
+           <tr v-for="r in paginated" :key="r.role_code">
+            <td>{{ r.role_code }}</td>
+            <td>{{ r.name }}</td>
             <td>
               <span
                 :class="{
-                  'label label-success': v.status === 'approved',
-                  'label label-warning': v.status === 'pending',
-                  'label label-danger': v.status === 'rejected',
+                  'label label-success': r.status === 'active',
+                  'label label-danger': r.status === 'deleted',
                 }"
-              >{{ v.status }}</span>
+              >{{ r.status }}</span>
             </td>
-            <td>{{ v.user_modified || '-' }}</td>
-            <td>{{ new Date(v.date_created).toLocaleDateString() }}</td>
+            <td>{{ r.user_created || '-' }}</td>
+            <td>{{ r.user_modified || '-' }}</td>
+            <td>{{ new Date(r.date_created).toLocaleDateString() }}</td>
             <td style="white-space: nowrap;">
-              <button class="btn btn-primary" @click="openDetail(v)"><i class="fa fa-eye"></i></button>
-              <button class="btn btn-info" @click="openEdit(v)"><i class="fa fa-pencil"></i></button>
-              <button class="btn btn-danger" @click="handleDelete(v.id_vendor)"><i class="fa fa-trash"></i></button>
+              <button class="btn btn-primary" @click="openDetail(r)"><i class="fa fa-eye"></i></button>
+              <button class="btn btn-info" @click="openEdit(r)"><i class="fa fa-pencil"></i></button>
+              <button class="btn btn-danger" @click="handleDelete(r.role_code)"><i class="fa fa-trash"></i></button>
             </td>
           </tr>
           <tr v-if="paginated.length === 0">
-            <td colspan="9" style="text-align: center;">No vendors found.</td>
+            <td colspan="7" style="text-align: center;">No roles found.</td>
           </tr>
         </tbody>
       </table>
@@ -347,10 +335,10 @@ const pageNumbers = computed(() => {
     </div>
   </div>
 
-  <VendorModal
+  <RoleModal
     :visible="modalVisible"
     :mode="modalMode"
-    :vendor="selectedVendor"
+    :role="selectedRole"
     @close="modalVisible = false"
     @save="handleSave"
   />

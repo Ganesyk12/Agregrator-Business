@@ -6,13 +6,12 @@ export interface VendorForm {
   description: string
   category: string
   location: string
-  status: string
 }
 
 const props = defineProps<{
   visible: boolean
   mode: 'add' | 'edit' | 'detail'
-  vendor: VendorForm & { id_vendor?: number; verified_at?: string | null; user_modified?: string | null; date_created?: string } | null
+  vendor: VendorForm & { id_vendor?: number; verified_at?: string | null; user_modified?: string | null; date_created?: string; status?: string } | null
 }>()
 
 const emit = defineEmits<{
@@ -21,27 +20,24 @@ const emit = defineEmits<{
 }>()
 
 const categories = ['mua', 'fotografer', 'wo', 'catering', 'dekorasi', 'venue', 'hiburan', 'transportasi']
-const statuses = ['pending', 'approved', 'rejected']
 
 const form = ref<VendorForm>({
   business_name: '',
   description: '',
   category: '',
   location: '',
-  status: 'pending',
 })
 
 watch(() => props.visible, (val) => {
   if (val) {
     if (props.mode === 'add') {
-      form.value = { business_name: '', description: '', category: '', location: '', status: 'pending' }
+      form.value = { business_name: '', description: '', category: '', location: '' }
     } else if (props.vendor) {
       form.value = {
         business_name: props.vendor.business_name,
         description: props.vendor.description,
         category: props.vendor.category,
         location: props.vendor.location,
-        status: props.vendor.status,
       }
     }
   }
@@ -82,10 +78,6 @@ function save() {
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Location</label>
                     <input class="form-control" :value="vendor.location || '-'" readonly />
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Status</label>
-                    <input class="form-control" :value="vendor.status" readonly />
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -134,12 +126,6 @@ function save() {
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Description</label>
                     <textarea class="form-control" v-model="form.description" placeholder="Description" rows="4" style="resize: none;"></textarea>
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Status</label>
-                    <select class="form-control" v-model="form.status">
-                      <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
-                    </select>
                   </div>
                 </div>
               </div>

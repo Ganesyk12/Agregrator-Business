@@ -33,12 +33,19 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
-    title: 'Business',
+    title: 'Admin',
+    items: [
+      { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' },
+      { label: 'Payments', icon: 'fa-credit-card', to: '/payments' },
+    ],
+  },
+  {
+    title: 'Setup',
     items: [
       { label: 'Vendors', icon: 'fa-building', to: '/vendors' },
       { label: 'Packages', icon: 'fa-cube', to: '/packages' },
-      { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' },
-      { label: 'Payments', icon: 'fa-credit-card', to: '/payments' },
+      { label: 'Roles', icon: 'fa-lock', to: '/roles' },
+      { label: 'User Roles', icon: 'fa-tag', to: '/user-roles' },
       { label: 'Users', icon: 'fa-users', to: '/users' },
     ],
   },

@@ -8,7 +8,6 @@ export interface PackageForm {
   price: number
   duration: string
   whats_included: string
-  status: string
 }
 
 const props = defineProps<{
@@ -23,8 +22,6 @@ const emit = defineEmits<{
   save: [data: PackageForm]
 }>()
 
-const statuses = ['active', 'inactive']
-
 const form = ref<PackageForm>({
   id_vendor: 0,
   name: '',
@@ -32,7 +29,6 @@ const form = ref<PackageForm>({
   price: 0,
   duration: '',
   whats_included: '',
-  status: 'active',
 })
 
 watch(() => props.visible, (val) => {
@@ -45,7 +41,6 @@ watch(() => props.visible, (val) => {
         price: 0,
         duration: '',
         whats_included: '',
-        status: 'active',
       }
     } else if (props.pkg) {
       form.value = {
@@ -55,7 +50,6 @@ watch(() => props.visible, (val) => {
         price: props.pkg.price,
         duration: props.pkg.duration || '',
         whats_included: props.pkg.whats_included || '',
-        status: props.pkg.status,
       }
     }
   }
@@ -117,10 +111,6 @@ function save() {
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Duration</label>
                     <input class="form-control" :value="pkg.duration || '-'" readonly />
                   </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Status</label>
-                    <input class="form-control" :value="pkg.status" readonly />
-                  </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
@@ -171,12 +161,6 @@ function save() {
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Status</label>
-                    <select v-model="form.status" class="form-control">
-                      <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
-                    </select>
-                  </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">What's Included</label>
                     <textarea v-model="form.whats_included" class="form-control" placeholder="Describe inclusions (e.g. Album, Videography)" rows="3" style="resize: none;"></textarea>
