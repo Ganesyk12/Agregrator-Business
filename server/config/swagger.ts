@@ -89,6 +89,25 @@ const options: swaggerJsdoc.Options = {
             user_modified:    { type: 'string', nullable: true },
           },
         },
+        Booking: {
+          type: 'object',
+          properties: {
+            id_booking: { type: 'integer' },
+            id_user: { type: 'integer' },
+            id_vendor: { type: 'integer' },
+            id_package: { type: 'integer' },
+            event_date: { type: 'string', format: 'date-time' },
+            event_location: { type: 'string', nullable: true },
+            total_price: { type: 'number' },
+            dp_amount: { type: 'number' },
+            status: { type: 'string', enum: ['pending', 'confirmed', 'completed', 'cancelled'] },
+            notes: { type: 'string', nullable: true },
+            date_created: { type: 'string', format: 'date-time' },
+            date_modified: { type: 'string', format: 'date-time' },
+            user_created: { type: 'string', nullable: true },
+            user_modified: { type: 'string', nullable: true },
+          },
+        },
         Error: {
           type: 'object',
           properties: {
