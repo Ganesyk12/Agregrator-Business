@@ -73,14 +73,6 @@ const handleLogout = () => {
               <span class=" fa fa-angle-down"></span>
             </a>
             <ul class="dropdown-menu dropdown-usermenu pull-right" :style="{ display: isDropdownOpen ? 'block' : 'none' }">
-              <li><a href="javascript:;" @click="closeDropdown"> Profile</a></li>
-              <li>
-                <a href="javascript:;" @click="closeDropdown">
-                  <span class="badge bg-red pull-right">50%</span>
-                  <span>Settings</span>
-                </a>
-              </li>
-              <li><a href="javascript:;" @click="closeDropdown">Help</a></li>
               <li><a href="javascript:;" @click.prevent="handleLogout"><i class="fa fa-sign-out pull-right"></i> Log Out</a></li>
             </ul>
           </li>

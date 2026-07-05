@@ -25,8 +25,16 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     const { email, password } = req.body
 
     const user = await authService.findByEmail(email)
-    if (!user || user.password !== password) {
+    if (!user) {
+      throw createError(404, 'User not found')
+    }
+
+    if (user.password !== password) {
       throw createError(401, 'Invalid email or password')
+    }
+
+    if (!user.is_active || user.status === 'suspended' || user.status === 'inactive') {
+      throw createError(403, 'Account is suspended or inactive')
     }
 
     const roles = user.user_roles?.map(ur => ({

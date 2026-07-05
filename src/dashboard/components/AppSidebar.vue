@@ -45,6 +45,7 @@ const menuSections: MenuSection[] = [
       { label: 'Vendors', icon: 'fa-building', to: '/vendors' },
       { label: 'Categories', icon: 'fa-tags', to: '/categories' },
       { label: 'Packages', icon: 'fa-cube', to: '/packages' },
+      { label: 'Portfolio', icon: 'fa-picture-o', to: '/portfolios' },
       { label: 'Users', icon: 'fa-users', to: '/users' },
       { label: 'Roles', icon: 'fa-lock', to: '/roles' },
       { label: 'User Access', icon: 'fa-tag', to: '/user-roles' },

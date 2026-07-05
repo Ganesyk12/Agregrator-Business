@@ -1,3 +1,4 @@
+import path from 'path'
 import express from 'express'
 import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
@@ -14,11 +15,14 @@ import roleRoutes from './modules/roles/roles.routes'
 import locationRoutes from './modules/locations/locations.routes'
 import bookingRoutes from './modules/bookings/bookings.routes'
 import categoryRoutes from './modules/categories/categories.routes'
+import portfolioRoutes from './modules/portfolios/portfolios.routes'
+import uploadRoutes from './modules/upload/upload.routes'
 
 const app = express()
 
 app.use(cors({ origin: env.corsOrigin }))
 app.use(express.json())
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
@@ -40,6 +44,8 @@ app.use('/api/roles', roleRoutes)
 app.use('/api/locations', locationRoutes)
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/categories', categoryRoutes)
+app.use('/api/portfolios', portfolioRoutes)
+app.use('/api/upload', uploadRoutes)
 
 app.use(errorHandler)
 

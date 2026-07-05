@@ -9,20 +9,17 @@ const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
 const showPassword = ref(false)
+const errorMessage = ref('')
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const handleLogin = async () => {
   if (!email.value || !password.value) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Validasi Gagal',
-      text: 'Email dan password wajib diisi!',
-      confirmButtonColor: '#8C907E'
-    })
+    errorMessage.value = 'Email dan password wajib diisi!'
     return
   }
 
   isLoading.value = true
+  errorMessage.value = ''
   try {
     const response = await fetch(`${apiUrl}/api/auth/login`, {
       method: 'POST',
@@ -63,12 +60,16 @@ const handleLogin = async () => {
     }, 1500)
 
   } catch (err: any) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Login Gagal',
-      text: err.message || 'Terjadi kesalahan sistem, silakan coba lagi.',
-      confirmButtonColor: '#111111'
-    })
+    console.error('Login error:', err)
+    if (err.message === 'User not found') {
+      errorMessage.value = 'Email tidak terdaftar. Silakan periksa kembali atau hubungi Administrator.'
+    } else if (err.message === 'Invalid email or password') {
+      errorMessage.value = 'Email atau kata sandi yang Anda masukkan salah.'
+    } else if (err.message === 'Account is suspended or inactive') {
+      errorMessage.value = 'Akun Anda sedang dinonaktifkan atau ditangguhkan. Silakan hubungi Administrator.'
+    } else {
+      errorMessage.value = err.message || 'Terjadi kesalahan sistem, silakan coba lagi.'
+    }
   } finally {
     isLoading.value = false
   }
@@ -88,6 +89,12 @@ const handleLogin = async () => {
         </div>
         <h2>Sigyn Business</h2>
         <p>Akses akun administratif Anda</p>
+      </div>
+
+      <!-- Error Banner -->
+      <div v-if="errorMessage" class="login-alert-banner">
+        <i class="fa fa-exclamation-triangle"></i>
+        <span>{{ errorMessage }}</span>
       </div>
 
       <form @submit.prevent="handleLogin" class="login-form-kaira">
@@ -323,6 +330,10 @@ const handleLogin = async () => {
   box-sizing: border-box !important;
 }
 
+.login-input-wrapper input[type="password"] {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
 .login-input-wrapper input::placeholder {
   color: #bcbcb8 !important;
 }
@@ -431,5 +442,26 @@ const handleLogin = async () => {
 }
 .login-register-link:hover {
   color: #8C907E !important;
+}
+
+/* Error Banner Style */
+.login-alert-banner {
+  background-color: #FDEDED !important;
+  border: 1px solid #F8C2C2 !important;
+  color: #D32F2F !important;
+  padding: 12px 16px !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  margin-bottom: 24px !important;
+  text-align: left !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  line-height: 1.5 !important;
+}
+.login-alert-banner i {
+  font-size: 15px !important;
+  margin-top: 2px !important;
+  flex-shrink: 0 !important;
 }
 </style>

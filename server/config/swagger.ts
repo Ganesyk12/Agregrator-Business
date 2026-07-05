@@ -121,6 +121,23 @@ const options: swaggerJsdoc.Options = {
             user_modified: { type: 'string', nullable: true },
           },
         },
+        Portfolio: {
+          type: 'object',
+          properties: {
+            id_portfolio:  { type: 'integer' },
+            id_vendor:     { type: 'integer' },
+            media_url:     { type: 'string' },
+            description:   { type: 'string', nullable: true },
+            location:      { type: 'string', nullable: true },
+            label:         { type: 'string', nullable: true },
+            sort_order:    { type: 'integer' },
+            status:        { type: 'string' },
+            date_created:  { type: 'string', format: 'date-time' },
+            date_modified: { type: 'string', format: 'date-time' },
+            user_created:  { type: 'string', nullable: true },
+            user_modified: { type: 'string', nullable: true },
+          },
+        },
         Error: {
           type: 'object',
           properties: {
