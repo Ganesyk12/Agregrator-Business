@@ -4,7 +4,7 @@
       <div class="row justify-content-between align-items-center w-100">
         <div class="col-auto">
           <a class="navbar-brand text-white" href="/">
-            <img :src="mainLogo" alt="Kaira" style="height: 45px;">
+            <img :src="mainLogo" alt="Sigyn" style="height: 60px; width: auto;">
           </a>
         </div>
 
@@ -51,43 +51,9 @@
                     <li><a class="dropdown-item" href="/product">Single Product V2</a></li>
                   </ul>
                 </li>
-
-                <!-- Dropdown Blog -->
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="dropdownBlog" data-bs-toggle="dropdown" aria-expanded="false">
-                    Blog
-                  </a>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownBlog">
-                    <li><a class="dropdown-item" href="/blog">Blog Classic</a></li>
-                    <li><a class="dropdown-item" href="/blog">Blog Grid with Sidebar</a></li>
-                    <li><a class="dropdown-item" href="/blog">Blog Grid Four Column</a></li>
-                    <li><a class="dropdown-item" href="/blog">Blog No Sidebar</a></li>
-                    <li><a class="dropdown-item" href="/blog">Blog Right Sidebar</a></li>
-                    <li><a class="dropdown-item" href="/blog/post">Single Post</a></li>
-                    <li><a class="dropdown-item" href="/blog/post">Single Post No Sidebar</a></li>
-                  </ul>
-                </li>
-
-                <!-- Dropdown Pages -->
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="dropdownPages" data-bs-toggle="dropdown" aria-expanded="false">
-                    Pages
-                  </a>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownPages">
-                    <li><a class="dropdown-item" href="/about">About</a></li>
-                    <li><a class="dropdown-item" href="/cart">Cart</a></li>
-                    <li><a class="dropdown-item" href="/checkout">Checkout</a></li>
-                    <li><a class="dropdown-item" href="/coming-soon">Coming Soon</a></li>
-                    <li><a class="dropdown-item" href="/contact">Contact</a></li>
-                    <li><a class="dropdown-item" href="/404">Error Page</a></li>
-                    <li><a class="dropdown-item" href="/faqs">FAQs</a></li>
-                    <li><a class="dropdown-item" href="/account">My Account</a></li>
-                    <li><a class="dropdown-item" href="/order-tracking">Order Tracking</a></li>
-                    <li><a class="dropdown-item" href="/wishlist">Wishlist</a></li>
-                  </ul>
-                </li>
-
-                <li class="nav-item"><a class="nav-link" href="/blog">Blog</a></li>
+                <li class="nav-item"><a class="nav-link" href="/photography">Photography</a></li>
+                <li class="nav-item"><a class="nav-link" href="/mua">MUA</a></li>
+                <li class="nav-item"><a class="nav-link" href="/bouquet">Bouquet Flowers</a></li>
                 <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
               </ul>
             </div>
@@ -134,7 +100,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import mainLogo from '@/assets/kaira/images/main-logo.png'
+import mainLogo from '@/assets/kaira/images/logosigyn.png'
 
 const searchOpen = ref(false)
 

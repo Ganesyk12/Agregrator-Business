@@ -25,38 +25,41 @@ CSS STRUCTURE:
 body {
   --heading-font: "Marcellus", Roboto, sans-serif;
   --heading-font-weight: 400;
-  --heading-color: #111;
+  --heading-color: #2a2a2a;
   --heading-line-height: 1.24;
 
-  --swiper-theme-color: #8C907E;
+  --swiper-theme-color: #B89C7B;
 
   /* bootstrap */
   --bs-body-font-family: "Jost", Roboto, sans-serif;
   --bs-body-font-size: 18px;
   --bs-body-font-weight: 400;
   --bs-body-line-height: 1.5;
-  --bs-body-color: #8f8f8f;
-  --bs-body-color-rgb: 143, 143, 143;
+  --bs-body-color: #5a5a5a;
+  --bs-body-color-rgb: 90, 90, 90;
 
-  --bs-primary: #8C907E;
-  --bs-secondary: #6c757d;
-  --bs-black: #111;
-  --bs-light: #F1F1F0;
+  --bs-primary: #DCCEB6;
+  --bs-secondary: #B89C7B;
+  --bs-black: #2a2a2a;
+  --bs-light: #ECE6DD;
   --bs-dark: #212529;
   --bs-gray: #9aa1a7;
   --bs-gray-dark: #51565b;
 
-  --bs-primary-rgb: 140, 144, 126;
-  --bs-secondary-rgb: 108, 117, 125;
-  --bs-black-rgb: 17, 17, 17;
-  --bs-light-rgb: 241, 241, 240;
+  --bs-primary-rgb: 220, 206, 182;
+  --bs-secondary-rgb: 184, 156, 123;
+  --bs-black-rgb: 42, 42, 42;
+  --bs-light-rgb: 236, 230, 221;
   --bs-dark-rgb: 33, 37, 41;
 
-  --bs-link-color: #111;
-  --bs-link-color-rgb: 17, 17, 17;
+  --bs-link-color: #2a2a2a;
+  --bs-link-color-rgb: 42, 42, 42;
   --bs-link-decoration: underline;
-  --bs-link-hover-color: #111;
-  --bs-link-hover-color-rgb: 17, 17, 17;
+  --bs-link-hover-color: #B89C7B;
+  --bs-link-hover-color-rgb: 184, 156, 123;
+
+  --bs-body-bg: #F7F4EF;
+  --bs-body-bg-rgb: 247, 244, 239;
 }
 
 body {
@@ -179,19 +182,35 @@ a {
 
 .btn-primary {
   --bs-btn-color: #fff;
-  --bs-btn-bg: #8C907E;
-  --bs-btn-border-color: #8C907E;
+  --bs-btn-bg: #DCCEB6;
+  --bs-btn-border-color: #DCCEB6;
   --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #5e624e;
-  --bs-btn-hover-border-color: #5e624e;
-  --bs-btn-focus-shadow-rgb: 49, 132, 253;
+  --bs-btn-hover-bg: #B89C7B;
+  --bs-btn-hover-border-color: #B89C7B;
+  --bs-btn-focus-shadow-rgb: 184, 156, 123;
   --bs-btn-active-color: #fff;
-  --bs-btn-active-bg: #5e624e;
-  --bs-btn-active-border-color: #5e624e;
+  --bs-btn-active-bg: #B89C7B;
+  --bs-btn-active-border-color: #B89C7B;
   --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
   --bs-btn-disabled-color: #fff;
-  --bs-btn-disabled-bg: #8C907E;
-  --bs-btn-disabled-border-color: #8C907E;
+  --bs-btn-disabled-bg: #DCCEB6;
+  --bs-btn-disabled-border-color: #DCCEB6;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #DCCEB6;
+  --bs-btn-border-color: #DCCEB6;
+  --bs-btn-hover-color: #B89C7B;
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-hover-border-color: #DCCEB6;
+  --bs-btn-focus-shadow-rgb: 184, 156, 123;
+  --bs-btn-active-color: #B89C7B;
+  --bs-btn-active-bg: transparent;
+  --bs-btn-active-border-color: #DCCEB6;
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --bs-btn-disabled-color: #DCCEB6;
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: #DCCEB6;
 }
 
 .pagination {
@@ -1091,7 +1110,7 @@ a {
 }
 
 .testimonials .swiper-pagination .swiper-pagination-bullet-active {
-  background: #8C907E;
+  background: #B89C7B;
 }
 
 .swiper-pagination-bullet {
@@ -1506,7 +1525,7 @@ a.btn-link.text-light:after {
   --bs-accordion-btn-active-icon: url('data:image/svg+xml,%3Csvg xmlns="http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" width="24" height="24" viewBox="0 0 24 24"%3E%3Cpath fill="currentColor" d="M19 11H5a1 1 0 0 0 0 2h14a1 1 0 0 0 0-2Z"%2F%3E%3C%2Fsvg%3E');
   --bs-accordion-body-padding-x: 0;
   --bs-accordion-body-padding-y: 0;
-  --bs-accordion-active-color: #8C907E;
+  --bs-accordion-active-color: #B89C7B;
 }
 
 .product-filter .accordion-body>div,

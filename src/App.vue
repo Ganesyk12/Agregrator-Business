@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import IconSprite from '@/components/layout/IconSprite.vue'
-
-const title = import.meta.env.VITE_APP_TITLE
 </script>
 
 <template>
