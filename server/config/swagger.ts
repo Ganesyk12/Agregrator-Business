@@ -96,7 +96,6 @@ const options: swaggerJsdoc.Options = {
             id_booking: { type: 'integer' },
             id_user: { type: 'integer' },
             id_vendor: { type: 'integer' },
-            id_package: { type: 'integer' },
             event_date: { type: 'string', format: 'date-time' },
             event_location: { type: 'string', nullable: true },
             total_price: { type: 'number' },
@@ -107,6 +106,25 @@ const options: swaggerJsdoc.Options = {
             date_modified: { type: 'string', format: 'date-time' },
             user_created: { type: 'string', nullable: true },
             user_modified: { type: 'string', nullable: true },
+            booking_packages: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id_booking_package: { type: 'integer' },
+                  id_booking: { type: 'integer' },
+                  id_package: { type: 'integer' },
+                  package: {
+                    type: 'object',
+                    properties: {
+                      id_package: { type: 'integer' },
+                      name: { type: 'string' },
+                      price: { type: 'number' },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
         Category: {

@@ -30,11 +30,11 @@ const router = Router()
  *         application/json:
  *           schema:
  *             type: object
- *             required: [id_user, id_vendor, id_package, event_date, total_price]
+ *             required: [id_user, id_vendor, package_ids, event_date, total_price]
  *             properties:
  *               id_user: { type: integer }
  *               id_vendor: { type: integer }
- *               id_package: { type: integer }
+ *               package_ids: { type: array, items: { type: integer } }
  *               event_date: { type: string, format: date-time }
  *               event_location: { type: string }
  *               total_price: { type: number }
@@ -95,6 +95,7 @@ router.get('/', bookingCtrl.getAll)
  *               dp_amount: { type: number }
  *               status: { type: string, enum: [pending, confirmed, completed, cancelled] }
  *               notes: { type: string }
+ *               package_ids: { type: array, items: { type: integer } }
  *     responses:
  *       200:
  *         description: Booking berhasil diupdate

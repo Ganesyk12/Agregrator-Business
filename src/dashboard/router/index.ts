@@ -23,6 +23,31 @@ const router = createRouter({
           component: () => import('@/dashboard/views/BookingView.vue'),
         },
         {
+          path: 'payments',
+          name: 'payments',
+          component: () => import('@/dashboard/views/PaymentView.vue'),
+        },
+        {
+          path: 'commissions',
+          name: 'commissions',
+          component: () => import('@/dashboard/views/CommissionView.vue'),
+        },
+        {
+          path: 'payouts',
+          name: 'payouts',
+          component: () => import('@/dashboard/views/PayoutView.vue'),
+        },
+        {
+          path: 'invoices',
+          name: 'invoices',
+          component: () => import('@/dashboard/views/InvoiceView.vue'),
+        },
+        {
+          path: 'invoices/:paymentId',
+          name: 'invoice-detail',
+          component: () => import('@/dashboard/views/InvoiceDetailView.vue'),
+        },
+        {
           path: 'vendors',
           name: 'vendors',
           component: () => import('@/dashboard/views/VendorView.vue'),

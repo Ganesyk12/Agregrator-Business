@@ -1,42 +1,49 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
-import BookingModal, { type BookingForm } from '../components/BookingModal.vue'
+import PaymentModal, { type PaymentForm } from '../components/PaymentModal.vue'
 
-interface Booking {
+const router = useRouter()
+
+interface Payment {
+  id_payment: number
   id_booking: number
-  id_user: number
-  event_date: string
-  event_location: string | null
-  total_price: number
-  dp_amount: number
+  amount: number
+  payment_type: string
   status: string
-  notes: string | null
+  payment_proof_url: string | null
+  paid_at: string | null
+  released_at: string | null
   date_created: string
-  customer?: {
-    full_name: string
-    email: string
-  }
-  booking_packages?: {
-    package: {
-      id_package: number
-      name: string
-      price: number
-      vendor: { id_vendor: number; business_name: string }
+  booking?: {
+    id_booking: number
+    total_price: number
+    dp_amount: number
+    customer?: {
+      full_name: string
+      email: string
     }
-  }[]
+    booking_packages?: {
+      package: {
+        name: string
+        price: number
+        vendor: { id_vendor: number; business_name: string }
+      }
+    }[]
+  }
 }
 
-const bookings = ref<Booking[]>([])
+const payments = ref<Payment[]>([])
 const search = ref('')
-const sortColumn = ref<keyof Booking | 'customer_name' | 'vendor_name' | 'package_name'>('date_created')
+const sortColumn = ref<keyof Payment | 'customer_name' | 'vendor_name' | 'package_name'>('date_created')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 const currentPage = ref(1)
 const perPage = ref(5)
 
 const modalVisible = ref(false)
 const modalMode = ref<'add' | 'edit' | 'detail'>('add')
-const selectedBooking = ref<Booking | null>(null)
+const selectedPayment = ref<Payment | null>(null)
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -48,104 +55,85 @@ const Toast = Swal.mixin({
   timerProgressBar: true
 })
 
-async function fetchBookings() {
+async function fetchPayments() {
   try {
-    const res = await fetch(`${apiUrl}/api/bookings`)
-    if (!res.ok) throw new Error('Failed to fetch bookings')
+    const res = await fetch(`${apiUrl}/api/payments`)
+    if (!res.ok) throw new Error('Failed to fetch payments')
     const json = await res.json()
-    bookings.value = json.data || []
+    payments.value = json.data || []
   } catch (err) {
-    console.error('Error fetching bookings:', err)
-    bookings.value = []
+    console.error('Error fetching payments:', err)
+    payments.value = []
   }
 }
 
 onMounted(() => {
-  fetchBookings()
+  fetchPayments()
 })
 
 function openAdd() {
-  selectedBooking.value = null
+  selectedPayment.value = null
   modalMode.value = 'add'
   modalVisible.value = true
 }
 
-function openEdit(b: Booking) {
-  selectedBooking.value = { ...b }
+function openEdit(p: Payment) {
+  selectedPayment.value = { ...p }
   modalMode.value = 'edit'
   modalVisible.value = true
 }
 
-function openDetail(b: Booking) {
-  selectedBooking.value = { ...b }
+function openDetail(p: Payment) {
+  selectedPayment.value = { ...p }
   modalMode.value = 'detail'
   modalVisible.value = true
 }
 
-function getVendorNames(b: Booking): string {
-  const names = new Set<string>()
-  b.booking_packages?.forEach(bp => {
-    if (bp.package.vendor?.business_name) names.add(bp.package.vendor.business_name)
-  })
-  return [...names].join(', ') || '-'
-}
-
-async function handleSave(data: BookingForm) {
-  const body = {
-    id_user: data.id_user,
-    package_ids: data.package_ids,
-    event_date: data.event_date,
-    event_location: data.event_location,
-    total_price: data.total_price,
-    dp_amount: data.dp_amount,
-    status: data.status,
-    notes: data.notes,
-  }
-
+async function handleSave(data: PaymentForm) {
   if (modalMode.value === 'add') {
     try {
-      const res = await fetch(`${apiUrl}/api/bookings`, {
+      const res = await fetch(`${apiUrl}/api/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(data),
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to create booking')
+        throw new Error(errBody?.error?.message || 'Failed to create payment')
       }
-      await fetchBookings()
+      await fetchPayments()
       Toast.fire({
         icon: 'success',
-        title: 'Booking created successfully'
+        title: 'Payment created successfully'
       })
     } catch (err: any) {
-      console.error('Error creating booking:', err)
+      console.error('Error creating payment:', err)
       Toast.fire({
         icon: 'error',
-        title: err.message || 'Failed to create booking'
+        title: err.message || 'Failed to create payment'
       })
     }
-  } else if (modalMode.value === 'edit' && selectedBooking.value) {
+  } else if (modalMode.value === 'edit' && selectedPayment.value) {
     try {
-      const res = await fetch(`${apiUrl}/api/bookings/${selectedBooking.value.id_booking}`, {
+      const res = await fetch(`${apiUrl}/api/payments/${selectedPayment.value.id_payment}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(data),
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to update booking')
+        throw new Error(errBody?.error?.message || 'Failed to update payment')
       }
-      await fetchBookings()
+      await fetchPayments()
       Toast.fire({
         icon: 'success',
-        title: 'Booking updated successfully'
+        title: 'Payment updated successfully'
       })
     } catch (err: any) {
-      console.error('Error updating booking:', err)
+      console.error('Error updating payment:', err)
       Toast.fire({
         icon: 'error',
-        title: err.message || 'Failed to update booking'
+        title: err.message || 'Failed to update payment'
       })
     }
   }
@@ -155,7 +143,7 @@ async function handleSave(data: BookingForm) {
 async function handleDelete(id: number) {
   const result = await Swal.fire({
     title: 'Are you sure?',
-    text: "This will soft-delete the booking.",
+    text: "This will soft-delete the payment.",
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
@@ -165,39 +153,38 @@ async function handleDelete(id: number) {
 
   if (result.isConfirmed) {
     try {
-      const res = await fetch(`${apiUrl}/api/bookings/${id}`, {
+      const res = await fetch(`${apiUrl}/api/payments/${id}`, {
         method: 'DELETE',
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to delete booking')
+        throw new Error(errBody?.error?.message || 'Failed to delete payment')
       }
-      await fetchBookings()
+      await fetchPayments()
       Toast.fire({
         icon: 'success',
-        title: 'Booking deleted successfully.'
+        title: 'Payment deleted successfully.'
       })
     } catch (err: any) {
-      console.error('Error deleting booking:', err)
+      console.error('Error deleting payment:', err)
       Toast.fire({
         icon: 'error',
-        title: err.message || 'Failed to delete booking'
+        title: err.message || 'Failed to delete payment'
       })
     }
   }
 }
 
-// Sorting and Filtering
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
-  let result = bookings.value
+  let result = payments.value
   if (q) {
-    result = result.filter(b =>
-      (b.customer?.full_name?.toLowerCase() || '').includes(q) ||
-      (b.vendor?.business_name?.toLowerCase() || '').includes(q) ||
-      (b.booking_packages?.map(bp => bp.package.name).join(', ')?.toLowerCase() || '').includes(q) ||
-      (b.status?.toLowerCase() || '').includes(q) ||
-      (b.event_location?.toLowerCase() || '').includes(q)
+      result = result.filter(p =>
+      (p.booking?.customer?.full_name?.toLowerCase() || '').includes(q) ||
+      (p.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ')?.toLowerCase() || '').includes(q) ||
+      (p.booking?.booking_packages?.map(bp => bp.package.name).join(', ')?.toLowerCase() || '').includes(q) ||
+      (p.payment_type?.toLowerCase() || '').includes(q) ||
+      (p.status?.toLowerCase() || '').includes(q)
     )
   }
 
@@ -207,17 +194,17 @@ const filtered = computed(() => {
     let va = ''
     let vb = ''
     if (col === 'customer_name') {
-      va = (a.customer?.full_name || '').toLowerCase()
-      vb = (b.customer?.full_name || '').toLowerCase()
+      va = (a.booking?.customer?.full_name || '').toLowerCase()
+      vb = (b.booking?.customer?.full_name || '').toLowerCase()
     } else if (col === 'vendor_name') {
-      va = getVendorNames(a).toLowerCase()
-      vb = getVendorNames(b).toLowerCase()
+      va = (a.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ') || '').toLowerCase()
+      vb = (b.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ') || '').toLowerCase()
     } else if (col === 'package_name') {
-      va = (a.booking_packages?.map(bp => bp.package.name).join(', ') || '').toLowerCase()
-      vb = (b.booking_packages?.map(bp => bp.package.name).join(', ') || '').toLowerCase()
+      va = (a.booking?.booking_packages?.map(bp => bp.package.name).join(', ') || '').toLowerCase()
+      vb = (b.booking?.booking_packages?.map(bp => bp.package.name).join(', ') || '').toLowerCase()
     } else {
-      va = String(a[col as keyof Booking] ?? '').toLowerCase()
-      vb = String(b[col as keyof Booking] ?? '').toLowerCase()
+      va = String(a[col as keyof Payment] ?? '').toLowerCase()
+      vb = String(b[col as keyof Payment] ?? '').toLowerCase()
     }
     return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
   })
@@ -267,7 +254,7 @@ function formatCurrency(value: number) {
 <template>
   <div class="x_panel">
     <div class="x_title">
-      <h2>Bookings Management</h2>
+      <h2>Payments Management</h2>
       <div class="clearfix"></div>
     </div>
 
@@ -275,7 +262,7 @@ function formatCurrency(value: number) {
       <div class="row" style="margin-bottom: 12px;">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <button class="btn btn-success" @click="openAdd">
-            <i class="fa fa-plus"></i> Create Booking
+            <i class="fa fa-plus"></i> Create Payment
           </button>
         </div>
         <div class="col-md-6 col-sm-6 col-xs-12">
@@ -285,7 +272,7 @@ function formatCurrency(value: number) {
               type="text"
               v-model="search"
               class="form-control"
-              placeholder="Search by customer, vendor, package, status..."
+              placeholder="Search by customer, vendor, package, type, status..."
             />
           </div>
         </div>
@@ -297,13 +284,14 @@ function formatCurrency(value: number) {
             <tr>
               <th
                 v-for="col in ([
+                  { key: 'id_payment', label: 'ID' },
                   { key: 'customer_name', label: 'Customer' },
                   { key: 'vendor_name', label: 'Vendor' },
                   { key: 'package_name', label: 'Package' },
-                  { key: 'event_date', label: 'Event Date' },
-                  { key: 'total_price', label: 'Total Price' },
-                  { key: 'dp_amount', label: 'DP Amount' },
+                  { key: 'amount', label: 'Amount' },
+                  { key: 'payment_type', label: 'Type' },
                   { key: 'status', label: 'Status' },
+                  { key: 'paid_at', label: 'Paid At' },
                 ] as { key: string; label: string }[])"
                 :key="col.key"
                 @click="setSort(col.key)"
@@ -320,32 +308,42 @@ function formatCurrency(value: number) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="b in paginated" :key="b.id_booking">
-              <td>{{ b.customer?.full_name || '-' }}</td>
-              <td>{{ getVendorNames(b) }}</td>
-              <td>{{ b.booking_packages?.map(bp => bp.package.name).join(', ') || '-' }}</td>
-              <td>{{ new Date(b.event_date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) }}</td>
-              <td>{{ formatCurrency(b.total_price) }}</td>
-              <td>{{ formatCurrency(b.dp_amount) }}</td>
+            <tr v-for="p in paginated" :key="p.id_payment">
+              <td>{{ p.id_payment }}</td>
+              <td>{{ p.booking?.customer?.full_name || '-' }}</td>
+              <td>{{ p.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ') || '-' }}</td>
+              <td>{{ p.booking?.booking_packages?.map(bp => bp.package.name).join(', ') || '-' }}</td>
+              <td>{{ formatCurrency(p.amount) }}</td>
               <td>
                 <span
                   :class="{
-                    'label label-success': b.status === 'completed',
-                    'label label-info': b.status === 'confirmed',
-                    'label label-warning': b.status === 'pending',
-                    'label label-danger': b.status === 'cancelled',
+                    'label label-primary': p.payment_type === 'dp',
+                    'label label-success': p.payment_type === 'full',
+                    'label label-info': p.payment_type === 'installment',
                   }"
                   style="font-size: 13px; text-transform: uppercase;"
-                >{{ b.status }}</span>
+                >{{ p.payment_type }}</span>
               </td>
+              <td>
+                <span
+                  :class="{
+                    'label label-success': p.status === 'paid' || p.status === 'released',
+                    'label label-warning': p.status === 'pending',
+                    'label label-danger': p.status === 'cancelled',
+                  }"
+                  style="font-size: 13px; text-transform: uppercase;"
+                >{{ p.status }}</span>
+              </td>
+              <td>{{ p.paid_at ? new Date(p.paid_at).toLocaleDateString('id-ID') : '-' }}</td>
               <td style="white-space: nowrap;">
-                <button class="btn btn-primary" @click="openDetail(b)"><i class="fa fa-eye"></i></button>
-                <button class="btn btn-info" @click="openEdit(b)"><i class="fa fa-pencil"></i></button>
-                <button class="btn btn-danger" @click="handleDelete(b.id_booking)"><i class="fa fa-trash"></i></button>
+                <button class="btn btn-primary" @click="openDetail(p)"><i class="fa fa-eye"></i></button>
+                <button class="btn btn-info" @click="openEdit(p)"><i class="fa fa-pencil"></i></button>
+                <button class="btn btn-success" @click="router.push('/invoices/' + p.id_payment)"><i class="fa fa-file-text-o"></i></button>
+                <button class="btn btn-danger" @click="handleDelete(p.id_payment)"><i class="fa fa-trash"></i></button>
               </td>
             </tr>
             <tr v-if="paginated.length === 0">
-              <td colspan="8" style="text-align: center;">No bookings found.</td>
+              <td colspan="9" style="text-align: center;">No payments found.</td>
             </tr>
           </tbody>
         </table>
@@ -388,10 +386,10 @@ function formatCurrency(value: number) {
     </div>
   </div>
 
-  <BookingModal
+  <PaymentModal
     :visible="modalVisible"
     :mode="modalMode"
-    :booking="selectedBooking"
+    :payment="selectedPayment"
     @close="modalVisible = false"
     @save="handleSave"
   />

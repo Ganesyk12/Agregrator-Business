@@ -17,6 +17,9 @@ import bookingRoutes from './modules/bookings/bookings.routes'
 import categoryRoutes from './modules/categories/categories.routes'
 import portfolioRoutes from './modules/portfolios/portfolios.routes'
 import uploadRoutes from './modules/upload/upload.routes'
+import paymentRoutes from './modules/payments/payments.routes'
+import commissionRoutes from './modules/commissions/commissions.routes'
+import payoutRoutes from './modules/payouts/payouts.routes'
 
 const app = express()
 
@@ -46,6 +49,9 @@ app.use('/api/bookings', bookingRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/portfolios', portfolioRoutes)
 app.use('/api/upload', uploadRoutes)
+app.use('/api/payments', paymentRoutes)
+app.use('/api/commissions', commissionRoutes)
+app.use('/api/payouts', payoutRoutes)
 
 app.use(errorHandler)
 
