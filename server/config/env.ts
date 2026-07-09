@@ -1,9 +1,15 @@
 import 'dotenv/config'
 
+function req(key: string): string {
+  const val = process.env[key]
+  if (!val) throw new Error(`Missing env variable: ${key}`)
+  return val
+}
+
 export const env = {
-  port: Number(process.env.PORT) || 3000,
-  nodeEnv: process.env.NODE_ENV || 'development',
-  jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
-  dbPath: process.env.DB_PATH || './server/db/data.sqlite',
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  port: Number(req('PORT')),
+  nodeEnv: req('NODE_ENV'),
+  jwtSecret: req('JWT_SECRET'),
+  corsOrigin: req('CORS_ORIGIN'),
+  databaseUrl: req('DATABASE_URL'),
 }
