@@ -69,7 +69,7 @@ const handleLogout = () => {
         <ul class="nav navbar-nav navbar-right">
           <li class="user-profile-li dropdown" :class="{ open: isDropdownOpen }">
             <a href="javascript:;" class="user-profile dropdown-toggle" @click.prevent="toggleDropdown" aria-expanded="false">
-              <img src="/gentela-gh-pages/production/images/img.jpg" alt="">{{ userName }}
+              <i class="fa fa-user-circle-o" style="font-size:18px;margin-right:6px"></i>{{ userName }}
               <span class=" fa fa-angle-down"></span>
             </a>
             <ul class="dropdown-menu dropdown-usermenu pull-right" :style="{ display: isDropdownOpen ? 'block' : 'none' }">

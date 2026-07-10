@@ -41,15 +41,16 @@ export async function getByVendor(req: Request, res: Response, next: NextFunctio
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const { id_vendor, id_package, id_category, title, code, cover_url, description, location, label, sort_order } = req.body
-    if (!id_vendor || !title || !code || !cover_url) {
-      throw createError(400, 'id_vendor, title, code, and cover_url are required')
+    if (!id_vendor || !title || !cover_url) {
+      throw createError(400, 'id_vendor, title, and cover_url are required')
     }
+    const autoCode = code || `PRT-${Date.now()}`
     const portfolio = await portfolioService.create({
       id_vendor: Number(id_vendor),
       id_package: id_package ? Number(id_package) : null,
       id_category: id_category ? Number(id_category) : null,
       title,
-      code,
+      code: autoCode,
       cover_url,
       description: description || null,
       location: location || null,

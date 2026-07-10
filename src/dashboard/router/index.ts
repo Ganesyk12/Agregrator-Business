@@ -82,6 +82,11 @@ const router = createRouter({
           name: 'user-roles',
           component: () => import('@/dashboard/views/UserRoleView.vue'),
         },
+        {
+          path: 'company-info',
+          name: 'company-info',
+          component: () => import('@/dashboard/views/CompanyInfoView.vue'),
+        },
       ],
     },
   ],

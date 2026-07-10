@@ -208,6 +208,10 @@ function getVendorName(vendorId: number) {
                     <label class="control-label" style="font-weight: bold;">Event Date</label>
                     <input class="form-control" :value="new Date(booking.event_date).toLocaleString()" readonly />
                   </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold;">Location</label>
+                    <input class="form-control" :value="booking.event_location || '-'" readonly />
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">

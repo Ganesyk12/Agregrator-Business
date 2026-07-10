@@ -2,7 +2,7 @@ import prisma from '../../db'
 import type { Payment } from './payments.types'
 
 const bookingInclude = {
-  customer: { select: { id_user: true, email: true, full_name: true } },
+  customer: { select: { id_user: true, email: true, full_name: true, phone: true } },
   booking_packages: {
     include: {
       package: {

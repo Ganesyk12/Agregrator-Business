@@ -96,6 +96,17 @@ async function main() {
       phone: '081234567891',
     },
   })
+
+  const superAdminUser = await prisma.user.upsert({
+    where: { email: 'superadmin@sigyn.com' },
+    update: {},
+    create: {
+      email: 'superadmin@sigyn.com',
+      password: '123456',
+      full_name: 'Super Admin',
+      phone: '081234567892',
+    },
+  })
   console.log('Users seeded successfully.')
 
   // ── User Roles ──
@@ -114,6 +125,11 @@ async function main() {
     where: { email_role_code: { email: vendorUser2.email, role_code: 'eUser-Vendor' } },
     update: {},
     create: { email: vendorUser2.email, role_code: 'eUser-Vendor' },
+  })
+  await prisma.user_Role.upsert({
+    where: { email_role_code: { email: superAdminUser.email, role_code: 'eUser-SuperAdmin' } },
+    update: {},
+    create: { email: superAdminUser.email, role_code: 'eUser-SuperAdmin' },
   })
   console.log('User roles seeded successfully.')
 
@@ -164,6 +180,12 @@ async function main() {
     const vp = vendorPortfolios[i]
     const code = `PRT-${String(i + 1).padStart(4, '0')}`
     const coverIdx = (i * 3) % portfolioImages.length
+
+    const existing = await prisma.portfolio.findUnique({ where: { code } })
+    if (existing) {
+      await prisma.portfolioImage.deleteMany({ where: { id_portfolio: existing.id_portfolio } })
+      await prisma.portfolio.delete({ where: { code } })
+    }
 
     const portfolio = await prisma.portfolio.create({
       data: {
@@ -354,6 +376,25 @@ async function main() {
     },
   })
   console.log('Payouts created for both vendors')
+
+  // ── Company Info ──
+  console.log('Seeding company info...')
+  await prisma.companyInfo.upsert({
+    where: { id_company: 1 },
+    update: {},
+    create: {
+      id_company: 1,
+      company_name: 'Agregrator Business',
+      address: 'Jl. Sudirman No. 123, Jakarta Pusat',
+      phone: '(021) 1234-5678',
+      email: 'hello@agregrator.com',
+      bank_name: 'Bank Central Asia (BCA)',
+      bank_account: '123-456-7890',
+      bank_holder: 'PT Agregrator Business',
+      footer_text: 'Terima kasih telah menggunakan layanan kami.',
+    },
+  })
+  console.log('Company info seeded successfully.')
 
   console.log('Seed completed successfully!')
 }

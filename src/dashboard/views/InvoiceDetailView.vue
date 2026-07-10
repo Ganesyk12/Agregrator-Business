@@ -7,6 +7,7 @@ const router = useRouter()
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const payment = ref<any>(null)
+const companyInfo = ref<any>(null)
 const loading = ref(true)
 const showPrintPreview = ref(false)
 
@@ -24,7 +25,18 @@ async function fetchPayment() {
   }
 }
 
-onMounted(fetchPayment)
+async function fetchCompanyInfo() {
+  try {
+    const res = await fetch(`${apiUrl}/api/company-info`)
+    const json = await res.json()
+    companyInfo.value = json.data
+  } catch { /* ignore */ }
+}
+
+onMounted(() => {
+  fetchPayment()
+  fetchCompanyInfo()
+})
 
 function formatCurrency(v: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
@@ -122,18 +134,20 @@ function printInvoice() {
             <!-- info row -->
             <div class="row invoice-info">
               <div class="col-sm-4 invoice-col">
-                <strong>Agregrator Business</strong>
+                <strong>{{ companyInfo?.company_name || 'Agregrator Business' }}</strong>
                 <address>
-                  Platform Vendor Management<br>
-                  Email: admin@agregrator.com<br>
-                  Phone: (021) 1234-5678
+                  {{ companyInfo?.address || 'Platform Vendor Management' }}<br>
+                  <template v-if="companyInfo?.email">Email: {{ companyInfo.email }}<br></template>
+                  <template v-if="companyInfo?.phone">Phone: {{ companyInfo.phone }}<br></template>
+                  <template v-if="!companyInfo?.email && !companyInfo?.phone">Platform Vendor Management</template>
                 </address>
               </div>
               <div class="col-sm-4 invoice-col">
                 <strong>Customer</strong>
                 <address>
                   <strong>{{ payment.booking?.customer?.full_name || '-' }}</strong><br>
-                  Email: {{ payment.booking?.customer?.email || '-' }}
+                  Email: {{ payment.booking?.customer?.email || '-' }}<br>
+                  <template v-if="payment.booking?.customer?.phone">Phone: {{ payment.booking?.customer?.phone }}</template>
                 </address>
               </div>
               <div class="col-sm-4 invoice-col">
@@ -174,22 +188,25 @@ function printInvoice() {
             </div>
 
             <!-- Event info summary -->
-            <div class="row" v-if="payment.booking?.event_location">
-              <div class="col-xs-12">
-                <p class="text-muted">
-                  <i class="fa fa-map-marker"></i> Location: {{ payment.booking.event_location }}
-                </p>
-              </div>
-            </div>
+            <p v-if="payment.booking?.event_location" style="margin: 0 0 4px;">
+              <strong>Location:</strong> {{ payment.booking.event_location }}
+            </p>
+            <p v-if="payment.booking?.notes" style="margin: 0 0 4px;">
+              <strong>Catatan Booking:</strong> {{ payment.booking.notes }}
+            </p>
 
             <!-- Payment summary -->
             <div class="row">
               <div class="col-xs-6">
-                <p class="lead">Notes:</p>
+                <p class="lead">Info Pembayaran</p>
                 <p class="text-muted well well-sm no-shadow" style="margin-top:10px;">
-                  Invoice ini merupakan bukti pembayaran <strong>{{ payment.payment_type === 'dp' ? 'Uang Muka (DP)' : payment.payment_type === 'full' ? 'Pelunasan' : 'Cicilan' }}</strong> untuk layanan yang dipesan.
-                  <template v-if="services.length > 1"><br><br>Paket ini mencakup <strong>{{ services.length }} layanan</strong>: {{ services.map((s: any) => s.name).join(', ') }}.</template>
-                  <template v-if="payment.booking?.notes"> <br><br><strong>Catatan Booking:</strong> {{ payment.booking.notes }}</template>
+                  <template v-if="companyInfo?.bank_name">
+                    <strong>Transfer Bank:</strong><br>
+                    {{ companyInfo.bank_name }} — {{ companyInfo.bank_account }}<br>
+                    a.n. {{ companyInfo.bank_holder }}<br><br>
+                  </template>
+                  Invoice ini merupakan bukti pembayaran <strong>{{ payment.payment_type === 'dp' ? 'Uang Muka (DP)' : payment.payment_type === 'full' ? 'Pelunasan' : 'Cicilan' }}</strong> untuk layanan yang dipesan.<br><br>
+                  Untuk informasi lebih lanjut mengenai layanan, silakan hubungi tim Customer Service kami melalui nomor telepon atau email yang tercantum di atas.
                 </p>
               </div>
               <div class="col-xs-6">
@@ -215,7 +232,7 @@ function printInvoice() {
                       </tr>
                       <tr>
                         <th>Status Pembayaran:</th>
-                        <td><span :class="'label ' + (payment.status==='paid'||payment.status==='released'?'label-success':'label-warning')" style="text-transform:uppercase;">{{ payment.status === 'paid' || payment.status === 'released' ? 'LUNAS' : payment.status }}</span></td>
+                        <td><span :class="'label ' + (payment.status==='paid'||payment.status==='released'?'label-success':'label-warning')" style="text-transform:uppercase;">{{ payment.status === 'paid' || payment.status === 'released' ? 'DIBAYARKAN' : payment.status }}</span></td>
                       </tr>
                     </tbody>
                   </table>
@@ -255,17 +272,18 @@ function printInvoice() {
           <div class="print-info-block">
             <strong>Bill To:</strong>
             <p>{{ payment.booking?.customer?.full_name || '-' }}<br>
-            {{ payment.booking?.customer?.email || '-' }}</p>
+            {{ payment.booking?.customer?.email || '-' }}<br>
+            <span v-if="payment.booking?.customer?.phone">{{ payment.booking?.customer?.phone }}</span></p>
           </div>
           <div class="print-info-block">
             <strong>From:</strong>
-            <p>Agregrator Business<br>
-            Platform Vendor Management</p>
+            <p>{{ companyInfo?.company_name || 'Agregrator Business' }}<br>
+            {{ companyInfo?.email || '' }}<br>
+            <span v-if="companyInfo?.phone">{{ companyInfo.phone }}</span></p>
           </div>
           <div class="print-info-block print-info-right">
             <p><strong>Payment Type:</strong> {{ payment.payment_type?.toUpperCase() || '-' }}</p>
-            <p><strong>Status:</strong> {{ payment.status === 'paid' || payment.status === 'released' ? 'LUNAS' : payment.status?.toUpperCase() }}</p>
-            <p><strong>Booking ID:</strong> #{{ payment.id_booking }}</p>
+            <p><strong>Status:</strong> {{ payment.status === 'paid' || payment.status === 'released' ? 'DIBAYARKAN' : payment.status?.toUpperCase() }}</p>
             <p><strong>Event:</strong> {{ payment.booking?.event_date ? formatDate(payment.booking.event_date) : '-' }}</p>
           </div>
         </div>
@@ -274,7 +292,7 @@ function printInvoice() {
         <table class="print-table">
           <thead>
             <tr>
-              <th style="width:5%">#</th>
+              <th style="width:5%">No</th>
               <th style="width:20%">Service</th>
               <th style="width:25%">Description</th>
               <th style="width:12%">Duration</th>
@@ -298,40 +316,95 @@ function printInvoice() {
           <strong>Location:</strong> {{ payment.booking.event_location }}
         </p>
 
-        <!-- Totals -->
-        <div class="print-totals">
-          <table>
-            <tbody>
-              <tr>
-                <th>Total Harga Paket:</th>
-                <td>{{ formatCurrency(payment.booking?.total_price || 0) }}</td>
-              </tr>
-              <tr v-if="payment.payment_type === 'dp'">
-                <th>DP Dibayar:</th>
-                <td>{{ formatCurrency(payment.amount) }}</td>
-              </tr>
-              <tr v-if="payment.payment_type === 'dp'">
-                <th>Sisa Pembayaran:</th>
-                <td>{{ formatCurrency((payment.booking?.total_price || 0) - payment.amount) }}</td>
-              </tr>
-              <tr v-else>
-                <th>Jumlah Dibayar:</th>
-                <td>{{ formatCurrency(payment.amount) }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <p v-if="payment.booking?.notes" class="print-location">
+          <strong>Catatan Booking:</strong> {{ payment.booking.notes }}
+        </p>
+
+        <!-- Totals + Stamp -->
+        <div class="print-totals-row">
+          <div class="print-stamp-wrap">
+            <div class="print-stamp">
+              <svg viewBox="0 0 200 200" class="stamp-svg">
+                <defs>
+                  <path id="stamp-arc" d="M 29 100 A 71 71 0 1 1 171 100" fill="none" />
+                <path id="stamp-arc-bottom" d="M 29 100 A 71 71 0 0 0 171 100" fill="none" />
+                </defs>
+                <circle cx="100" cy="100" r="88" fill="rgba(255,255,255,0.9)" stroke="#c0392b" stroke-width="2.5" />
+                <circle cx="100" cy="100" r="81" fill="none" stroke="#c0392b" stroke-width="1" />
+                <circle cx="100" cy="100" r="58" fill="none" stroke="#c0392b" stroke-width="1" stroke-dasharray="3,3" />
+                <text font-size="14" font-weight="900" fill="#c0392b" letter-spacing="2" text-anchor="middle">
+                  <textPath href="#stamp-arc" startOffset="50%">
+                    {{ (companyInfo?.company_name || 'Agregrator Business') }}
+                  </textPath>
+                </text>
+                <text x="100" y="90" font-size="22" font-weight="bold" fill="#c0392b" text-anchor="middle" letter-spacing="3">
+                  {{ payment.payment_type === 'dp' ? 'DP' : payment.payment_type === 'full' ? 'DIBAYARKAN' : 'CICILAN' }}
+                </text>
+                <text x="100" y="112" font-size="10" font-weight="bold" fill="#c0392b" text-anchor="middle" letter-spacing="1.5">
+                  {{ payment.status === 'released' ? 'RELEASED' : payment.status === 'paid' ? 'PAID' : '' }}
+                </text>
+                <text font-size="14" font-weight="900" fill="#c0392b" letter-spacing="2" text-anchor="middle">
+                  <textPath href="#stamp-arc-bottom" startOffset="50%">
+                    {{ payment.paid_at ? formatDate(payment.paid_at) : payment.date_created ? formatDate(payment.date_created) : '' }}
+                  </textPath>
+                </text>
+                <line x1="31" y1="100" x2="169" y2="100" stroke="#c0392b" stroke-width="1" />
+              </svg>
+            </div>
+          </div>
+          <div class="print-totals">
+            <table>
+              <tbody>
+                <tr>
+                  <th>Total Harga Paket:</th>
+                  <td>{{ formatCurrency(payment.booking?.total_price || 0) }}</td>
+                </tr>
+                <tr v-if="payment.payment_type === 'dp'">
+                  <th>DP Dibayar:</th>
+                  <td>{{ formatCurrency(payment.amount) }}</td>
+                </tr>
+                <tr v-if="payment.payment_type === 'dp'">
+                  <th>Sisa Pembayaran:</th>
+                  <td>{{ formatCurrency((payment.booking?.total_price || 0) - payment.amount) }}</td>
+                </tr>
+                <tr v-else>
+                  <th>Jumlah Dibayar:</th>
+                  <td>{{ formatCurrency(payment.amount) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <hr class="print-divider">
 
         <div class="print-footer-text">
+          <div class="print-footer-row">
+            <div class="print-footer-left">
+              <p v-if="companyInfo?.bank_name">
+                <strong>Informasi Rekening Bank:</strong><br>
+                {{ companyInfo.bank_name }} — {{ companyInfo.bank_account }}<br>
+                a.n. {{ companyInfo.bank_holder }}
+              </p>
+            </div>
+            <div class="print-footer-right">
+              <p v-if="companyInfo?.address">
+                <strong>{{ companyInfo.company_name }}</strong><br>
+                {{ companyInfo.address }}<br>
+                <template v-if="companyInfo.phone">Telp: {{ companyInfo.phone }}<br></template>
+                <template v-if="companyInfo.email">Email: {{ companyInfo.email }}</template>
+              </p>
+            </div>
+          </div>
+          <hr class="print-divider-light">
           <p>
             Invoice ini merupakan bukti pembayaran <strong>{{ payment.payment_type === 'dp' ? 'Uang Muka (DP)' : payment.payment_type === 'full' ? 'Pelunasan' : 'Cicilan' }}</strong>
             untuk layanan yang dipesan.
-            <template v-if="services.length > 1"><br>Paket ini mencakup <strong>{{ services.length }} layanan</strong>: {{ services.map((s: any) => s.name).join(', ') }}.</template>
           </p>
-          <p v-if="payment.booking?.notes"><br><strong>Catatan Booking:</strong> {{ payment.booking.notes }}</p>
-          <p class="print-thanks">Terima kasih telah menggunakan layanan kami.</p>
+          <p style="font-size:11px;margin-top:6px;">
+            Untuk informasi lebih lanjut mengenai layanan, silakan hubungi tim Customer Service kami melalui nomor telepon atau email yang tercantum di atas.
+          </p>
+          <p class="print-thanks">{{ companyInfo?.footer_text || 'Terima kasih telah menggunakan layanan kami.' }}</p>
         </div>
       </div>
     </div>
@@ -447,6 +520,14 @@ function printInvoice() {
   flex: 1;
 }
 
+.print-info-block:first-child {
+  flex: 2;
+}
+
+.print-info-block:nth-child(2) {
+  flex: 1.5;
+}
+
 .print-info-block strong {
   font-size: 12px;
   color: #555;
@@ -474,9 +555,10 @@ function printInvoice() {
   background: #2c3e50;
   color: #fff;
   padding: 8px 10px;
-  text-align: left;
   font-size: 12px;
   text-transform: uppercase;
+  text-align: center;
+  border-bottom: 1px solid #eee;
 }
 
 .print-table td {
@@ -495,10 +577,16 @@ function printInvoice() {
   color: #555;
 }
 
+.print-totals-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
 .print-totals {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 10px;
 }
 
 .print-totals table {
@@ -526,17 +614,67 @@ function printInvoice() {
   color: #555;
 }
 
+.print-footer-row {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 8px;
+}
+
+.print-footer-left,
+.print-footer-right {
+  flex: 1;
+}
+
+.print-footer-left p,
+.print-footer-right p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.print-divider-light {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 8px 0;
+}
+
 .print-thanks {
   margin-top: 12px;
   font-style: italic;
   color: #888;
+  text-align: center;
+}
+
+.print-stamp-wrap {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.print-stamp {
+  width: 145px;
+  height: 145px;
+  transform: rotate(-6deg);
+}
+
+.stamp-svg {
+  width: 100%;
+  height: 100%;
 }
 
 </style>
 
 <style>
 /* ─── Print media (global — not scoped) ─── */
+@page {
+  size: A4;
+  margin: 0;
+}
+
 @media print {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
   body * {
     visibility: hidden;
   }
@@ -549,6 +687,8 @@ function printInvoice() {
     top: 0;
     left: 0;
     right: 0;
+    page-break-after: avoid;
+    page-break-inside: avoid;
   }
 
   .no-print {
@@ -569,7 +709,19 @@ function printInvoice() {
   }
 
   .print-preview-page {
-    padding: 15mm 20mm !important;
+    padding: 10mm 15mm !important;
+  }
+
+  .print-table {
+    page-break-inside: avoid;
+  }
+
+  .print-totals {
+    page-break-inside: avoid;
+  }
+
+  .print-footer-text {
+    page-break-inside: avoid;
   }
 
   .print-divider {
@@ -592,6 +744,11 @@ function printInvoice() {
   .print-header-left h2,
   .print-header-right h1 {
     color: #000 !important;
+  }
+
+  .print-stamp {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 </style>

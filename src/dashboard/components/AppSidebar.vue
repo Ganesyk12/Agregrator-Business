@@ -38,7 +38,7 @@ const allSections: MenuSection[] = [
     ],
   },
   {
-    title: 'Setup',
+    title: 'Vendor Management',
     roles: ['eUser-Admin'],
     items: [
       { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' },
@@ -46,6 +46,7 @@ const allSections: MenuSection[] = [
       { label: 'Users', icon: 'fa-users', to: '/users' },
     ],
   },
+
   {
     title: 'Finance & Accounting',
     roles: ['eUser-Finance'],
@@ -63,6 +64,7 @@ const allSections: MenuSection[] = [
     items: [
       { label: 'Roles', icon: 'fa-lock', to: '/roles' },
       { label: 'User Access', icon: 'fa-tag', to: '/user-roles' },
+      { label: 'Company Info', icon: 'fa-building-o', to: '/company-info' },
     ],
   },
 ]

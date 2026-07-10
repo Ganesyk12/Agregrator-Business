@@ -67,6 +67,7 @@ model User_Role {
 model Vendor {
   id_vendor     Int      @id @default(autoincrement())
   id_user       Int      @unique
+  vendor_code   String   @unique @default(uuid())
   business_name String
   description   String?
   category      String
@@ -311,5 +312,25 @@ model Payout {
 
   @@unique([id_booking, id_vendor])
   @@index([id_vendor])
+  @@schema("sigyn")
+}
+
+model CompanyInfo {
+  id_company    Int      @id @default(autoincrement())
+  company_name  String   @default("Agregrator Business")
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  bank_name     String?
+  bank_account  String?
+  bank_holder   String?
+  footer_text   String?
+  logo_url      String?
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
+
   @@schema("sigyn")
 }

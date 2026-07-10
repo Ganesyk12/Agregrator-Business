@@ -6,10 +6,10 @@ export interface PortfolioForm {
   id_vendor: number
   id_package: number | null
   id_category: number | null
-  media_url: string
+  cover_url: string
+  title: string
   description: string
   location: string
-  label: string
   sort_order: number
 }
 
@@ -76,10 +76,10 @@ watch(() => props.visible, (val) => {
         id_vendor: props.vendors[0]?.id_vendor ?? 0,
         id_package: null,
         id_category: null,
-        media_url: '',
+        cover_url: '',
+        title: '',
         description: '',
         location: '',
-        label: '',
         sort_order: 0,
       }
     } else if (props.portfolio) {
@@ -87,10 +87,10 @@ watch(() => props.visible, (val) => {
         id_vendor: props.portfolio.id_vendor,
         id_package: props.portfolio.id_package || null,
         id_category: props.portfolio.id_category || null,
-        media_url: props.portfolio.media_url,
+        cover_url: props.portfolio.cover_url || '',
+        title: props.portfolio.title || '',
         description: props.portfolio.description || '',
         location: props.portfolio.location || '',
-        label: props.portfolio.label || '',
         sort_order: props.portfolio.sort_order || 0,
       }
     }
@@ -132,10 +132,12 @@ async function onFileChange(event: Event) {
       }
     }
 
+    const vendor = props.vendors.find(v => Number(v.id_vendor) === Number(form.value.id_vendor))
+    const vendorCode = vendor ? (vendor as any).vendor_code : ''
+
     const queryParams = new URLSearchParams({
-      id_vendor: String(form.value.id_vendor),
+      vendor_code: vendorCode,
       category: catNameClean,
-      package: pkgNameClean
     })
 
     const res = await fetch(`${apiUrl}/api/upload?${queryParams.toString()}`, {
@@ -149,7 +151,7 @@ async function onFileChange(event: Event) {
     }
 
     const result = await res.json()
-    form.value.media_url = result.url
+    form.value.cover_url = result.url
     ToastSuccess('Media berhasil diunggah')
   } catch (err: any) {
     console.error('Upload error:', err)
@@ -180,7 +182,7 @@ function getMediaUrl(url: string) {
 }
 
 function save() {
-  if (!form.value.media_url || !form.value.id_vendor || !form.value.id_package || !form.value.label) return
+  if (!form.value.cover_url || !form.value.id_vendor || !form.value.title) return
   emit('save', { ...form.value })
 }
 </script>
@@ -205,8 +207,12 @@ function save() {
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block;">Label/Title</label>
-                    <input class="form-control" :value="portfolio.label || '-'" readonly />
+                    <label class="control-label" style="font-weight: bold; display: block;">Code</label>
+                    <input class="form-control" :value="portfolio.code || '-'" readonly />
+                  </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block;">Title</label>
+                    <input class="form-control" :value="portfolio.title || '-'" readonly />
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block;">Vendor</label>
@@ -228,19 +234,15 @@ function save() {
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block;">Media path</label>
-                    <input class="form-control" :value="portfolio.media_url" readonly />
+                    <input class="form-control" :value="portfolio.cover_url" readonly />
                   </div>
-                  <div class="form-group" style="text-align: left;" v-if="portfolio.media_url">
+                  <div class="form-group" style="text-align: left;" v-if="portfolio.cover_url">
                     <label class="control-label" style="font-weight: bold; display: block; margin-bottom: 8px;">Preview Media</label>
-                    <img :src="getMediaUrl(portfolio.media_url)" alt="Preview" style="max-width: 100%; max-height: 180px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />
+                    <img :src="getMediaUrl(portfolio.cover_url)" alt="Preview" style="max-width: 100%; max-height: 180px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block;">Description</label>
                     <textarea class="form-control" :value="portfolio.description || '-'" readonly rows="4"></textarea>
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block;">Status</label>
-                    <input class="form-control" :value="portfolio.status" readonly />
                   </div>
                 </div>
               </div>
@@ -253,8 +255,8 @@ function save() {
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold; display: block;">Label/Title *</label>
-                    <input v-model="form.label" class="form-control" placeholder="e.g. Traditional Wedding MUA, Outdoor Prewedding" required />
+                    <label class="control-label" style="font-weight: bold; display: block;">Title *</label>
+                    <input v-model="form.title" class="form-control" placeholder="e.g. Traditional Wedding MUA, Outdoor Prewedding" required />
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block;">Vendor *</label>
@@ -292,17 +294,17 @@ function save() {
                   <!-- File Upload Input with Package & Category query params -->
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block;">Upload Media (Foto/Video) *</label>
-                    <input type="file" @change="onFileChange" class="form-control" accept="image/*,video/*" :required="mode === 'add' && !form.media_url" />
+                    <input type="file" @change="onFileChange" class="form-control" accept="image/*,video/*" :required="mode === 'add' && !form.cover_url" />
                     <div style="margin-top: 6px;">
                       <span v-if="isUploading" class="text-info"><i class="fa fa-spinner fa-spin"></i> Mengunggah file...</span>
                       <span v-if="uploadError" class="text-danger"><i class="fa fa-exclamation-circle"></i> {{ uploadError }}</span>
-                      <span v-if="form.media_url && !isUploading" class="text-success"><i class="fa fa-check-circle"></i> File siap: {{ form.media_url }}</span>
+                      <span v-if="form.cover_url && !isUploading" class="text-success"><i class="fa fa-check-circle"></i> File siap: {{ form.cover_url }}</span>
                     </div>
                   </div>
 
-                  <div class="form-group" style="text-align: left; margin-top: 15px;" v-if="form.media_url">
+                  <div class="form-group" style="text-align: left; margin-top: 15px;" v-if="form.cover_url">
                     <label class="control-label" style="font-weight: bold; display: block; margin-bottom: 8px;">Preview Media</label>
-                    <img :src="getMediaUrl(form.media_url)" alt="Preview" style="max-width: 100%; max-height: 180px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />
+                    <img :src="getMediaUrl(form.cover_url)" alt="Preview" style="max-width: 100%; max-height: 180px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />
                   </div>
 
                   <div class="form-group" style="text-align: left;">
@@ -317,7 +319,7 @@ function save() {
 
         <div class="modal-footer">
           <button type="button" class="btn btn-default" @click="emit('close')">Close</button>
-          <button v-if="mode !== 'detail'" type="button" class="btn btn-primary" @click="save" :disabled="!form.media_url || !form.id_vendor || !form.id_package || !form.label || isUploading">
+          <button v-if="mode !== 'detail'" type="button" class="btn btn-primary" @click="save" :disabled="!form.cover_url || !form.id_vendor || !form.title || isUploading">
             Save changes
           </button>
         </div>

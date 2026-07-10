@@ -18,10 +18,11 @@ const Toast = Swal.mixin({
 interface Portfolio {
   id_portfolio: number
   id_vendor: number
-  media_url: string
+  cover_url: string
+  code: string
+  title: string
   description: string | null
   location: string | null
-  label: string | null
   sort_order: number
   status: string
   date_created: string
@@ -60,6 +61,7 @@ async function fetchVendors() {
     const json = await res.json()
     vendors.value = (json.data || []).map((v: any) => ({
       id_vendor: v.id_vendor,
+      vendor_code: v.vendor_code,
       business_name: v.business_name
     }))
   } catch (err) {
@@ -112,10 +114,10 @@ async function handleSave(data: PortfolioForm) {
           id_vendor: Number(data.id_vendor),
           id_package: data.id_package ? Number(data.id_package) : null,
           id_category: data.id_category ? Number(data.id_category) : null,
-          media_url: data.media_url,
+          cover_url: data.cover_url,
+          title: data.title,
           description: data.description,
           location: data.location,
-          label: data.label,
           sort_order: portfolios.value.length + 1,
         })
       })
@@ -143,10 +145,10 @@ async function handleSave(data: PortfolioForm) {
         body: JSON.stringify({
           id_package: data.id_package ? Number(data.id_package) : null,
           id_category: data.id_category ? Number(data.id_category) : null,
-          media_url: data.media_url,
+          cover_url: data.cover_url,
+          title: data.title,
           description: data.description,
           location: data.location,
-          label: data.label,
           sort_order: selectedPortfolio.value.sort_order,
         })
       })
@@ -214,7 +216,7 @@ const filtered = computed(() => {
   let result = portfolios.value
   if (q) {
     result = result.filter(p =>
-      (p.label?.toLowerCase() || '').includes(q) ||
+      (p.title?.toLowerCase() || '').includes(q) ||
       (p.vendor?.business_name?.toLowerCase() || '').includes(q) ||
       (p.location?.toLowerCase() || '').includes(q) ||
       (p.description?.toLowerCase() || '').includes(q)
@@ -370,9 +372,9 @@ function getMediaUrl(url: string) {
           >
             <!-- Image Wrapper -->
             <div class="portfolio-card-img-wrapper">
-              <img :src="getMediaUrl(p.media_url) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60'" class="portfolio-card-img" alt="Portfolio Media" />
-              <div class="portfolio-card-status-badge" :class="p.status">
-                {{ p.status }}
+              <img :src="getMediaUrl(p.cover_url) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60'" class="portfolio-card-img" alt="Portfolio Media" />
+              <div class="portfolio-card-drag-handle">
+                <i class="fa fa-arrows"></i>
               </div>
             </div>
             
@@ -381,8 +383,8 @@ function getMediaUrl(url: string) {
               <span class="portfolio-card-vendor">
                 <i class="fa fa-shopping-bag"></i> {{ p.vendor?.business_name || 'General Vendor' }}
               </span>
-              <h3 class="portfolio-card-title" :title="p.label || 'No Title'">
-                {{ p.label || 'No Title' }}
+              <h3 class="portfolio-card-title" :title="p.title || 'No Title'">
+                {{ p.title || 'No Title' }}
               </h3>
               <p class="portfolio-card-desc">
                 {{ p.description || 'No description provided for this catalog product.' }}
@@ -393,9 +395,7 @@ function getMediaUrl(url: string) {
                 <span class="portfolio-card-location">
                   <i class="fa fa-map-marker"></i> {{ p.location || 'Online' }}
                 </span>
-                <span class="portfolio-card-order">
-                  Order: <strong>{{ p.sort_order }}</strong>
-                </span>
+
               </div>
             </div>
             
@@ -518,26 +518,27 @@ function getMediaUrl(url: string) {
   transform: scale(1.05);
 }
 
-.portfolio-card-status-badge {
+.portfolio-card-drag-handle {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  border-radius: 20px;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.45);
   color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: grab;
   z-index: 2;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  opacity: 0.6;
+  transition: opacity 0.2s;
 }
 
-.portfolio-card-status-badge.active {
-  background-color: #26B99A; /* Gentella success green */
-}
-
-.portfolio-card-status-badge.inactive {
-  background-color: #d9534f; /* Danger red */
+.portfolio-card:hover .portfolio-card-drag-handle {
+  opacity: 1;
 }
 
 .portfolio-card-body {
@@ -601,8 +602,7 @@ function getMediaUrl(url: string) {
   border-top: 1px solid #e1e1e0;
   background-color: #fafafa;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: stretch;
   padding: 0;
 }
 
@@ -610,18 +610,20 @@ function getMediaUrl(url: string) {
   flex: 1;
   background: transparent;
   border: none;
-  padding: 12px;
-  font-size: 12px;
+  padding: 8px 6px;
+  font-size: 11px;
   font-weight: 500;
   color: #555555;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   transition: background-color 0.2s, color 0.2s;
   outline: none;
   margin: 0 !important;
+  min-width: 0;
+  height: 100%;
 }
 
 .portfolio-btn:not(:last-child) {

@@ -2,40 +2,44 @@ import { Router } from 'express'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
-
 const router = Router()
 
-// Ensure upload directory exists
-const uploadDir = path.join(process.cwd(), 'uploads')
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true })
+const baseDir = path.join(process.cwd(), 'public', 'uploads', 'portfolio')
+
+if (!fs.existsSync(baseDir)) {
+  fs.mkdirSync(baseDir, { recursive: true })
 }
 
-// Multer storage configuration
 const storage = multer.diskStorage({
-  destination: (req, _file, cb) => {
-    const idVendor = req.query.id_vendor || req.body.id_vendor
-    const subdir = idVendor ? `vendor-${idVendor}` : 'general'
-    const targetDir = path.join(uploadDir, subdir)
+  destination: async (req, _file, cb) => {
+    try {
+      const vendorCode = req.query.vendor_code || req.body.vendor_code
+      const category = req.query.category || req.body.category || 'uncategorized'
 
-    // Ensure the subdirectory exists
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true })
+      if (!vendorCode) {
+        cb(new Error('vendor_code is required'), '')
+        return
+      }
+
+      const targetDir = path.join(baseDir, vendorCode, category)
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true })
+      }
+      cb(null, targetDir)
+    } catch (err: any) {
+      cb(err, '')
     }
-
-    cb(null, targetDir)
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
     cb(null, uniqueSuffix + path.extname(file.originalname))
-  }
+  },
 })
 
-// File filter (accept images and videos)
 const fileFilter = (_req: any, file: any, cb: any) => {
   const allowedMimeTypes = [
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-    'video/mp4', 'video/mpeg', 'video/ogg', 'video/webm'
+    'video/mp4', 'video/mpeg', 'video/ogg', 'video/webm',
   ]
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true)
@@ -47,9 +51,7 @@ const fileFilter = (_req: any, file: any, cb: any) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: {
-    fileSize: 50 * 1024 * 1024 // 50 MB limit to support video files
-  }
+  limits: { fileSize: 50 * 1024 * 1024 },
 })
 
 /**
@@ -57,12 +59,17 @@ const upload = multer({
  * /api/upload:
  *   post:
  *     tags: [Upload]
- *     summary: Upload media (gambar/video) ke server
+ *     summary: Upload media (gambar/video)
  *     parameters:
  *       - in: query
- *         name: id_vendor
- *         schema: { type: integer }
- *         description: ID Vendor untuk mengklasifikasikan folder upload
+ *         name: vendor_code
+ *         schema: { type: string }
+ *         required: true
+ *         description: Kode unik vendor
+ *       - in: query
+ *         name: category
+ *         schema: { type: string }
+ *         description: Kategori portfolio (e.g. fotografi, videografi)
  *     requestBody:
  *       required: true
  *       content:
@@ -84,27 +91,31 @@ const upload = multer({
  *                 url: { type: string }
  *                 filename: { type: string }
  */
-router.post('/', upload.single('file'), (req: any, res: any) => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ error: { message: 'File tidak ditemukan' } })
-      return
+router.post('/', (req: any, res: any) => {
+  upload.single('file')(req, res, (err: any) => {
+    if (err) {
+      return res.status(400).json({ error: { message: err.message } })
     }
 
-    const idVendor = req.query.id_vendor || req.body.id_vendor
-    const subdir = idVendor ? `vendor-${idVendor}` : 'general'
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: { message: 'File tidak ditemukan' } })
+      }
 
-    // Return relative path accessible statically
-    const fileUrl = `/uploads/${subdir}/${req.file.filename}`
-    res.json({
-      url: fileUrl,
-      filename: req.file.filename,
-      mimetype: req.file.mimetype,
-      size: req.file.size
-    })
-  } catch (error: any) {
-    res.status(500).json({ error: { message: error.message } })
-  }
+      const vendorCode = req.query.vendor_code || req.body.vendor_code
+      const category = req.query.category || req.body.category || 'uncategorized'
+      const fileUrl = `/uploads/portfolio/${vendorCode}/${category}/${req.file.filename}`
+
+      res.json({
+        url: fileUrl,
+        filename: req.file.filename,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+      })
+    } catch (error: any) {
+      res.status(500).json({ error: { message: error.message } })
+    }
+  })
 })
 
 export default router

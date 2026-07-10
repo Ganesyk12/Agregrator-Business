@@ -1,6 +1,7 @@
 export interface Vendor {
   id_vendor: number
   id_user: number
+  vendor_code: string
   business_name: string
   description: string | null
   category: string
