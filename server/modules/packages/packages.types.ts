@@ -1,6 +1,7 @@
 export interface Package {
   id_package: number
   id_vendor: number
+  id_category: number | null
   name: string
   description: string | null
   price: number
@@ -13,5 +14,8 @@ export interface Package {
   user_modified: string | null
   vendor?: {
     business_name: string
+  }
+  category?: {
+    category_name: string
   }
 }

@@ -18,6 +18,7 @@ const Toast = Swal.mixin({
 interface Package {
   id_package: number
   id_vendor: number
+  id_category: number | null
   name: string
   description: string | null
   price: number
@@ -31,10 +32,14 @@ interface Package {
   vendor?: {
     business_name: string
   }
+  category?: {
+    category_name: string
+  }
 }
 
 const packages = ref<Package[]>([])
 const vendors = ref<Array<{ id_vendor: number; business_name: string }>>([])
+const categories = ref<Array<{ id_category: number; category_name: string }>>([])
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 async function fetchPackages() {
@@ -53,7 +58,6 @@ async function fetchVendors() {
     const res = await fetch(`${apiUrl}/api/vendors`)
     if (!res.ok) throw new Error('Failed to fetch vendors')
     const json = await res.json()
-    // Make sure we only map vendors that are valid
     vendors.value = (json.data || []).map((v: any) => ({
       id_vendor: v.id_vendor,
       business_name: v.business_name
@@ -63,9 +67,24 @@ async function fetchVendors() {
   }
 }
 
+async function fetchCategories() {
+  try {
+    const res = await fetch(`${apiUrl}/api/categories`)
+    if (!res.ok) throw new Error('Failed to fetch categories')
+    const json = await res.json()
+    categories.value = (json.data || []).map((c: any) => ({
+      id_category: c.id_category,
+      category_name: c.category_name
+    }))
+  } catch (err) {
+    console.error('Error fetching categories:', err)
+  }
+}
+
 onMounted(() => {
   fetchPackages()
   fetchVendors()
+  fetchCategories()
 })
 
 const modalVisible = ref(false)
@@ -98,6 +117,7 @@ async function handleSave(data: PackageForm) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_vendor: Number(data.id_vendor),
+          id_category: data.id_category ? Number(data.id_category) : null,
           name: data.name,
           price: Number(data.price),
           description: data.description,
@@ -114,11 +134,11 @@ async function handleSave(data: PackageForm) {
         icon: 'success',
         title: 'Package created successfully'
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating package:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to create package'
+        title: err.message || 'Failed to create package'
       })
     }
   } else if (modalMode.value === 'edit' && selectedPackage.value) {
@@ -127,6 +147,7 @@ async function handleSave(data: PackageForm) {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id_category: data.id_category ? Number(data.id_category) : null,
           name: data.name,
           price: Number(data.price),
           description: data.description,
@@ -143,11 +164,11 @@ async function handleSave(data: PackageForm) {
         icon: 'success',
         title: 'Package updated successfully'
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating package:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to update package'
+        title: err.message || 'Failed to update package'
       })
     }
   }
@@ -179,18 +200,18 @@ async function handleDelete(id: number) {
         icon: 'success',
         title: 'Package has been deleted.'
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting package:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete package'
+        title: err.message || 'Failed to delete package'
       })
     }
   }
 }
 
 const search = ref('')
-const sortColumn = ref<keyof Package>('name')
+const sortColumn = ref<keyof Package | 'vendor' | 'category'>('name')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const currentPage = ref(1)
 const perPage = ref(5)
@@ -202,6 +223,7 @@ const filtered = computed(() => {
     result = result.filter(p =>
       (p.name?.toLowerCase() || '').includes(q) ||
       (p.vendor?.business_name?.toLowerCase() || '').includes(q) ||
+      (p.category?.category_name?.toLowerCase() || '').includes(q) ||
       (p.description?.toLowerCase() || '').includes(q) ||
       (p.duration?.toLowerCase() || '').includes(q) ||
       (p.status?.toLowerCase() || '').includes(q) ||
@@ -216,9 +238,12 @@ const filtered = computed(() => {
     if (col === 'vendor') {
       va = (a.vendor?.business_name || '').toLowerCase()
       vb = (b.vendor?.business_name || '').toLowerCase()
+    } else if (col === 'category') {
+      va = (a.category?.category_name || '').toLowerCase()
+      vb = (b.category?.category_name || '').toLowerCase()
     } else {
-      va = String(a[col] ?? '').toLowerCase()
-      vb = String(b[col] ?? '').toLowerCase()
+      va = String(a[col as keyof Package] ?? '').toLowerCase()
+      vb = String(b[col as keyof Package] ?? '').toLowerCase()
     }
     return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
   })
@@ -232,7 +257,7 @@ const paginated = computed(() => {
   return filtered.value.slice(start, start + perPage.value)
 })
 
-function setSort(col: keyof Package) {
+function setSort(col: any) {
   if (sortColumn.value === col) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
@@ -300,6 +325,7 @@ function formatCurrency(value: number) {
                 v-for="col in ([
                   { key: 'name', label: 'Package Name' },
                   { key: 'vendor', label: 'Vendor' },
+                  { key: 'category', label: 'Category' },
                   { key: 'price', label: 'Price' },
                   { key: 'duration', label: 'Duration' },
                   { key: 'status', label: 'Status' },
@@ -324,6 +350,7 @@ function formatCurrency(value: number) {
             <tr v-for="p in paginated" :key="p.id_package">
               <td>{{ p.name }}</td>
               <td>{{ p.vendor?.business_name || '-' }}</td>
+              <td>{{ p.category?.category_name || '-' }}</td>
               <td>{{ formatCurrency(p.price) }}</td>
               <td>{{ p.duration || '-' }}</td>
               <td>
@@ -343,7 +370,7 @@ function formatCurrency(value: number) {
               </td>
             </tr>
             <tr v-if="paginated.length === 0">
-              <td colspan="8" style="text-align: center;">No packages found.</td>
+              <td colspan="9" style="text-align: center;">No packages found.</td>
             </tr>
           </tbody>
         </table>
@@ -391,6 +418,7 @@ function formatCurrency(value: number) {
     :mode="modalMode"
     :pkg="selectedPackage"
     :vendors="vendors"
+    :categories="categories"
     @close="modalVisible = false"
     @save="handleSave"
   />

@@ -1,8 +1,6 @@
 export interface Booking {
   id_booking: number
   id_user: number
-  id_vendor: number
-  id_package: number
   event_date: Date
   event_location: string | null
   total_price: number
@@ -19,13 +17,29 @@ export interface Booking {
     email: string
     full_name: string
   }
-  vendor?: {
-    id_vendor: number
-    business_name: string
-  }
-  package?: {
-    id_package: number
-    name: string
-    price: number
-  }
+  booking_packages?: {
+    package: {
+      id_package: number
+      name: string
+      price: number
+      description: string | null
+      duration: string | null
+      vendor: {
+        id_vendor: number
+        business_name: string
+      }
+    }
+  }[]
+}
+
+export interface BookingCreateInput {
+  id_user: number
+  package_ids: number[]
+  event_date: Date
+  event_location?: string | null
+  total_price: number
+  dp_amount?: number
+  notes?: string | null
+  user_created?: string
+  user_modified?: string
 }

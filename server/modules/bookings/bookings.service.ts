@@ -1,93 +1,98 @@
 import prisma from '../../db'
-import type { Booking } from './bookings.types'
+import type { Booking, BookingCreateInput } from './bookings.types'
+
+const include = {
+  customer: { select: { id_user: true, email: true, full_name: true } },
+  booking_packages: {
+    include: {
+      package: {
+        select: {
+          id_package: true, name: true, price: true,
+          description: true, duration: true,
+          vendor: { select: { id_vendor: true, business_name: true } },
+        },
+      },
+    },
+  },
+} as const
 
 export async function findAll(): Promise<Booking[]> {
   return prisma.booking.findMany({
-    where: {
-      status: { not: 'deleted' },
-    },
-    include: {
-      customer: { select: { id_user: true, email: true, full_name: true } },
-      vendor: { select: { id_vendor: true, business_name: true } },
-      package: { select: { id_package: true, name: true, price: true } },
-    },
+    where: { status: { not: 'deleted' } },
+    include,
     orderBy: { date_created: 'desc' },
   }) as unknown as Booking[]
 }
 
 export async function findById(id: number): Promise<Booking | null> {
   return prisma.booking.findFirst({
-    where: {
-      id_booking: id,
-      status: { not: 'deleted' },
-    },
-    include: {
-      customer: { select: { id_user: true, email: true, full_name: true } },
-      vendor: { select: { id_vendor: true, business_name: true } },
-      package: { select: { id_package: true, name: true, price: true } },
-    },
+    where: { id_booking: id, status: { not: 'deleted' } },
+    include,
   }) as unknown as Booking | null
 }
 
 export async function create(
-  data: Pick<Booking, 'id_user' | 'id_vendor' | 'id_package' | 'event_date' | 'event_location' | 'total_price' | 'dp_amount' | 'notes'> &
-    Partial<Pick<Booking, 'user_created' | 'user_modified'>>
+  data: BookingCreateInput & { user_created?: string; user_modified?: string }
 ): Promise<Booking> {
-  const payload = {
-    ...data,
-    user_created: data.user_created ?? 'SYSTEM',
-    user_modified: data.user_modified ?? 'SYSTEM',
-  }
+  const { package_ids, ...rest } = data
   return prisma.booking.create({
-    data: payload,
-    include: {
-      customer: { select: { id_user: true, email: true, full_name: true } },
-      vendor: { select: { id_vendor: true, business_name: true } },
-      package: { select: { id_package: true, name: true, price: true } },
+    data: {
+      ...rest,
+      user_created: data.user_created ?? 'SYSTEM',
+      user_modified: data.user_modified ?? 'SYSTEM',
+      booking_packages: {
+        create: package_ids.map((id_package) => ({
+          id_package,
+          user_created: data.user_created ?? 'SYSTEM',
+        })),
+      },
     },
+    include,
   }) as unknown as Booking
 }
 
 export async function update(
   id: number,
-  data: Partial<Pick<Booking, 'event_date' | 'event_location' | 'total_price' | 'dp_amount' | 'status' | 'notes' | 'user_modified'>>
+  data: Partial<Pick<Booking, 'event_date' | 'event_location' | 'total_price' | 'dp_amount' | 'status' | 'notes' | 'user_modified'>> & {
+    package_ids?: number[]
+  }
 ): Promise<Booking | null> {
   const existing = await prisma.booking.findFirst({
-    where: {
-      id_booking: id,
-      status: { not: 'deleted' },
-    },
+    where: { id_booking: id, status: { not: 'deleted' } },
   })
   if (!existing) return null
 
-  const payload = {
-    ...data,
+  const { package_ids, ...fields } = data
+  const updateData: any = {
+    ...fields,
     user_modified: data.user_modified ?? 'SYSTEM',
   }
+
+  if (package_ids) {
+    updateData.booking_packages = {
+      deleteMany: {},
+      create: package_ids.map((id_package) => ({
+        id_package,
+        user_created: 'SYSTEM',
+      })),
+    }
+  }
+
   return prisma.booking.update({
     where: { id_booking: id },
-    data: payload,
-    include: {
-      customer: { select: { id_user: true, email: true, full_name: true } },
-      vendor: { select: { id_vendor: true, business_name: true } },
-      package: { select: { id_package: true, name: true, price: true } },
-    },
+    data: updateData,
+    include,
   }) as unknown as Booking
 }
 
 export async function remove(id: number): Promise<boolean> {
   const existing = await prisma.booking.findFirst({
-    where: {
-      id_booking: id,
-      status: { not: 'deleted' },
-    },
+    where: { id_booking: id, status: { not: 'deleted' } },
   })
   if (!existing) return false
   await prisma.booking.update({
     where: { id_booking: id },
-    data: {
-      status: 'deleted',
-    },
+    data: { status: 'deleted' },
   })
   return true
 }

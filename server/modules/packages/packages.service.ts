@@ -7,7 +7,10 @@ export async function findAll(): Promise<Package[]> {
       status: { not: 'deleted' },
     },
     orderBy: { date_created: 'desc' },
-    include: { vendor: { select: { business_name: true } } }
+    include: {
+      vendor: { select: { business_name: true } },
+      category: { select: { category_name: true } }
+    }
   }) as unknown as Package[]
 }
 
@@ -17,7 +20,10 @@ export async function findById(id: number): Promise<Package | null> {
       id_package: id,
       status: { not: 'deleted' },
     },
-    include: { vendor: { select: { business_name: true } } }
+    include: {
+      vendor: { select: { business_name: true } },
+      category: { select: { category_name: true } }
+    }
   }) as unknown as Package | null
 }
 
@@ -28,12 +34,15 @@ export async function findByVendor(vendorId: number): Promise<Package[]> {
       status: { not: 'deleted' },
     },
     orderBy: { date_created: 'desc' },
-    include: { vendor: { select: { business_name: true } } }
+    include: {
+      vendor: { select: { business_name: true } },
+      category: { select: { category_name: true } }
+    }
   }) as unknown as Package[]
 }
 
 export async function create(
-  data: Pick<Package, 'id_vendor' | 'name' | 'price' | 'description' | 'duration' | 'whats_included'> &
+  data: Pick<Package, 'id_vendor' | 'id_category' | 'name' | 'price' | 'description' | 'duration' | 'whats_included'> &
     Partial<Pick<Package, 'user_created' | 'user_modified'>>
 ): Promise<Package> {
   const payload = {
@@ -43,13 +52,16 @@ export async function create(
   }
   return prisma.package.create({
     data: payload,
-    include: { vendor: { select: { business_name: true } } }
+    include: {
+      vendor: { select: { business_name: true } },
+      category: { select: { category_name: true } }
+    }
   }) as unknown as Package
 }
 
 export async function update(
   id: number,
-  data: Partial<Pick<Package, 'name' | 'description' | 'price' | 'duration' | 'whats_included' | 'status' | 'user_modified'>>
+  data: Partial<Pick<Package, 'id_category' | 'name' | 'description' | 'price' | 'duration' | 'whats_included' | 'status' | 'user_modified'>>
 ): Promise<Package | null> {
   const existing = await prisma.package.findFirst({
     where: {
@@ -65,7 +77,10 @@ export async function update(
   return prisma.package.update({
     where: { id_package: id },
     data: payload,
-    include: { vendor: { select: { business_name: true } } }
+    include: {
+      vendor: { select: { business_name: true } },
+      category: { select: { category_name: true } }
+    }
   }) as unknown as Package
 }
 

@@ -1,151 +1,123 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import CategoryModal, { type CategoryForm } from '../components/CategoryModal.vue'
 import Swal from 'sweetalert2'
-import BookingModal, { type BookingForm } from '../components/BookingModal.vue'
-
-interface Booking {
-  id_booking: number
-  id_user: number
-  event_date: string
-  event_location: string | null
-  total_price: number
-  dp_amount: number
-  status: string
-  notes: string | null
-  date_created: string
-  customer?: {
-    full_name: string
-    email: string
-  }
-  booking_packages?: {
-    package: {
-      id_package: number
-      name: string
-      price: number
-      vendor: { id_vendor: number; business_name: string }
-    }
-  }[]
-}
-
-const bookings = ref<Booking[]>([])
-const search = ref('')
-const sortColumn = ref<keyof Booking | 'customer_name' | 'vendor_name' | 'package_name'>('date_created')
-const sortDirection = ref<'asc' | 'desc'>('desc')
-const currentPage = ref(1)
-const perPage = ref(5)
-
-const modalVisible = ref(false)
-const modalMode = ref<'add' | 'edit' | 'detail'>('add')
-const selectedBooking = ref<Booking | null>(null)
-
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const Toast = Swal.mixin({
   toast: true,
   position: 'top-end',
   showConfirmButton: false,
   timer: 3000,
-  timerProgressBar: true
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer
+    toast.onmouseleave = Swal.resumeTimer
+  }
 })
 
-async function fetchBookings() {
+interface Category {
+  id_category: number
+  category_name: string
+  status: string
+  date_created: string
+  date_modified: string
+  user_created: string | null
+  user_modified: string | null
+}
+
+const modalVisible = ref(false)
+const modalMode = ref<'add' | 'edit' | 'detail'>('add')
+const selectedCategory = ref<Category | null>(null)
+const categories = ref<Category[]>([])
+
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+async function fetchCategories() {
   try {
-    const res = await fetch(`${apiUrl}/api/bookings`)
-    if (!res.ok) throw new Error('Failed to fetch bookings')
+    const res = await fetch(`${apiUrl}/api/categories`)
     const json = await res.json()
-    bookings.value = json.data || []
+    if (!json.data) {
+      categories.value = []
+    } else {
+      categories.value = json.data
+    }
   } catch (err) {
-    console.error('Error fetching bookings:', err)
-    bookings.value = []
+    console.error('Error fetching categories:', err)
+    categories.value = []
   }
 }
 
 onMounted(() => {
-  fetchBookings()
+  fetchCategories()
 })
 
 function openAdd() {
-  selectedBooking.value = null
+  selectedCategory.value = null
   modalMode.value = 'add'
   modalVisible.value = true
 }
 
-function openEdit(b: Booking) {
-  selectedBooking.value = { ...b }
+function openEdit(c: Category) {
+  selectedCategory.value = { ...c }
   modalMode.value = 'edit'
   modalVisible.value = true
 }
 
-function openDetail(b: Booking) {
-  selectedBooking.value = { ...b }
+function openDetail(c: Category) {
+  selectedCategory.value = { ...c }
   modalMode.value = 'detail'
   modalVisible.value = true
 }
 
-function getVendorNames(b: Booking): string {
-  const names = new Set<string>()
-  b.booking_packages?.forEach(bp => {
-    if (bp.package.vendor?.business_name) names.add(bp.package.vendor.business_name)
-  })
-  return [...names].join(', ') || '-'
-}
-
-async function handleSave(data: BookingForm) {
-  const body = {
-    id_user: data.id_user,
-    package_ids: data.package_ids,
-    event_date: data.event_date,
-    event_location: data.event_location,
-    total_price: data.total_price,
-    dp_amount: data.dp_amount,
-    status: data.status,
-    notes: data.notes,
-  }
-
+async function handleSave(data: CategoryForm) {
   if (modalMode.value === 'add') {
     try {
-      const res = await fetch(`${apiUrl}/api/bookings`, {
+      const res = await fetch(`${apiUrl}/api/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          category_name: data.category_name,
+        })
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to create booking')
+        throw new Error(errBody?.error?.message || 'Failed to create category')
       }
-      await fetchBookings()
+      await fetchCategories()
       Toast.fire({
         icon: 'success',
-        title: 'Booking created successfully'
+        title: 'Category created successfully'
       })
     } catch (err: any) {
-      console.error('Error creating booking:', err)
+      console.error('Error creating category:', err)
       Toast.fire({
         icon: 'error',
-        title: err.message || 'Failed to create booking'
+        title: err.message || 'Failed to create category'
       })
     }
-  } else if (modalMode.value === 'edit' && selectedBooking.value) {
+  } else if (modalMode.value === 'edit' && selectedCategory.value) {
     try {
-      const res = await fetch(`${apiUrl}/api/bookings/${selectedBooking.value.id_booking}`, {
+      const res = await fetch(`${apiUrl}/api/categories/${selectedCategory.value.id_category}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          category_name: data.category_name,
+        })
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to update booking')
+        throw new Error(errBody?.error?.message || 'Failed to update category')
       }
-      await fetchBookings()
+      await fetchCategories()
       Toast.fire({
         icon: 'success',
-        title: 'Booking updated successfully'
+        title: 'Category updated successfully'
       })
     } catch (err: any) {
-      console.error('Error updating booking:', err)
+      console.error('Error updating category:', err)
       Toast.fire({
         icon: 'error',
-        title: err.message || 'Failed to update booking'
+        title: err.message || 'Failed to update category'
       })
     }
   }
@@ -155,7 +127,7 @@ async function handleSave(data: BookingForm) {
 async function handleDelete(id: number) {
   const result = await Swal.fire({
     title: 'Are you sure?',
-    text: "This will soft-delete the booking.",
+    text: "You won't be able to revert this!",
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
@@ -165,60 +137,48 @@ async function handleDelete(id: number) {
 
   if (result.isConfirmed) {
     try {
-      const res = await fetch(`${apiUrl}/api/bookings/${id}`, {
+      const res = await fetch(`${apiUrl}/api/categories/${id}`, {
         method: 'DELETE',
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody?.error?.message || 'Failed to delete booking')
+        throw new Error(errBody?.error?.message || 'Failed to delete category')
       }
-      await fetchBookings()
+      await fetchCategories()
       Toast.fire({
         icon: 'success',
-        title: 'Booking deleted successfully.'
+        title: 'Category has been deleted.'
       })
     } catch (err: any) {
-      console.error('Error deleting booking:', err)
+      console.error('Error deleting category:', err)
       Toast.fire({
         icon: 'error',
-        title: err.message || 'Failed to delete booking'
+        title: err.message || 'Failed to delete category'
       })
     }
   }
 }
 
-// Sorting and Filtering
+const search = ref('')
+const sortColumn = ref<keyof Category>('category_name')
+const sortDirection = ref<'asc' | 'desc'>('asc')
+const currentPage = ref(1)
+const perPage = ref(5)
+
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
-  let result = bookings.value
+  let result = categories.value
   if (q) {
-    result = result.filter(b =>
-      (b.customer?.full_name?.toLowerCase() || '').includes(q) ||
-      (b.vendor?.business_name?.toLowerCase() || '').includes(q) ||
-      (b.booking_packages?.map(bp => bp.package.name).join(', ')?.toLowerCase() || '').includes(q) ||
-      (b.status?.toLowerCase() || '').includes(q) ||
-      (b.event_location?.toLowerCase() || '').includes(q)
+    result = result.filter(c =>
+      (c.category_name?.toLowerCase() || '').includes(q) ||
+      (c.status?.toLowerCase() || '').includes(q)
     )
   }
-
   const col = sortColumn.value
   const dir = sortDirection.value
   result = [...result].sort((a, b) => {
-    let va = ''
-    let vb = ''
-    if (col === 'customer_name') {
-      va = (a.customer?.full_name || '').toLowerCase()
-      vb = (b.customer?.full_name || '').toLowerCase()
-    } else if (col === 'vendor_name') {
-      va = getVendorNames(a).toLowerCase()
-      vb = getVendorNames(b).toLowerCase()
-    } else if (col === 'package_name') {
-      va = (a.booking_packages?.map(bp => bp.package.name).join(', ') || '').toLowerCase()
-      vb = (b.booking_packages?.map(bp => bp.package.name).join(', ') || '').toLowerCase()
-    } else {
-      va = String(a[col as keyof Booking] ?? '').toLowerCase()
-      vb = String(b[col as keyof Booking] ?? '').toLowerCase()
-    }
+    const va = String(a[col] ?? '').toLowerCase()
+    const vb = String(b[col] ?? '').toLowerCase()
     return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
   })
   return result
@@ -231,11 +191,11 @@ const paginated = computed(() => {
   return filtered.value.slice(start, start + perPage.value)
 })
 
-function setSort(col: string) {
+function setSort(col: keyof Category) {
   if (sortColumn.value === col) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
-    sortColumn.value = col as any
+    sortColumn.value = col
     sortDirection.value = 'asc'
   }
   currentPage.value = 1
@@ -258,16 +218,12 @@ const pageNumbers = computed(() => {
   for (let i = start; i <= end; i++) pages.push(i)
   return pages
 })
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value)
-}
 </script>
 
 <template>
   <div class="x_panel">
     <div class="x_title">
-      <h2>Bookings Management</h2>
+      <h2>Categories Management</h2>
       <div class="clearfix"></div>
     </div>
 
@@ -275,17 +231,17 @@ function formatCurrency(value: number) {
       <div class="row" style="margin-bottom: 12px;">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <button class="btn btn-success" @click="openAdd">
-            <i class="fa fa-plus"></i> Create Booking
+            <i class="fa fa-plus"></i> Add Category
           </button>
         </div>
         <div class="col-md-6 col-sm-6 col-xs-12">
-          <div class="input-group" style="margin: 0;">
+          <div class="input-group" style="max-width: 250px; float: right;">
             <span class="input-group-addon"><i class="fa fa-search"></i></span>
             <input
               type="text"
-              v-model="search"
               class="form-control"
-              placeholder="Search by customer, vendor, package, status..."
+              placeholder="Search categories..."
+              v-model="search"
             />
           </div>
         </div>
@@ -297,14 +253,11 @@ function formatCurrency(value: number) {
             <tr>
               <th
                 v-for="col in ([
-                  { key: 'customer_name', label: 'Customer' },
-                  { key: 'vendor_name', label: 'Vendor' },
-                  { key: 'package_name', label: 'Package' },
-                  { key: 'event_date', label: 'Event Date' },
-                  { key: 'total_price', label: 'Total Price' },
-                  { key: 'dp_amount', label: 'DP Amount' },
+                  { key: 'category_name', label: 'Category Name' },
                   { key: 'status', label: 'Status' },
-                ] as { key: string; label: string }[])"
+                  { key: 'user_modified', label: 'Modified By' },
+                  { key: 'date_created', label: 'Created' },
+                ] as { key: keyof Category; label: string }[])"
                 :key="col.key"
                 @click="setSort(col.key)"
                 style="cursor: pointer; user-select: none;"
@@ -320,32 +273,26 @@ function formatCurrency(value: number) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="b in paginated" :key="b.id_booking">
-              <td>{{ b.customer?.full_name || '-' }}</td>
-              <td>{{ getVendorNames(b) }}</td>
-              <td>{{ b.booking_packages?.map(bp => bp.package.name).join(', ') || '-' }}</td>
-              <td>{{ new Date(b.event_date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) }}</td>
-              <td>{{ formatCurrency(b.total_price) }}</td>
-              <td>{{ formatCurrency(b.dp_amount) }}</td>
+            <tr v-for="c in paginated" :key="c.id_category">
+              <td>{{ c.category_name }}</td>
               <td>
                 <span
                   :class="{
-                    'label label-success': b.status === 'completed',
-                    'label label-info': b.status === 'confirmed',
-                    'label label-warning': b.status === 'pending',
-                    'label label-danger': b.status === 'cancelled',
+                    'label label-success': c.status === 'active',
+                    'label label-danger': c.status === 'deleted' || c.status === 'inactive',
                   }"
-                  style="font-size: 13px; text-transform: uppercase;"
-                >{{ b.status }}</span>
+                >{{ c.status }}</span>
               </td>
+              <td>{{ c.user_modified || '-' }}</td>
+              <td>{{ new Date(c.date_created).toLocaleDateString() }}</td>
               <td style="white-space: nowrap;">
-                <button class="btn btn-primary" @click="openDetail(b)"><i class="fa fa-eye"></i></button>
-                <button class="btn btn-info" @click="openEdit(b)"><i class="fa fa-pencil"></i></button>
-                <button class="btn btn-danger" @click="handleDelete(b.id_booking)"><i class="fa fa-trash"></i></button>
+                <button class="btn btn-primary" @click="openDetail(c)"><i class="fa fa-eye"></i></button>
+                <button class="btn btn-info" @click="openEdit(c)"><i class="fa fa-pencil"></i></button>
+                <button class="btn btn-danger" @click="handleDelete(c.id_category)"><i class="fa fa-trash"></i></button>
               </td>
             </tr>
             <tr v-if="paginated.length === 0">
-              <td colspan="8" style="text-align: center;">No bookings found.</td>
+              <td colspan="5" style="text-align: center;">No categories found.</td>
             </tr>
           </tbody>
         </table>
@@ -388,10 +335,10 @@ function formatCurrency(value: number) {
     </div>
   </div>
 
-  <BookingModal
+  <CategoryModal
     :visible="modalVisible"
     :mode="modalMode"
-    :booking="selectedBooking"
+    :category="selectedCategory"
     @close="modalVisible = false"
     @save="handleSave"
   />

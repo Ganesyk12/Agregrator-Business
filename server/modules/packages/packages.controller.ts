@@ -35,11 +35,19 @@ export async function getByVendor(req: Request, res: Response, next: NextFunctio
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_vendor, name, price, description, duration, whats_included } = req.body
+    const { id_vendor, id_category, name, price, description, duration, whats_included } = req.body
     if (!id_vendor || !name || price === undefined) {
       throw createError(400, 'id_vendor, name, and price are required')
     }
-    const pkg = await packageService.create({ id_vendor, name, price, description, duration, whats_included })
+    const pkg = await packageService.create({
+      id_vendor: Number(id_vendor),
+      id_category: id_category ? Number(id_category) : null,
+      name,
+      price: Number(price),
+      description,
+      duration,
+      whats_included
+    })
     res.status(201).json({ data: pkg })
   } catch (err) {
     next(err)
@@ -48,7 +56,17 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 
 export async function update(req: Request, res: Response, next: NextFunction) {
   try {
-    const pkg = await packageService.update(Number(req.params.id), req.body)
+    const { id_category, name, price, description, duration, whats_included, status } = req.body
+    const updateData: any = {}
+    if (id_category !== undefined) updateData.id_category = id_category ? Number(id_category) : null
+    if (name !== undefined) updateData.name = name
+    if (price !== undefined) updateData.price = price !== null ? Number(price) : undefined
+    if (description !== undefined) updateData.description = description
+    if (duration !== undefined) updateData.duration = duration
+    if (whats_included !== undefined) updateData.whats_included = whats_included
+    if (status !== undefined) updateData.status = status
+
+    const pkg = await packageService.update(Number(req.params.id), updateData)
     if (!pkg) {
       res.status(404).json({ error: { message: 'Package not found' } })
       return
