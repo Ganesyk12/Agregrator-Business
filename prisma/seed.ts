@@ -10,7 +10,22 @@ const pool = new pg.Pool({ connectionString })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
+const portfolioImages = [
+  'banner-image-1.jpg', 'banner-image-2.jpg', 'banner-image-3.jpg',
+  'banner-image-4.jpg', 'banner-image-5.jpg', 'banner-image-6.jpg',
+  'collection-banner.jpg', 'newsletter-image.jpg', 'bg-newsletter.jpg',
+  'single-image-2.jpg', 'post-image1.jpg', 'post-image2.jpg',
+  'post-image3.jpg', 'post-image4.jpg', 'post-image5.jpg',
+  'post-image6.jpg', 'post-image7.jpg', 'post-image8.jpg',
+  'post-image9.jpg', 'post-image1.jpg', 'post-image2.jpg',
+]
+
+function img(file: string) {
+  return `/src/assets/kaira/images/${file}`
+}
+
 async function main() {
+  // ── Roles ──
   console.log('Seeding database roles...')
   const roles = [
     { role_code: 'eUser-Admin', name: 'Admin' },
@@ -113,8 +128,9 @@ async function main() {
       description: 'Vendor fotografi & videografi pernikahan profesional',
       category: 'Fotografi',
       location: 'Jakarta Selatan',
+      years_exp: 8,
       status: 'verified',
-      verified_at: new Date(),
+      verified_at: new Date('2024-06-01'),
     },
   })
 
@@ -127,11 +143,57 @@ async function main() {
       description: 'Katering pernikahan dengan menu prasmanan & fine dining',
       category: 'Katering',
       location: 'Jakarta Pusat',
+      years_exp: 5,
       status: 'verified',
       verified_at: new Date(),
     },
   })
   console.log('Vendors seeded successfully.')
+
+  // ── Portfolios ──
+  console.log('Seeding portfolios...')
+  const vendorPortfolios: { vendorId: number; name: string; cat: string }[] = [
+    { vendorId: vendor1.id_vendor, name: 'Akbar & Sarah Wedding', cat: 'Wedding' },
+    { vendorId: vendor1.id_vendor, name: 'Rina Graduation Photos', cat: 'Graduation' },
+    { vendorId: vendor1.id_vendor, name: 'Budi Family Session', cat: 'Family' },
+    { vendorId: vendor2.id_vendor, name: 'TechCorp Annual Event', cat: 'Corporate' },
+    { vendorId: vendor2.id_vendor, name: 'Dian & Adi Wedding Video', cat: 'Wedding' },
+  ]
+
+  for (let i = 0; i < vendorPortfolios.length; i++) {
+    const vp = vendorPortfolios[i]
+    const code = `PRT-${String(i + 1).padStart(4, '0')}`
+    const coverIdx = (i * 3) % portfolioImages.length
+
+    const portfolio = await prisma.portfolio.create({
+      data: {
+        id_vendor: vp.vendorId,
+        title: vp.name,
+        code,
+        cover_url: img(portfolioImages[coverIdx]),
+        description: `A beautiful ${vp.cat.toLowerCase()} project captured by our talented team.`,
+      },
+    })
+
+    const imageIndices = [
+      (coverIdx + 1) % portfolioImages.length,
+      (coverIdx + 2) % portfolioImages.length,
+      (coverIdx + 3) % portfolioImages.length,
+      (coverIdx + 4) % portfolioImages.length,
+    ]
+
+    for (let j = 0; j < imageIndices.length; j++) {
+      await prisma.portfolioImage.create({
+        data: {
+          id_portfolio: portfolio.id_portfolio,
+          image_url: img(portfolioImages[imageIndices[j]]),
+          caption: j === 0 ? 'Main highlight' : j === 1 ? 'Behind the scenes' : `Photo ${j + 1}`,
+          sort_order: j,
+        },
+      })
+    }
+  }
+  console.log('Portfolios seeded successfully.')
 
   // ── Packages ──
   console.log('Seeding packages...')
@@ -202,7 +264,7 @@ async function main() {
   })
   console.log('Packages seeded successfully.')
 
-  // ── Booking (1 booking with 5 packages from 2 vendors) ──
+  // ── Booking ──
   console.log('Seeding booking with multi-vendor packages...')
   const totalPrice = pkg1.price + pkg2.price + pkg3.price + pkg4.price + pkg5.price
   const booking = await prisma.booking.create({
@@ -243,7 +305,7 @@ async function main() {
   })
   console.log(`Payment created for booking #${booking.id_booking} (DP: Rp${dpAmount.toLocaleString()})`)
 
-  // ── Commissions (per vendor) ──
+  // ── Commissions ──
   console.log('Seeding commissions...')
   const commissionPct = 10
   const vendor1PackagesTotal = pkg1.price + pkg2.price + pkg3.price
@@ -271,7 +333,7 @@ async function main() {
   })
   console.log(`Commissions created for both vendors (${commissionPct}% each)`)
 
-  // ── Payouts (per vendor) ──
+  // ── Payouts ──
   console.log('Seeding payouts...')
   await prisma.payout.create({
     data: {
@@ -291,7 +353,9 @@ async function main() {
       user_created: 'SYSTEM',
     },
   })
-  console.log(`Payouts created for both vendors`)
+  console.log('Payouts created for both vendors')
+
+  console.log('Seed completed successfully!')
 }
 
 main()

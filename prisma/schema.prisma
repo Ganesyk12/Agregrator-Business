@@ -71,6 +71,7 @@ model Vendor {
   description   String?
   category      String
   location      String?
+  years_exp     Int      @default(0)
   status        String   @default("pending")
   verified_at   DateTime?
   date_created  DateTime @default(now())
@@ -90,13 +91,31 @@ model Vendor {
   @@schema("sigyn")
 }
 
+model Category {
+  id_category   Int      @id @default(autoincrement())
+  category_name String   @unique
+  status        String   @default("active")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
+
+  packages   Package[]
+  portfolios Portfolio[]
+
+  @@index([status])
+  @@schema("sigyn")
+}
+
 model Portfolio {
   id_portfolio  Int      @id @default(autoincrement())
   id_vendor     Int
   id_package    Int?
   id_category   Int?
-  media_url     String
+  title         String
+  code          String   @unique
   description   String?
+  cover_url     String
   location      String?
   label         String?
   sort_order    Int      @default(0)
@@ -106,13 +125,27 @@ model Portfolio {
   user_created  String?
   user_modified String?
 
-  vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
-  package Package? @relation(fields: [id_package], references: [id_package])
-  category Category? @relation(fields: [id_category], references: [id_category])
+  vendor   Vendor           @relation(fields: [id_vendor], references: [id_vendor])
+  package  Package?         @relation(fields: [id_package], references: [id_package])
+  category Category?        @relation(fields: [id_category], references: [id_category])
+  images   PortfolioImage[]
 
   @@index([id_vendor])
   @@index([id_package])
   @@index([id_category])
+  @@schema("sigyn")
+}
+
+model PortfolioImage {
+  id_image     Int      @id @default(autoincrement())
+  id_portfolio Int
+  image_url    String
+  caption      String?
+  sort_order   Int      @default(0)
+  date_created DateTime @default(now())
+
+  portfolio Portfolio @relation(fields: [id_portfolio], references: [id_portfolio], onDelete: Cascade)
+
   @@schema("sigyn")
 }
 
@@ -278,21 +311,5 @@ model Payout {
 
   @@unique([id_booking, id_vendor])
   @@index([id_vendor])
-  @@schema("sigyn")
-}
-
-model Category {
-  id_category   Int      @id @default(autoincrement())
-  category_name String   @unique
-  status        String   @default("active")
-  date_created  DateTime @default(now())
-  date_modified DateTime @updatedAt
-  user_created  String?
-  user_modified String?
-
-  packages      Package[]
-  portfolios    Portfolio[]
-
-  @@index([status])
   @@schema("sigyn")
 }

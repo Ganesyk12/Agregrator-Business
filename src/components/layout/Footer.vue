@@ -6,7 +6,7 @@
           <div class="footer-menu footer-menu-001">
             <div class="footer-intro mb-4">
               <a href="/">
-                <img :src="mainLogo" alt="logo">
+                <img :src="mainLogo" alt="Sigyn" style="max-width: 150px; height: auto;">
               </a>
             </div>
             <p>Gravida massa volutpat aenean odio. Amet, turpis erat nullam fringilla elementum diam in. Nisi, purus
@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import mainLogo from '@/assets/kaira/images/main-logo.png'
+import mainLogo from '@/assets/kaira/images/logosigyn.png'
 import arctIcon from '@/assets/kaira/images/arct-icon.png'
 import dhlLogo from '@/assets/kaira/images/dhl-logo.png'
 import visaCard from '@/assets/kaira/images/visa-card.png'

@@ -7,7 +7,6 @@ import HeroBanner from '@/components/home/HeroBanner.vue'
 import FeaturesSection from '@/components/home/FeaturesSection.vue'
 import CategorySection from '@/components/home/CategorySection.vue'
 import ProductSection from '@/components/home/ProductSection.vue'
-import CollectionSection from '@/components/home/CollectionSection.vue'
 import VideoSection from '@/components/home/VideoSection.vue'
 import TestimonialSection from '@/components/home/TestimonialSection.vue'
 import BlogSection from '@/components/home/BlogSection.vue'
@@ -76,7 +75,6 @@ const relatedProducts: Product[] = [
       view-all-link="/shop"
     />
     
-    <CollectionSection />
     
     <ProductSection 
       title="Best Selling Items"

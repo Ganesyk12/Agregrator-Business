@@ -1,7 +1,11 @@
-// src/router/index.ts
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import BaseView from '../views/BaseView.vue'
+import PhotographyView from '../views/PhotographyView.vue'
+import MUAView from '../views/MUAView.vue'
+import BouquetView from '../views/BouquetView.vue'
+import PortfolioDetailView from '../views/PortfolioDetailView.vue'
+import BookingView from '../views/BookingView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -22,10 +26,29 @@ const routes: RouteRecordRaw[] = [
     props: { title: 'Product Detail' }
   },
   {
-    path: '/blog',
-    name: 'blog',
-    component: BaseView,
-    props: { title: 'Blog' }
+    path: '/photography',
+    name: 'photography',
+    component: PhotographyView
+  },
+  {
+    path: '/mua',
+    name: 'mua',
+    component: MUAView
+  },
+  {
+    path: '/bouquet',
+    name: 'bouquet',
+    component: BouquetView
+  },
+  {
+    path: '/portfolio/:id',
+    name: 'portfolio-detail',
+    component: PortfolioDetailView
+  },
+  {
+    path: '/booking',
+    name: 'booking',
+    component: BookingView
   },
   {
     path: '/about',
