@@ -3,9 +3,9 @@
     <div class="container-fluid">
       <div class="row justify-content-between align-items-center w-100">
         <div class="col-auto">
-          <a class="navbar-brand text-white" href="/">
+          <router-link class="navbar-brand text-white" to="/">
             <img :src="mainLogo" alt="Sigyn" style="height: 60px; width: auto;">
-          </a>
+          </router-link>
         </div>
 
         <div class="col-auto">
@@ -20,41 +20,30 @@
             </div>
 
             <div class="offcanvas-body">
-              <ul class="navbar-nav justify-content-end flex-grow-1 gap-1 gap-md-5 pe-3">
-                <!-- Dropdown Home -->
+              <ul class="navbar-nav justify-content-end flex-grow-1 gap-1 gap-md-4 pe-3">
+                <li class="nav-item">
+                  <router-link class="nav-link" to="/">Beranda</router-link>
+                </li>
                 <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle active" href="#" id="dropdownHome" data-bs-toggle="dropdown" aria-expanded="false">
-                    Home
+                  <a class="nav-link dropdown-toggle" href="#" id="dropdownLayanan" data-bs-toggle="dropdown" aria-expanded="false">
+                    Layanan
                   </a>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownHome">
-                    <li><a class="dropdown-item" href="/">Home Layout 1</a></li>
-                    <li><a class="dropdown-item" href="/">Home Layout 2</a></li>
-                    <li><a class="dropdown-item" href="/">Home Layout 3</a></li>
-                    <li><a class="dropdown-item" href="/">Home Layout 4</a></li>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownLayanan">
+                    <li><router-link class="dropdown-item" to="/photography">Photography</router-link></li>
+                    <li><router-link class="dropdown-item" to="/mua">MUA</router-link></li>
+                    <li><router-link class="dropdown-item" to="/photography">Nail Art</router-link></li>
+                    <li><router-link class="dropdown-item" to="/bouquet">Bouquet Flowers</router-link></li>
                   </ul>
                 </li>
-
-                <!-- Dropdown Shop -->
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="dropdownShop" data-bs-toggle="dropdown" aria-expanded="false">
-                    Shop
-                  </a>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownShop">
-                    <li><a class="dropdown-item" href="/shop">Shop Sidebar</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Three Column</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Three Column Wide</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Four Column</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Four Column Wide</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Six Column</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Six Column Wide</a></li>
-                    <li><a class="dropdown-item" href="/product">Single Product</a></li>
-                    <li><a class="dropdown-item" href="/product">Single Product V2</a></li>
-                  </ul>
+                <li class="nav-item">
+                  <router-link class="nav-link" to="/shop">Explore</router-link>
                 </li>
-                <li class="nav-item"><a class="nav-link" href="/photography">Photography</a></li>
-                <li class="nav-item"><a class="nav-link" href="/mua">MUA</a></li>
-                <li class="nav-item"><a class="nav-link" href="/bouquet">Bouquet Flowers</a></li>
-                <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+                <li class="nav-item">
+                  <router-link class="nav-link" to="/about">About</router-link>
+                </li>
+                <li class="nav-item">
+                  <router-link class="nav-link" to="/contact">Contact</router-link>
+                </li>
               </ul>
             </div>
           </div>
@@ -63,7 +52,9 @@
         <div class="col-3 col-lg-auto">
           <ul class="list-unstyled d-flex m-0">
             <li class="d-none d-lg-block">
-              <a href="/wishlist" class="text-uppercase mx-3">Wishlist <span class="wishlist-count">(0)</span></a>
+              <router-link to="/wishlist" class="text-uppercase mx-3">
+                Wishlist <span class="wishlist-count">(0)</span>
+              </router-link>
             </li>
             <li class="d-none d-lg-block">
               <a href="#" class="text-uppercase mx-3" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
@@ -71,11 +62,11 @@
               </a>
             </li>
             <li class="d-lg-none">
-              <a href="/wishlist" class="mx-2">
+              <router-link to="/wishlist" class="mx-2">
                 <svg width="24" height="24" viewBox="0 0 24 24">
                   <use xlink:href="#heart"></use>
                 </svg>
-              </a>
+              </router-link>
             </li>
             <li class="d-lg-none">
               <a href="#" class="mx-2" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">

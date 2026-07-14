@@ -13,6 +13,9 @@ import packageRoutes from './modules/packages/packages.routes'
 import roleRoutes from './modules/roles/roles.routes'
 import locationRoutes from './modules/locations/locations.routes'
 import bookingRoutes from './modules/bookings/bookings.routes'
+import portfolioRoutes from './modules/portfolios/portfolios.routes'
+// import portfolioRoutes from './modules/portfolios/portfolios.routes'
+import portfolioMockRoutes from './modules/portfolios/portfolios.mock'
 
 const app = express()
 
@@ -38,6 +41,7 @@ app.use('/api/packages', packageRoutes)
 app.use('/api/roles', roleRoutes)
 app.use('/api/locations', locationRoutes)
 app.use('/api/bookings', bookingRoutes)
+app.use('/api/portfolios', portfolioMockRoutes)
 
 app.use(errorHandler)
 

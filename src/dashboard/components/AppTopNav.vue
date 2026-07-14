@@ -17,7 +17,7 @@ const toggleSidebar = inject('toggleSidebar', () => {})
         <ul class="nav navbar-nav navbar-right">
           <li class="">
             <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-              <img src="/gentela-gh-pages/production/images/img.jpg" alt="">Admin
+              <img src="https://via.placeholder.com/40" alt="">Admin
               <span class=" fa fa-angle-down"></span>
             </a>
             <ul class="dropdown-menu dropdown-usermenu pull-right">
