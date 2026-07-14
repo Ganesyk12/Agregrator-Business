@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, inject, type Ref } from 'vue'
+import { ref, computed, inject, type Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
@@ -17,39 +17,80 @@ interface MenuItem {
 interface MenuSection {
   title: string
   items: MenuItem[]
+  roles: string[]
 }
 
-const menuSections: MenuSection[] = [
+const allSections: MenuSection[] = [
   {
     title: 'General',
+    roles: ['eUser-Customer'],
     items: [
-      {
-        label: 'Home',
-        icon: 'fa-home',
-        children: [
-          { label: 'Dashboard', icon: '', to: '/' },
-        ],
-      },
+      { label: 'Dashboard', icon: 'fa-dashboard', to: '/' },
     ],
   },
   {
-    title: 'Admin',
-    items: [
-      { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' },
-      { label: 'Payments', icon: 'fa-credit-card', to: '/payments' },
-    ],
-  },
-  {
-    title: 'Setup',
+    title: 'Service Management',
+    roles: ['eUser-Vendor'],
     items: [
       { label: 'Vendors', icon: 'fa-building', to: '/vendors' },
       { label: 'Packages', icon: 'fa-cube', to: '/packages' },
+      { label: 'Portfolio', icon: 'fa-picture-o', to: '/portfolios' },
+    ],
+  },
+  {
+    title: 'Vendor Management',
+    roles: ['eUser-Admin'],
+    items: [
+      { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' },
+      { label: 'Categories', icon: 'fa-tags', to: '/categories' },
       { label: 'Users', icon: 'fa-users', to: '/users' },
+    ],
+  },
+
+  {
+    title: 'Finance & Accounting',
+    roles: ['eUser-Finance'],
+    items: [
+      { label: 'Revenue Summary', icon: 'fa-line-chart', to: '/' },
+      { label: 'Payments', icon: 'fa-credit-card', to: '/payments' },
+      { label: 'Commissions', icon: 'fa-percent', to: '/commissions' },
+      { label: 'Payouts', icon: 'fa-money', to: '/payouts' },
+      { label: 'Invoices', icon: 'fa-file-text-o', to: '/invoices' },
+    ],
+  },
+  {
+    title: 'System',
+    roles: ['eUser-SuperAdmin'],
+    items: [
       { label: 'Roles', icon: 'fa-lock', to: '/roles' },
       { label: 'User Access', icon: 'fa-tag', to: '/user-roles' },
+      { label: 'Company Info', icon: 'fa-building-o', to: '/company-info' },
     ],
   },
 ]
+
+const userRoles = ref<string[]>([])
+
+function loadUserRoles() {
+  try {
+    const raw = localStorage.getItem('sigyn_user')
+    if (raw) {
+      const user = JSON.parse(raw)
+      userRoles.value = (user.roles || []).map((r: any) => r.role_code)
+    }
+  } catch {
+    userRoles.value = []
+  }
+}
+
+loadUserRoles()
+
+const isSuperAdmin = computed(() => userRoles.value.includes('eUser-SuperAdmin'))
+
+const menuSections = computed(() => {
+  if (isSuperAdmin.value) return allSections
+  return allSections.filter(s => s.roles.some(r => userRoles.value.includes(r)))
+})
 
 const activeMenu = ref<string | null>(null)
 
@@ -79,17 +120,17 @@ function toggleMenu(menu: MenuItem) {
 </script>
 
 <template>
-  <div class="col-md-3 left_col">
-    <div class="left_col scroll-view">
-      <div class="navbar nav_title" style="border: 0;">
-        <a href="/" class="site_title">
-          <i class="fa fa-paw"></i> <span>Agregrator Business</span>
-        </a>
-      </div>
+  <div class="col-md-3 left_col sidebar-wrap">
+    <div class="navbar nav_title" style="border: 0;">
+      <a href="/" class="site_title">
+        <i class="fa fa-paw"></i> <span>Agregrator Business</span>
+      </a>
+    </div>
 
-      <div class="clearfix"></div>
+    <div class="clearfix"></div>
 
-      <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+    <div class="sidebar-body">
+      <div class="main_menu_side hidden-print main_menu">
         <div v-for="section in menuSections" :key="section.title" class="menu_section">
           <h3>{{ section.title }}</h3>
           <ul class="nav side-menu">
@@ -121,8 +162,6 @@ function toggleMenu(menu: MenuItem) {
           </ul>
         </div>
       </div>
-
-
     </div>
   </div>
 </template>
@@ -139,5 +178,18 @@ function toggleMenu(menu: MenuItem) {
 }
 .menu_section:first-of-type {
   margin-top: 20px;
+}
+
+.sidebar-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 </style>

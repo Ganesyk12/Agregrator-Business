@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue'
 
 export interface PackageForm {
   id_vendor: number
+  id_category: number | null
   name: string
   description: string
   price: number
@@ -15,6 +16,7 @@ const props = defineProps<{
   mode: 'add' | 'edit' | 'detail'
   pkg?: any
   vendors: Array<{ id_vendor: number; business_name: string }>
+  categories: Array<{ id_category: number; category_name: string }>
 }>()
 
 const emit = defineEmits<{
@@ -24,6 +26,7 @@ const emit = defineEmits<{
 
 const form = ref<PackageForm>({
   id_vendor: 0,
+  id_category: null,
   name: '',
   description: '',
   price: 0,
@@ -36,6 +39,7 @@ watch(() => props.visible, (val) => {
     if (props.mode === 'add') {
       form.value = {
         id_vendor: props.vendors[0]?.id_vendor ?? 0,
+        id_category: null,
         name: '',
         description: '',
         price: 0,
@@ -45,6 +49,7 @@ watch(() => props.visible, (val) => {
     } else if (props.pkg) {
       form.value = {
         id_vendor: props.pkg.id_vendor,
+        id_category: props.pkg.id_category || null,
         name: props.pkg.name,
         description: props.pkg.description || '',
         price: props.pkg.price,
@@ -104,6 +109,10 @@ function save() {
                     <input class="form-control" :value="pkg.vendor?.business_name || '-'" readonly />
                   </div>
                   <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Category</label>
+                    <input class="form-control" :value="pkg.category?.category_name || '-'" readonly />
+                  </div>
+                  <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Price</label>
                     <input class="form-control" :value="formatCurrency(pkg.price)" readonly />
                   </div>
@@ -148,6 +157,15 @@ function save() {
                     <select v-model="form.id_vendor" class="form-control" required>
                       <option v-for="vendor in vendors" :key="vendor.id_vendor" :value="vendor.id_vendor">
                         {{ vendor.business_name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Category</label>
+                    <select v-model="form.id_category" class="form-control">
+                      <option :value="null">-- Select Category --</option>
+                      <option v-for="category in categories" :key="category.id_category" :value="category.id_category">
+                        {{ category.category_name }}
                       </option>
                     </select>
                   </div>

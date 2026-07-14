@@ -3,8 +3,7 @@ import { ref, watch, computed } from 'vue'
 
 export interface BookingForm {
   id_user: number
-  id_vendor: number
-  id_package: number
+  package_ids: number[]
   event_date: string
   event_location: string
   total_price: number
@@ -45,8 +44,7 @@ async function fetchLocations() {
 
 const form = ref<BookingForm>({
   id_user: 0,
-  id_vendor: 0,
-  id_package: 0,
+  package_ids: [],
   event_date: '',
   event_location: '',
   total_price: 0,
@@ -55,7 +53,6 @@ const form = ref<BookingForm>({
   notes: '',
 })
 
-// Load master data
 async function fetchMasterData() {
   try {
     const [resUsers, resVendors, resPackages] = await Promise.all([
@@ -70,7 +67,6 @@ async function fetchMasterData() {
       resPackages.json(),
     ])
 
-    // Filter customers who have 'eUser-Customer' role
     users.value = (jsonUsers.data || []).map((u: any) => ({
       id_user: u.id_user,
       email: u.email,
@@ -85,36 +81,44 @@ async function fetchMasterData() {
   }
 }
 
-// Filter users to display only customers
 const customerOptions = computed(() => {
-  return users.value.filter((u: any) => 
+  return users.value.filter((u: any) =>
     u.user_roles?.some((ur: any) => ur.role?.role_code === 'eUser-Customer')
   )
 })
 
-// Filter packages based on selected vendor
-const filteredPackages = computed(() => {
-  if (!form.value.id_vendor) return []
-  return packages.value.filter(p => p.id_vendor === form.value.id_vendor)
-})
-
-// Auto-fill price when package changes
-watch(() => form.value.id_package, (newPkgId) => {
-  if (props.mode === 'add' && newPkgId) {
-    const pkg = packages.value.find(p => p.id_package === newPkgId)
-    if (pkg) {
-      form.value.total_price = pkg.price
+const packagesByVendor = computed(() => {
+  const map: Record<number, { vendor: any; items: any[] }> = {}
+  for (const pkg of packages.value) {
+    const vid = pkg.id_vendor
+    if (!map[vid]) {
+      map[vid] = {
+        vendor: vendors.value.find((v: any) => v.id_vendor === vid),
+        items: [],
+      }
     }
+    map[vid].items.push(pkg)
+  }
+  return map
+})
+
+watch(() => form.value.package_ids, (ids) => {
+  if (props.mode === 'add') {
+    form.value.total_price = ids.reduce((sum, id) => {
+      const pkg = packages.value.find(p => p.id_package === id)
+      return sum + (pkg?.price || 0)
+    }, 0)
   }
 })
 
-// Reset package selection if vendor changes
-watch(() => form.value.id_vendor, (_, oldVendorId) => {
-  if (props.mode === 'add' && oldVendorId !== undefined && oldVendorId !== 0) {
-    form.value.id_package = 0
-    form.value.total_price = 0
+function togglePackage(id: number) {
+  const idx = form.value.package_ids.indexOf(id)
+  if (idx === -1) {
+    form.value.package_ids.push(id)
+  } else {
+    form.value.package_ids.splice(idx, 1)
   }
-})
+}
 
 watch(() => props.visible, async (val) => {
   if (val) {
@@ -122,8 +126,7 @@ watch(() => props.visible, async (val) => {
     if (props.mode === 'add') {
       form.value = {
         id_user: customerOptions.value[0]?.id_user ?? 0,
-        id_vendor: vendors.value[0]?.id_vendor ?? 0,
-        id_package: 0,
+        package_ids: [],
         event_date: '',
         event_location: '',
         total_price: 0,
@@ -132,7 +135,6 @@ watch(() => props.visible, async (val) => {
         notes: '',
       }
     } else if (props.booking) {
-      // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
       let formattedDate = ''
       if (props.booking.event_date) {
         const d = new Date(props.booking.event_date)
@@ -141,8 +143,7 @@ watch(() => props.visible, async (val) => {
 
       form.value = {
         id_user: props.booking.id_user,
-        id_vendor: props.booking.id_vendor,
-        id_package: props.booking.id_package,
+        package_ids: props.booking.booking_packages?.map((bp: any) => bp.package.id_package) || [],
         event_date: formattedDate,
         event_location: props.booking.event_location || '',
         total_price: props.booking.total_price,
@@ -154,14 +155,18 @@ watch(() => props.visible, async (val) => {
   }
 })
 
-// Format Currency
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value)
 }
 
 function save() {
-  if (!form.value.id_user || !form.value.id_vendor || !form.value.id_package || !form.value.event_date) return
+  if (!form.value.id_user || !form.value.package_ids.length || !form.value.event_date) return
   emit('save', { ...form.value })
+}
+
+function getVendorName(vendorId: number) {
+  const v = vendors.value.find((v: any) => v.id_vendor === vendorId)
+  return v?.business_name || 'Unknown'
 }
 </script>
 
@@ -179,7 +184,6 @@ function save() {
         </div>
 
         <div class="modal-body">
-          <!-- DETAIL VIEW -->
           <template v-if="mode === 'detail' && booking">
             <div class="form">
               <div class="row">
@@ -189,16 +193,24 @@ function save() {
                     <input class="form-control" :value="booking.customer?.full_name || '-'" readonly />
                   </div>
                   <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold;">Vendor</label>
-                    <input class="form-control" :value="booking.vendor?.business_name || '-'" readonly />
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold;">Package</label>
-                    <input class="form-control" :value="booking.package?.name || '-'" readonly />
+                    <label class="control-label" style="font-weight: bold;">Packages</label>
+                    <div class="form-control" style="height: auto; min-height: 34px; background: #eee;">
+                      <span v-if="!booking.booking_packages?.length">-</span>
+                      <ul v-else style="margin: 0; padding-left: 18px;">
+                        <li v-for="bp in booking.booking_packages" :key="bp.package.id_package">
+                          {{ bp.package.name }} ({{ formatCurrency(bp.package.price) }})
+                          <span style="color:#888;"> — {{ bp.package.vendor?.business_name }}</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold;">Event Date</label>
                     <input class="form-control" :value="new Date(booking.event_date).toLocaleString()" readonly />
+                  </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold;">Location</label>
+                    <input class="form-control" :value="booking.event_location || '-'" readonly />
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -223,7 +235,6 @@ function save() {
             </div>
           </template>
 
-          <!-- ADD/EDIT FORM VIEW -->
           <template v-else>
             <form @submit.prevent="save" class="form">
               <div class="row">
@@ -238,21 +249,26 @@ function save() {
                     </select>
                   </div>
                   <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold;">Vendor *</label>
-                    <select v-model="form.id_vendor" class="form-control" required :disabled="mode === 'edit'">
-                      <option v-for="v in vendors" :key="v.id_vendor" :value="v.id_vendor">
-                        {{ v.business_name }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold;">Package *</label>
-                    <select v-model="form.id_package" class="form-control" required :disabled="mode === 'edit' || !form.id_vendor">
-                      <option value="0" disabled>Select package</option>
-                      <option v-for="p in filteredPackages" :key="p.id_package" :value="p.id_package">
-                        {{ p.name }} ({{ formatCurrency(p.price) }})
-                      </option>
-                    </select>
+                    <label class="control-label" style="font-weight: bold;">Packages *</label>
+                    <div class="well well-sm" style="margin-bottom: 0; max-height: 240px; overflow-y: auto;">
+                      <template v-for="(group, vid) in packagesByVendor" :key="vid">
+                        <div style="font-weight: bold; margin: 6px 0 3px; color: #2c3e50;">
+                          {{ group.vendor?.business_name || 'Unknown Vendor' }}
+                        </div>
+                        <div v-for="p in group.items" :key="p.id_package" class="checkbox" style="margin: 0 0 4px 12px;">
+                          <label style="font-weight: normal;">
+                            <input
+                              type="checkbox"
+                              :checked="form.package_ids.includes(p.id_package)"
+                              @change="togglePackage(p.id_package)"
+                            />
+                            {{ p.name }} ({{ formatCurrency(p.price) }})
+                          </label>
+                        </div>
+                      </template>
+                      <div v-if="!Object.keys(packagesByVendor).length" style="color: #999;">No packages available</div>
+                    </div>
+                    <small style="color: #999;">Select one or more packages from any vendor</small>
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold;">Event Date *</label>
@@ -262,7 +278,7 @@ function save() {
                 <div class="col-md-6">
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold;">Total Price *</label>
-                    <input type="number" v-model.number="form.total_price" class="form-control" required placeholder="Price" />
+                    <input type="number" v-model.number="form.total_price" class="form-control" required placeholder="Auto-calculated" />
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold;">DP Amount</label>
@@ -298,7 +314,7 @@ function save() {
 
         <div class="modal-footer">
           <button type="button" class="btn btn-default" @click="emit('close')">Close</button>
-          <button v-if="mode !== 'detail'" type="button" class="btn btn-primary" @click="save" :disabled="!form.id_user || !form.id_vendor || !form.id_package || !form.event_date">
+          <button v-if="mode !== 'detail'" type="button" class="btn btn-primary" @click="save" :disabled="!form.id_user || !form.package_ids.length || !form.event_date">
             Save changes
           </button>
         </div>

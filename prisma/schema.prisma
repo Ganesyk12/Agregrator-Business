@@ -67,10 +67,12 @@ model User_Role {
 model Vendor {
   id_vendor     Int      @id @default(autoincrement())
   id_user       Int      @unique
+  vendor_code   String   @unique @default(uuid())
   business_name String
   description   String?
   category      String
   location      String?
+  years_exp     Int      @default(0)
   status        String   @default("pending")
   verified_at   DateTime?
   date_created  DateTime @default(now())
@@ -82,9 +84,26 @@ model Vendor {
   portfolios   Portfolio[]
   packages     Package[]
   availability VendorAvailability[]
-  bookings     Booking[]           @relation("VendorBookings")
+
   reviews      Review[]
+  commissions  Commission[]
   payouts      Payout[]
+
+  @@index([status])
+  @@schema("sigyn")
+}
+
+model Category {
+  id_category   Int      @id @default(autoincrement())
+  category_name String   @unique
+  status        String   @default("active")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
+
+  packages   Package[]
+  portfolios Portfolio[]
 
   @@index([status])
   @@schema("sigyn")
@@ -93,8 +112,14 @@ model Vendor {
 model Portfolio {
   id_portfolio  Int      @id @default(autoincrement())
   id_vendor     Int
-  media_url     String
-  caption       String?
+  id_package    Int?
+  id_category   Int?
+  title         String
+  code          String   @unique
+  description   String?
+  cover_url     String
+  location      String?
+  label         String?
   sort_order    Int      @default(0)
   status        String   @default("active")
   date_created  DateTime @default(now())
@@ -102,15 +127,35 @@ model Portfolio {
   user_created  String?
   user_modified String?
 
-  vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
+  vendor   Vendor           @relation(fields: [id_vendor], references: [id_vendor])
+  package  Package?         @relation(fields: [id_package], references: [id_package])
+  category Category?        @relation(fields: [id_category], references: [id_category])
+  images   PortfolioImage[]
 
   @@index([id_vendor])
+  @@index([id_package])
+  @@index([id_category])
+  @@schema("sigyn")
+}
+
+model PortfolioImage {
+  id_image     Int      @id @default(autoincrement())
+  id_portfolio Int
+  image_url    String
+  caption      String?
+  sort_order   Int      @default(0)
+  date_created DateTime @default(now())
+
+  portfolio Portfolio @relation(fields: [id_portfolio], references: [id_portfolio], onDelete: Cascade)
+>>>>>>> main
+
   @@schema("sigyn")
 }
 
 model Package {
   id_package     Int      @id @default(autoincrement())
   id_vendor      Int
+  id_category    Int?
   name           String
   description    String?
   price          Float
@@ -122,10 +167,13 @@ model Package {
   user_created   String?
   user_modified  String?
 
-  vendor   Vendor    @relation(fields: [id_vendor], references: [id_vendor])
-  bookings Booking[]
+  vendor           Vendor           @relation(fields: [id_vendor], references: [id_vendor])
+  category         Category?        @relation(fields: [id_category], references: [id_category])
+  booking_packages BookingPackage[]
+  portfolios       Portfolio[]
 
   @@index([id_vendor])
+  @@index([id_category])
   @@index([status])
   @@schema("sigyn")
 }
@@ -152,8 +200,6 @@ model VendorAvailability {
 model Booking {
   id_booking     Int      @id @default(autoincrement())
   id_user        Int
-  id_vendor      Int
-  id_package     Int
   event_date     DateTime
   event_location String?
   total_price    Float
@@ -165,23 +211,34 @@ model Booking {
   user_created   String?
   user_modified  String?
 
-  customer   User       @relation("CustomerBookings", fields: [id_user], references: [id_user])
-  vendor     Vendor     @relation("VendorBookings", fields: [id_vendor], references: [id_vendor])
-  package    Package    @relation(fields: [id_package], references: [id_package])
-  payment    Payment?
-  review     Review?
-  commission Commission?
-  payout     Payout?
+  customer         User             @relation("CustomerBookings", fields: [id_user], references: [id_user])
+  booking_packages BookingPackage[]
+  payments         Payment[]
+  review           Review?
+  commissions      Commission[]
+  payouts          Payout[]
 
   @@index([id_user])
-  @@index([id_vendor])
-  @@index([id_package])
+  @@schema("sigyn")
+}
+
+model BookingPackage {
+  id_booking_package Int      @id @default(autoincrement())
+  id_booking         Int
+  id_package         Int
+  date_created       DateTime @default(now())
+  user_created       String?
+
+  booking Booking @relation(fields: [id_booking], references: [id_booking], onDelete: Cascade)
+  package Package @relation(fields: [id_package], references: [id_package])
+
+  @@unique([id_booking, id_package])
   @@schema("sigyn")
 }
 
 model Payment {
   id_payment        Int       @id @default(autoincrement())
-  id_booking        Int       @unique
+  id_booking        Int
   amount            Float
   payment_type      String
   status            String    @default("pending")
@@ -222,7 +279,8 @@ model Review {
 
 model Commission {
   id_commission Int      @id @default(autoincrement())
-  id_booking    Int      @unique
+  id_booking    Int
+  id_vendor     Int
   percentage    Float
   amount        Float
   status        String   @default("pending")
@@ -232,14 +290,17 @@ model Commission {
   user_modified String?
 
   booking Booking @relation(fields: [id_booking], references: [id_booking])
+  vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
 
+  @@unique([id_booking, id_vendor])
+  @@index([id_vendor])
   @@schema("sigyn")
 }
 
 model Payout {
   id_payout     Int       @id @default(autoincrement())
   id_vendor     Int
-  id_booking    Int       @unique
+  id_booking    Int
   amount        Float
   status        String    @default("pending")
   paid_at       DateTime?
@@ -251,6 +312,27 @@ model Payout {
   vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
   booking Booking @relation(fields: [id_booking], references: [id_booking])
 
+  @@unique([id_booking, id_vendor])
   @@index([id_vendor])
+  @@schema("sigyn")
+}
+
+model CompanyInfo {
+  id_company    Int      @id @default(autoincrement())
+  company_name  String   @default("Agregrator Business")
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  bank_name     String?
+  bank_account  String?
+  bank_holder   String?
+  footer_text   String?
+  logo_url      String?
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
+
   @@schema("sigyn")
 }

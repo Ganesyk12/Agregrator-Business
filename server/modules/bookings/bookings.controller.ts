@@ -27,15 +27,14 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_user, id_vendor, id_package, event_date, event_location, total_price, dp_amount, notes } = req.body
-    if (!id_user || !id_vendor || !id_package || !event_date || total_price === undefined) {
-      throw createError(400, 'id_user, id_vendor, id_package, event_date, and total_price are required')
+    const { id_user, package_ids, event_date, event_location, total_price, dp_amount, notes } = req.body
+    if (!id_user || !package_ids?.length || !event_date || total_price === undefined) {
+      throw createError(400, 'id_user, package_ids (array), event_date, and total_price are required')
     }
 
     const booking = await bookingService.create({
       id_user: Number(id_user),
-      id_vendor: Number(id_vendor),
-      id_package: Number(id_package),
+      package_ids: (package_ids as number[]).map(Number),
       event_date: new Date(event_date),
       event_location: event_location || null,
       total_price: Number(total_price),
@@ -52,7 +51,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 export async function update(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)
-    const { event_date, event_location, total_price, dp_amount, status, notes } = req.body
+    const { event_date, event_location, total_price, dp_amount, status, notes, package_ids } = req.body
 
     const updateData: any = {}
     if (event_date) updateData.event_date = new Date(event_date)
@@ -61,6 +60,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     if (dp_amount !== undefined) updateData.dp_amount = Number(dp_amount)
     if (status !== undefined) updateData.status = status
     if (notes !== undefined) updateData.notes = notes
+    if (package_ids !== undefined) updateData.package_ids = (package_ids as number[]).map(Number)
 
     const booking = await bookingService.update(id, updateData)
     if (!booking) {

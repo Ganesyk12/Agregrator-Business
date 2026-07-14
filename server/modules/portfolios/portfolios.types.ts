@@ -4,18 +4,26 @@ export interface PortfolioImage {
   image_url: string
   caption: string | null
   sort_order: number
-  created_at: Date
+  date_created: Date
 }
 
 export interface Portfolio {
   id_portfolio: number
   id_vendor: number
+  id_package: number | null
+  id_category: number | null
   title: string
   code: string
-  category: string
   description: string | null
   cover_url: string
-  created_at: Date
+  location: string | null
+  label: string | null
+  sort_order: number
+  status: string
+  date_created: Date | string
+  date_modified: Date | string
+  user_created: string | null
+  user_modified: string | null
   images?: PortfolioImage[]
   vendor?: {
     id_vendor: number
@@ -23,11 +31,16 @@ export interface Portfolio {
     category: string
     location: string | null
     description: string | null
-    starting_price: number
-    years_exp: number
     status: string
     _count?: {
       portfolios: number
+      reviews?: number
     }
+  }
+  package?: {
+    name: string
+  }
+  category?: {
+    category_name: string
   }
 }

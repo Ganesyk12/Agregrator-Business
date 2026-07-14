@@ -3,7 +3,23 @@ import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    {
+      name: 'dashboard-rewrite',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url) {
+            const urlPath = req.url.split('?')[0]
+            if (urlPath === '/dashboard' || urlPath.startsWith('/dashboard/')) {
+              req.url = '/dashboard.html' + (req.url.includes('?') ? '?' + req.url.split('?')[1] : '')
+            }
+          }
+          next()
+        })
+      }
+    }
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

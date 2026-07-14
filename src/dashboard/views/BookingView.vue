@@ -6,8 +6,6 @@ import BookingModal, { type BookingForm } from '../components/BookingModal.vue'
 interface Booking {
   id_booking: number
   id_user: number
-  id_vendor: number
-  id_package: number
   event_date: string
   event_location: string | null
   total_price: number
@@ -19,12 +17,14 @@ interface Booking {
     full_name: string
     email: string
   }
-  vendor?: {
-    business_name: string
-  }
-  package?: {
-    name: string
-  }
+  booking_packages?: {
+    package: {
+      id_package: number
+      name: string
+      price: number
+      vendor: { id_vendor: number; business_name: string }
+    }
+  }[]
 }
 
 const bookings = ref<Booking[]>([])
@@ -82,13 +82,32 @@ function openDetail(b: Booking) {
   modalVisible.value = true
 }
 
+function getVendorNames(b: Booking): string {
+  const names = new Set<string>()
+  b.booking_packages?.forEach(bp => {
+    if (bp.package.vendor?.business_name) names.add(bp.package.vendor.business_name)
+  })
+  return [...names].join(', ') || '-'
+}
+
 async function handleSave(data: BookingForm) {
+  const body = {
+    id_user: data.id_user,
+    package_ids: data.package_ids,
+    event_date: data.event_date,
+    event_location: data.event_location,
+    total_price: data.total_price,
+    dp_amount: data.dp_amount,
+    status: data.status,
+    notes: data.notes,
+  }
+
   if (modalMode.value === 'add') {
     try {
       const res = await fetch(`${apiUrl}/api/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
@@ -111,7 +130,7 @@ async function handleSave(data: BookingForm) {
       const res = await fetch(`${apiUrl}/api/bookings/${selectedBooking.value.id_booking}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
@@ -176,7 +195,7 @@ const filtered = computed(() => {
     result = result.filter(b =>
       (b.customer?.full_name?.toLowerCase() || '').includes(q) ||
       (b.vendor?.business_name?.toLowerCase() || '').includes(q) ||
-      (b.package?.name?.toLowerCase() || '').includes(q) ||
+      (b.booking_packages?.map(bp => bp.package.name).join(', ')?.toLowerCase() || '').includes(q) ||
       (b.status?.toLowerCase() || '').includes(q) ||
       (b.event_location?.toLowerCase() || '').includes(q)
     )
@@ -191,11 +210,11 @@ const filtered = computed(() => {
       va = (a.customer?.full_name || '').toLowerCase()
       vb = (b.customer?.full_name || '').toLowerCase()
     } else if (col === 'vendor_name') {
-      va = (a.vendor?.business_name || '').toLowerCase()
-      vb = (b.vendor?.business_name || '').toLowerCase()
+      va = getVendorNames(a).toLowerCase()
+      vb = getVendorNames(b).toLowerCase()
     } else if (col === 'package_name') {
-      va = (a.package?.name || '').toLowerCase()
-      vb = (b.package?.name || '').toLowerCase()
+      va = (a.booking_packages?.map(bp => bp.package.name).join(', ') || '').toLowerCase()
+      vb = (b.booking_packages?.map(bp => bp.package.name).join(', ') || '').toLowerCase()
     } else {
       va = String(a[col as keyof Booking] ?? '').toLowerCase()
       vb = String(b[col as keyof Booking] ?? '').toLowerCase()
@@ -303,8 +322,8 @@ function formatCurrency(value: number) {
           <tbody>
             <tr v-for="b in paginated" :key="b.id_booking">
               <td>{{ b.customer?.full_name || '-' }}</td>
-              <td>{{ b.vendor?.business_name || '-' }}</td>
-              <td>{{ b.package?.name || '-' }}</td>
+              <td>{{ getVendorNames(b) }}</td>
+              <td>{{ b.booking_packages?.map(bp => bp.package.name).join(', ') || '-' }}</td>
               <td>{{ new Date(b.event_date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) }}</td>
               <td>{{ formatCurrency(b.total_price) }}</td>
               <td>{{ formatCurrency(b.dp_amount) }}</td>
