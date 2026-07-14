@@ -29,21 +29,24 @@ interface ExtraItem {
   selected: boolean
 }
 
-interface VendorInfo {
-  id_vendor: number
-  business_name: string
-  category: string
-  location: string
-  description: string
-  starting_price: number
-  years_exp: number
-  status: string
-  average_rating: number
-  completed_projects: number
-  cover_url: string
-  logo_url: string | null
-  availability: string
-  extras: ExtraItem[]
+interface PackageItem {
+  id_package: number
+  name: string
+  price: number
+  duration: string | null
+  description: string | null
+  whats_included: string | null
+  vendor: {
+    id_vendor: number
+    business_name: string
+    category: string
+    location: string | null
+    description: string | null
+    status: string
+    years_exp: number
+    _count: { portfolios: number; reviews: number }
+  }
+  category: { category_name: string }
 }
 
 const eventTypes = ['Wedding', 'Pre Wedding', 'Graduation', 'Birthday', 'Family', 'Corporate', 'Engagement', 'Product Photoshoot', 'Others']
@@ -68,10 +71,24 @@ onMounted(async () => {
   const price = route.query.startingPrice as string
   if (vid) {
     try {
-      const res = await fetch(`/api/portfolios/vendors/${vid}`)
+      const res = await fetch(`/api/portfolios/vendor/${vid}/info`)
       const json = await res.json()
       if (res.ok && json.data) {
-        addVendorToBooking(json.data)
+        const vendorData = json.data
+        const minPrice = vendorData.packages?.length > 0
+          ? Math.min(...vendorData.packages.map((p: any) => p.price))
+          : Number(price) || 0
+        bookedVendors.value.push({
+          id_vendor: vendorData.vendor.id_vendor,
+          business_name: vendorData.vendor.business_name,
+          category: vendorData.vendor.category,
+          starting_price: minPrice,
+          description: vendorData.vendor.description || '',
+          cover_url: '',
+          rating: vendorData.vendor.average_rating || 0,
+          selectedExtras: [],
+          expanded: false,
+        })
       }
     } catch {
       if (name) {
@@ -107,6 +124,21 @@ function addVendorToBooking(v: VendorInfo) {
   vendorExtrasCache.value[v.id_vendor] = v.extras.map((e) => ({ ...e, selected: false }))
 }
 
+function addPackageToBooking(p: PackageItem) {
+  if (bookedVendors.value.some((b) => b.id_vendor === p.vendor.id_vendor)) return
+  bookedVendors.value.push({
+    id_vendor: p.vendor.id_vendor,
+    business_name: p.vendor.business_name,
+    category: p.category.category_name,
+    starting_price: p.price,
+    description: p.vendor.description || p.description || '',
+    cover_url: '',
+    rating: 0,
+    selectedExtras: [],
+    expanded: false,
+  })
+}
+
 function toggleVendorExpand(id: number) {
   const v = bookedVendors.value.find((b) => b.id_vendor === id)
   if (v) v.expanded = !v.expanded
@@ -132,8 +164,8 @@ function openAddModal() {
   showAddModal.value = true
 }
 
-function handleAddVendor(v: any) {
-  addVendorToBooking(v as VendorInfo)
+function handleAddPackage(p: any) {
+  addPackageToBooking(p as PackageItem)
   showAddModal.value = false
 }
 
@@ -415,7 +447,7 @@ function handleProceedToPayment() {
     <AddServiceModal
       :visible="showAddModal"
       @close="showAddModal = false"
-      @add="handleAddVendor"
+      @add="handleAddPackage"
     />
   </div>
 </template>

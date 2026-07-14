@@ -90,20 +90,9 @@
       <div class="container">
         <div class="row">
           <div class="col-md-6 d-flex flex-wrap">
-            <div class="shipping">
-              <span>We ship with:</span>
-              <img :src="arctIcon" alt="icon">
-              <img :src="dhlLogo" alt="icon">
-            </div>
-            <div class="payment-option">
-              <span>Payment Option:</span>
-              <img :src="visaCard" alt="card">
-              <img :src="paypalCard" alt="card">
-              <img :src="masterCard" alt="card">
-            </div>
           </div>
           <div class="col-md-6 text-end">
-            <p>© Copyright 2022 Kaira. All rights reserved. Design by <a href="https://templatesjungle.com" target="_blank">TemplatesJungle</a> Distribution By <a href="https://themewagon.com" target="blank">ThemeWagon</a></p>
+            <p>@ 2026 SISYN CORPORATION . All Right Reserved</p>
           </div>
         </div>
       </div>
@@ -113,9 +102,4 @@
 
 <script setup lang="ts">
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
-import arctIcon from '@/assets/kaira/images/arct-icon.png'
-import dhlLogo from '@/assets/kaira/images/dhl-logo.png'
-import visaCard from '@/assets/kaira/images/visa-card.png'
-import paypalCard from '@/assets/kaira/images/paypal-card.png'
-import masterCard from '@/assets/kaira/images/master-card.png'
 </script>

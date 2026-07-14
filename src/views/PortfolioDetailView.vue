@@ -17,20 +17,17 @@ const relatedPortfolios = ref<any[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-const categoryLabels: Record<string, string> = {
-  Wedding: 'Wedding',
-  Graduation: 'Graduation',
-  Family: 'Family',
-  Corporate: 'Corporate',
-  Birthday: 'Birthday',
-  Product: 'Product',
-}
-
 const hasAvailability = computed(() => {
   return vendorInfo.value?.availability !== null && vendorInfo.value?.availability !== undefined
 })
 
 const vendorReviews = computed(() => vendorInfo.value?.reviews || [])
+
+const startingPrice = computed(() => {
+  const packages = vendorInfo.value?.packages
+  if (!packages || packages.length === 0) return 0
+  return Math.min(...packages.map((p: any) => p.price))
+})
 
 async function fetchPortfolio() {
   try {
@@ -60,7 +57,7 @@ function handleBookNow() {
   const query = new URLSearchParams({
     vendorId: String(vendor.id_vendor),
     businessName: vendor.business_name,
-    startingPrice: String(vendor.starting_price),
+    startingPrice: String(startingPrice.value),
   })
   router.push(`/booking?${query.toString()}`)
 }
@@ -129,7 +126,7 @@ onMounted(fetchPortfolio)
                 </div>
                 <div class="meta-item">
                   <span class="meta-label">Category</span>
-                  <span class="meta-value category-badge">{{ categoryLabels[portfolio.category] || portfolio.category }}</span>
+                  <span class="meta-value category-badge">{{ portfolio.category?.category_name || '-' }}</span>
                 </div>
               </div>
               <p v-if="portfolio.description" class="project-description">{{ portfolio.description }}</p>
@@ -190,7 +187,7 @@ onMounted(fetchPortfolio)
                 </div>
                 <div class="related-info">
                   <h4 class="related-title">{{ item.title }}</h4>
-                  <span class="related-category">{{ item.category }}</span>
+                  <span class="related-category">{{ item.category?.category_name || item.category }}</span>
                 </div>
               </div>
             </div>
@@ -203,7 +200,7 @@ onMounted(fetchPortfolio)
             :vendor="{
               id_vendor: portfolio.vendor?.id_vendor || 0,
               business_name: portfolio.vendor?.business_name || '',
-              starting_price: portfolio.vendor?.starting_price || 0,
+              starting_price: startingPrice,
               status: portfolio.vendor?.status || 'pending',
             }"
             :availability="hasAvailability ? 'Available' : null"

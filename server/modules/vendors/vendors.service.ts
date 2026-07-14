@@ -67,6 +67,21 @@ export async function update(
   }) as unknown as Vendor
 }
 
+export async function findVendorsWithPackages() {
+  return prisma.vendor.findMany({
+    where: { status: { not: 'deleted' } },
+    include: {
+      packages: {
+        where: { status: 'active' },
+        select: { id_package: true, name: true, price: true, duration: true },
+        orderBy: { price: 'asc' },
+      },
+      _count: { select: { portfolios: true, reviews: true } },
+    },
+    orderBy: { date_created: 'desc' },
+  })
+}
+
 export async function remove(id: number): Promise<boolean> {
   const existing = await prisma.vendor.findFirst({
     where: {

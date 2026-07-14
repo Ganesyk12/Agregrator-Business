@@ -21,39 +21,12 @@
 
             <div class="offcanvas-body">
               <ul class="navbar-nav justify-content-end flex-grow-1 gap-1 gap-md-5 pe-3">
-                <!-- Dropdown Home -->
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle active" href="#" id="dropdownHome" data-bs-toggle="dropdown" aria-expanded="false">
-                    Home
-                  </a>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownHome">
-                    <li><a class="dropdown-item" href="/">Home Layout 1</a></li>
-                    <li><a class="dropdown-item" href="/">Home Layout 2</a></li>
-                    <li><a class="dropdown-item" href="/">Home Layout 3</a></li>
-                    <li><a class="dropdown-item" href="/">Home Layout 4</a></li>
-                  </ul>
-                </li>
+                <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
 
-                <!-- Dropdown Shop -->
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="dropdownShop" data-bs-toggle="dropdown" aria-expanded="false">
-                    Shop
-                  </a>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownShop">
-                    <li><a class="dropdown-item" href="/shop">Shop Sidebar</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Three Column</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Three Column Wide</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Four Column</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Four Column Wide</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Six Column</a></li>
-                    <li><a class="dropdown-item" href="/shop">Shop Six Column Wide</a></li>
-                    <li><a class="dropdown-item" href="/product">Single Product</a></li>
-                    <li><a class="dropdown-item" href="/product">Single Product V2</a></li>
-                  </ul>
-                </li>
                 <li class="nav-item"><a class="nav-link" href="/photography">Photography</a></li>
                 <li class="nav-item"><a class="nav-link" href="/mua">MUA</a></li>
                 <li class="nav-item"><a class="nav-link" href="/bouquet">Bouquet Flowers</a></li>
+                <li class="nav-item"><a class="nav-link" href="/more-service">More Service</a></li>
                 <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
               </ul>
             </div>
@@ -84,13 +57,7 @@
                 </svg>
               </a>
             </li>
-            <li class="search-box mx-2">
-              <a href="#" class="search-button" @click.prevent="toggleSearch">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <use xlink:href="#search"></use>
-                </svg>
-              </a>
-            </li>
+
           </ul>
         </div>
       </div>
@@ -99,12 +66,5 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
-
-const searchOpen = ref(false)
-
-const toggleSearch = () => {
-  searchOpen.value = !searchOpen.value
-}
 </script>
