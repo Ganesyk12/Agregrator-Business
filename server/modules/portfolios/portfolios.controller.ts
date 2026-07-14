@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as portfolioService from './portfolios.service'
 import * as vendorService from '../vendors/vendors.service'
+import prisma from '../../db'
 import { createError } from '../../middleware/error-handler'
 
 export async function getAll(_req: Request, res: Response, next: NextFunction) {
@@ -126,6 +127,52 @@ export async function getRelated(req: Request, res: Response, next: NextFunction
     }
     const related = await portfolioService.findByVendorId(portfolio.id_vendor, portfolio.id_portfolio)
     res.json({ data: related })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function getVendors(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const vendors = await vendorService.findVendorsWithPackages()
+    const data = vendors.map((v: any) => ({
+      id_vendor: v.id_vendor,
+      business_name: v.business_name,
+      category: v.category,
+      location: v.location || '',
+      description: v.description || '',
+      starting_price: v.packages.length > 0 ? v.packages[0].price : 0,
+      years_exp: v.years_exp,
+      status: v.status,
+      average_rating: 0,
+      completed_projects: v._count?.portfolios || 0,
+      cover_url: '',
+      logo_url: null,
+      availability: v.status === 'verified' ? 'available' : 'booked',
+      extras: [],
+    }))
+    res.json({ data })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function getVendorsCategories(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const categories = await prisma.category.findMany({ select: { category_name: true }, where: { status: 'active' } })
+    const data = categories.map((c: any) => ({ name: c.category_name }))
+    res.json({ data })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function getPackagesByCategory(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { categoryName } = req.params
+    if (!categoryName) throw createError(400, 'Category name is required')
+    const packages = await portfolioService.getPackagesByCategory(categoryName)
+    res.json({ data: packages })
   } catch (err) {
     next(err)
   }

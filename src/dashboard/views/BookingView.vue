@@ -194,7 +194,7 @@ const filtered = computed(() => {
   if (q) {
     result = result.filter(b =>
       (b.customer?.full_name?.toLowerCase() || '').includes(q) ||
-      (b.vendor?.business_name?.toLowerCase() || '').includes(q) ||
+      b.booking_packages?.some(bp => bp.package.vendor?.business_name?.toLowerCase()?.includes(q)) ||
       (b.booking_packages?.map(bp => bp.package.name).join(', ')?.toLowerCase() || '').includes(q) ||
       (b.status?.toLowerCase() || '').includes(q) ||
       (b.event_location?.toLowerCase() || '').includes(q)

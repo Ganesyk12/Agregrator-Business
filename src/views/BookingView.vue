@@ -11,6 +11,8 @@ const route = useRoute()
 
 interface BookedVendor {
   id_vendor: number
+  id_package?: number
+  package_name?: string
   business_name: string
   category: string
   starting_price: number
@@ -29,21 +31,24 @@ interface ExtraItem {
   selected: boolean
 }
 
-interface VendorInfo {
-  id_vendor: number
-  business_name: string
-  category: string
-  location: string
-  description: string
-  starting_price: number
-  years_exp: number
-  status: string
-  average_rating: number
-  completed_projects: number
-  cover_url: string
-  logo_url: string | null
-  availability: string
-  extras: ExtraItem[]
+interface PackageItem {
+  id_package: number
+  name: string
+  price: number
+  duration: string | null
+  description: string | null
+  whats_included: string | null
+  vendor: {
+    id_vendor: number
+    business_name: string
+    category: string
+    location: string | null
+    description: string | null
+    status: string
+    years_exp: number
+    _count: { portfolios: number; reviews: number }
+  }
+  category: { category_name: string }
 }
 
 const eventTypes = ['Wedding', 'Pre Wedding', 'Graduation', 'Birthday', 'Family', 'Corporate', 'Engagement', 'Product Photoshoot', 'Others']
@@ -68,10 +73,24 @@ onMounted(async () => {
   const price = route.query.startingPrice as string
   if (vid) {
     try {
-      const res = await fetch(`/api/portfolios/vendors/${vid}`)
+      const res = await fetch(`/api/portfolios/vendor/${vid}/info`)
       const json = await res.json()
       if (res.ok && json.data) {
-        addVendorToBooking(json.data)
+        const vendorData = json.data
+        const minPrice = vendorData.packages?.length > 0
+          ? Math.min(...vendorData.packages.map((p: any) => p.price))
+          : Number(price) || 0
+        bookedVendors.value.push({
+          id_vendor: vendorData.vendor.id_vendor,
+          business_name: vendorData.vendor.business_name,
+          category: vendorData.vendor.category,
+          starting_price: minPrice,
+          description: vendorData.vendor.description || '',
+          cover_url: '',
+          rating: vendorData.vendor.average_rating || 0,
+          selectedExtras: [],
+          expanded: false,
+        })
       }
     } catch {
       if (name) {
@@ -107,8 +126,25 @@ function addVendorToBooking(v: VendorInfo) {
   vendorExtrasCache.value[v.id_vendor] = v.extras.map((e) => ({ ...e, selected: false }))
 }
 
-function toggleVendorExpand(id: number) {
-  const v = bookedVendors.value.find((b) => b.id_vendor === id)
+function addPackageToBooking(p: PackageItem) {
+  if (bookedVendors.value.some((b) => b.id_package === p.id_package)) return
+  bookedVendors.value.push({
+    id_vendor: p.vendor.id_vendor,
+    id_package: p.id_package,
+    package_name: p.name,
+    business_name: p.vendor.business_name,
+    category: p.category.category_name,
+    starting_price: p.price,
+    description: p.vendor.description || p.description || '',
+    cover_url: '',
+    rating: 0,
+    selectedExtras: [],
+    expanded: false,
+  })
+}
+
+function toggleVendorExpand(id: number, idPackage?: number) {
+  const v = bookedVendors.value.find((b) => idPackage ? b.id_package === idPackage : b.id_vendor === id)
   if (v) v.expanded = !v.expanded
 }
 
@@ -119,9 +155,15 @@ function toggleExtra(vendorId: number, extraId: string) {
   if (ex) ex.selected = !ex.selected
 }
 
-function removeVendor(id: number) {
-  bookedVendors.value = bookedVendors.value.filter((b) => b.id_vendor !== id)
-  delete vendorExtrasCache.value[id]
+function removeVendor(id: number, idPackage?: number) {
+  if (idPackage) {
+    const idx = bookedVendors.value.findIndex((b) => b.id_package === idPackage)
+    if (idx !== -1) bookedVendors.value.splice(idx, 1)
+  } else {
+    bookedVendors.value = bookedVendors.value.filter((b) => b.id_vendor !== id)
+  }
+  const stillHasVendor = bookedVendors.value.some((b) => b.id_vendor === id)
+  if (!stillHasVendor) delete vendorExtrasCache.value[id]
 }
 
 function viewPortfolio(id: number) {
@@ -132,8 +174,8 @@ function openAddModal() {
   showAddModal.value = true
 }
 
-function handleAddVendor(v: any) {
-  addVendorToBooking(v as VendorInfo)
+function handleAddPackage(p: any) {
+  addPackageToBooking(p as PackageItem)
   showAddModal.value = false
 }
 
@@ -276,21 +318,21 @@ function handleProceedToPayment() {
           </div>
 
           <div v-else class="booking-items">
-            <div v-for="vendor in bookedVendors" :key="vendor.id_vendor" class="vendor-card">
-              <div class="vendor-card-header" @click="toggleVendorExpand(vendor.id_vendor)">
+            <div v-for="vendor in bookedVendors" :key="vendor.id_package || vendor.id_vendor" class="vendor-card">
+              <div class="vendor-card-header" @click="toggleVendorExpand(vendor.id_vendor, vendor.id_package)">
                 <div class="vendor-cover" v-if="vendor.cover_url">
                   <img :src="vendor.cover_url" :alt="vendor.business_name" />
                 </div>
                 <div class="vendor-info">
                   <h3 class="vendor-name">{{ vendor.business_name }}</h3>
                   <span class="vendor-category">{{ vendor.category }}</span>
+                  <span class="vendor-package" v-if="vendor.package_name">{{ vendor.package_name }}</span>
                   <div class="vendor-meta">
-                    <span class="vendor-rating">★ {{ vendor.rating.toFixed(1) }}</span>
                     <span class="vendor-price">{{ formatPrice(vendor.starting_price) }}</span>
                   </div>
                 </div>
                 <div class="vendor-actions">
-                  <button class="btn-remove" @click.stop="removeVendor(vendor.id_vendor)" title="Remove">✕</button>
+                  <button class="btn-remove" @click.stop="removeVendor(vendor.id_vendor, vendor.id_package)" title="Remove">✕</button>
                   <span class="expand-icon">{{ vendor.expanded ? '▲' : '▼' }}</span>
                 </div>
               </div>
@@ -347,7 +389,6 @@ function handleProceedToPayment() {
         <section class="form-section checkout-section">
           <label class="terms-check">
             <input v-model="agreeTerms" type="checkbox" />
-            <span class="checkmark"></span>
             <span>I agree to the <a href="#" @click.prevent>Terms &amp; Conditions</a> and <a href="#" @click.prevent>Privacy Policy</a></span>
           </label>
           <button
@@ -398,10 +439,11 @@ function handleProceedToPayment() {
 
           <div v-if="bookedVendors.length > 0" class="summary-vendors">
             <h4>Booked Vendors</h4>
-            <div v-for="v in bookedVendors" :key="v.id_vendor" class="summary-vendor-row">
+            <div v-for="v in bookedVendors" :key="v.id_package || v.id_vendor" class="summary-vendor-row">
               <div class="sv-info">
                 <span class="sv-name">{{ v.business_name }}</span>
                 <span class="sv-cat">{{ v.category }}</span>
+                <span class="sv-pkg" v-if="v.package_name">{{ v.package_name }}</span>
               </div>
               <span class="sv-price">{{ formatPrice(v.starting_price) }}</span>
             </div>
@@ -415,7 +457,7 @@ function handleProceedToPayment() {
     <AddServiceModal
       :visible="showAddModal"
       @close="showAddModal = false"
-      @add="handleAddVendor"
+      @add="handleAddPackage"
     />
   </div>
 </template>
@@ -694,7 +736,14 @@ textarea {
   font-size: 0.8rem;
   color: #86868b;
   display: block;
-  margin-bottom: 6px;
+}
+
+.vendor-package {
+  font-size: 0.8rem;
+  color: #1d1d1f;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
 }
 
 .vendor-meta {
@@ -979,6 +1028,11 @@ textarea {
 .sv-cat {
   font-size: 0.75rem;
   color: #86868b;
+}
+.sv-pkg {
+  font-size: 0.75rem;
+  color: #1d1d1f;
+  font-weight: 600;
 }
 
 .sv-price {

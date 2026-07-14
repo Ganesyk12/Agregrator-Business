@@ -132,6 +132,31 @@ export async function getVendorReviews(vendorId: number) {
   })
 }
 
+export async function getPackagesByCategory(categoryName: string) {
+  return prisma.package.findMany({
+    where: {
+      status: 'active',
+      category: { category_name: categoryName, status: 'active' },
+    },
+    include: {
+      vendor: {
+        select: {
+          id_vendor: true,
+          business_name: true,
+          category: true,
+          location: true,
+          description: true,
+          status: true,
+          years_exp: true,
+          _count: { select: { portfolios: true, reviews: true } },
+        },
+      },
+      category: { select: { category_name: true } },
+    },
+    orderBy: [{ vendor: { business_name: 'asc' } }, { price: 'asc' }],
+  })
+}
+
 export async function getVendorPackages(vendorId: number) {
   return prisma.package.findMany({
     where: { id_vendor: vendorId, status: 'active' },

@@ -20,29 +20,18 @@
             </div>
 
             <div class="offcanvas-body">
-              <ul class="navbar-nav justify-content-end flex-grow-1 gap-1 gap-md-4 pe-3">
-                <li class="nav-item">
-                  <router-link class="nav-link" to="/">Beranda</router-link>
-                </li>
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="dropdownLayanan" data-bs-toggle="dropdown" aria-expanded="false">
-                    Layanan
+              <ul class="navbar-nav justify-content-end flex-grow-1 gap-1 gap-md-5 pe-3">
+                <li class="nav-item"><router-link class="nav-link" to="/">Home</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/photography">Photography</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/mua">MUA</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/bouquet">Bouquet Flowers</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/more-service">More Service</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/contact">Contact</router-link></li>
+                <li class="nav-item d-lg-none"><router-link class="nav-link" to="/wishlist">Wishlist <span class="wishlist-count">(0)</span></router-link></li>
+                <li class="nav-item d-lg-none">
+                  <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+                    Cart <span class="cart-count">(0)</span>
                   </a>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownLayanan">
-                    <li><router-link class="dropdown-item" to="/photography">Photography</router-link></li>
-                    <li><router-link class="dropdown-item" to="/mua">MUA</router-link></li>
-                    <li><router-link class="dropdown-item" to="/photography">Nail Art</router-link></li>
-                    <li><router-link class="dropdown-item" to="/bouquet">Bouquet Flowers</router-link></li>
-                  </ul>
-                </li>
-                <li class="nav-item">
-                  <router-link class="nav-link" to="/shop">Explore</router-link>
-                </li>
-                <li class="nav-item">
-                  <router-link class="nav-link" to="/about">About</router-link>
-                </li>
-                <li class="nav-item">
-                  <router-link class="nav-link" to="/contact">Contact</router-link>
                 </li>
               </ul>
             </div>
@@ -61,27 +50,7 @@
                 Cart <span class="cart-count">(0)</span>
               </a>
             </li>
-            <li class="d-lg-none">
-              <router-link to="/wishlist" class="mx-2">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <use xlink:href="#heart"></use>
-                </svg>
-              </router-link>
-            </li>
-            <li class="d-lg-none">
-              <a href="#" class="mx-2" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <use xlink:href="#cart"></use>
-                </svg>
-              </a>
-            </li>
-            <li class="search-box mx-2">
-              <a href="#" class="search-button" @click.prevent="toggleSearch">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <use xlink:href="#search"></use>
-                </svg>
-              </a>
-            </li>
+
           </ul>
         </div>
       </div>
@@ -90,12 +59,5 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
-
-const searchOpen = ref(false)
-
-const toggleSearch = () => {
-  searchOpen.value = !searchOpen.value
-}
 </script>
