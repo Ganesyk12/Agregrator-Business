@@ -389,7 +389,6 @@ function handleProceedToPayment() {
         <section class="form-section checkout-section">
           <label class="terms-check">
             <input v-model="agreeTerms" type="checkbox" />
-            <span class="checkmark"></span>
             <span>I agree to the <a href="#" @click.prevent>Terms &amp; Conditions</a> and <a href="#" @click.prevent>Privacy Policy</a></span>
           </label>
           <button

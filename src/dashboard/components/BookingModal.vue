@@ -176,7 +176,7 @@ function getVendorName(vendorId: number) {
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" @click="emit('close')">&times;</button>
-          <h4 class="modal-title">
+          <h4 class="modal-title" style="color: #fff;">
             <template v-if="mode === 'add'">Create Booking</template>
             <template v-else-if="mode === 'edit'">Edit Booking</template>
             <template v-else>Booking Detail</template>
@@ -265,7 +265,32 @@ function getVendorName(vendorId: number) {
                             {{ p.name }} ({{ formatCurrency(p.price) }})
                           </label>
                         </div>
-                      </template>
+</template>
+
+<style scoped>
+.checkbox input[type="checkbox"] {
+  position: static;
+  opacity: 1;
+  width: auto;
+  height: auto;
+  margin-right: 6px;
+  margin-left: 0;
+  vertical-align: middle;
+  display: inline-block;
+  pointer-events: auto;
+}
+.checkbox label {
+  display: inline-flex;
+  align-items: center;
+  padding-left: 0;
+  min-height: auto;
+}
+.checkbox label::before,
+.checkbox label::after {
+  display: none !important;
+  content: none !important;
+}
+</style>
                       <div v-if="!Object.keys(packagesByVendor).length" style="color: #999;">No packages available</div>
                     </div>
                     <small style="color: #999;">Select one or more packages from any vendor</small>

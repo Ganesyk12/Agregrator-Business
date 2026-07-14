@@ -92,7 +92,7 @@
           <div class="col-md-6 d-flex flex-wrap">
           </div>
           <div class="col-md-6 text-end">
-            <p>@ 2026 SISYN CORPORATION . All Right Reserved</p>
+            <p>@ 2026 SIGYN CORPORATION . All Right Reserved</p>
           </div>
         </div>
       </div>

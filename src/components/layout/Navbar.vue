@@ -28,6 +28,12 @@
                 <li class="nav-item"><a class="nav-link" href="/bouquet">Bouquet Flowers</a></li>
                 <li class="nav-item"><a class="nav-link" href="/more-service">More Service</a></li>
                 <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+                <li class="nav-item d-lg-none"><a class="nav-link" href="/wishlist">Wishlist <span class="wishlist-count">(0)</span></a></li>
+                <li class="nav-item d-lg-none">
+                  <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+                    Cart <span class="cart-count">(0)</span>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -43,20 +49,7 @@
                 Cart <span class="cart-count">(0)</span>
               </a>
             </li>
-            <li class="d-lg-none">
-              <a href="/wishlist" class="mx-2">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <use xlink:href="#heart"></use>
-                </svg>
-              </a>
-            </li>
-            <li class="d-lg-none">
-              <a href="#" class="mx-2" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <use xlink:href="#cart"></use>
-                </svg>
-              </a>
-            </li>
+
 
           </ul>
         </div>
