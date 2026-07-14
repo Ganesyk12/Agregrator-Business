@@ -11,6 +11,8 @@ const route = useRoute()
 
 interface BookedVendor {
   id_vendor: number
+  id_package?: number
+  package_name?: string
   business_name: string
   category: string
   starting_price: number
@@ -125,9 +127,11 @@ function addVendorToBooking(v: VendorInfo) {
 }
 
 function addPackageToBooking(p: PackageItem) {
-  if (bookedVendors.value.some((b) => b.id_vendor === p.vendor.id_vendor)) return
+  if (bookedVendors.value.some((b) => b.id_package === p.id_package)) return
   bookedVendors.value.push({
     id_vendor: p.vendor.id_vendor,
+    id_package: p.id_package,
+    package_name: p.name,
     business_name: p.vendor.business_name,
     category: p.category.category_name,
     starting_price: p.price,
@@ -139,8 +143,8 @@ function addPackageToBooking(p: PackageItem) {
   })
 }
 
-function toggleVendorExpand(id: number) {
-  const v = bookedVendors.value.find((b) => b.id_vendor === id)
+function toggleVendorExpand(id: number, idPackage?: number) {
+  const v = bookedVendors.value.find((b) => idPackage ? b.id_package === idPackage : b.id_vendor === id)
   if (v) v.expanded = !v.expanded
 }
 
@@ -151,9 +155,15 @@ function toggleExtra(vendorId: number, extraId: string) {
   if (ex) ex.selected = !ex.selected
 }
 
-function removeVendor(id: number) {
-  bookedVendors.value = bookedVendors.value.filter((b) => b.id_vendor !== id)
-  delete vendorExtrasCache.value[id]
+function removeVendor(id: number, idPackage?: number) {
+  if (idPackage) {
+    const idx = bookedVendors.value.findIndex((b) => b.id_package === idPackage)
+    if (idx !== -1) bookedVendors.value.splice(idx, 1)
+  } else {
+    bookedVendors.value = bookedVendors.value.filter((b) => b.id_vendor !== id)
+  }
+  const stillHasVendor = bookedVendors.value.some((b) => b.id_vendor === id)
+  if (!stillHasVendor) delete vendorExtrasCache.value[id]
 }
 
 function viewPortfolio(id: number) {
@@ -308,21 +318,21 @@ function handleProceedToPayment() {
           </div>
 
           <div v-else class="booking-items">
-            <div v-for="vendor in bookedVendors" :key="vendor.id_vendor" class="vendor-card">
-              <div class="vendor-card-header" @click="toggleVendorExpand(vendor.id_vendor)">
+            <div v-for="vendor in bookedVendors" :key="vendor.id_package || vendor.id_vendor" class="vendor-card">
+              <div class="vendor-card-header" @click="toggleVendorExpand(vendor.id_vendor, vendor.id_package)">
                 <div class="vendor-cover" v-if="vendor.cover_url">
                   <img :src="vendor.cover_url" :alt="vendor.business_name" />
                 </div>
                 <div class="vendor-info">
                   <h3 class="vendor-name">{{ vendor.business_name }}</h3>
                   <span class="vendor-category">{{ vendor.category }}</span>
+                  <span class="vendor-package" v-if="vendor.package_name">{{ vendor.package_name }}</span>
                   <div class="vendor-meta">
-                    <span class="vendor-rating">★ {{ vendor.rating.toFixed(1) }}</span>
                     <span class="vendor-price">{{ formatPrice(vendor.starting_price) }}</span>
                   </div>
                 </div>
                 <div class="vendor-actions">
-                  <button class="btn-remove" @click.stop="removeVendor(vendor.id_vendor)" title="Remove">✕</button>
+                  <button class="btn-remove" @click.stop="removeVendor(vendor.id_vendor, vendor.id_package)" title="Remove">✕</button>
                   <span class="expand-icon">{{ vendor.expanded ? '▲' : '▼' }}</span>
                 </div>
               </div>
@@ -430,10 +440,11 @@ function handleProceedToPayment() {
 
           <div v-if="bookedVendors.length > 0" class="summary-vendors">
             <h4>Booked Vendors</h4>
-            <div v-for="v in bookedVendors" :key="v.id_vendor" class="summary-vendor-row">
+            <div v-for="v in bookedVendors" :key="v.id_package || v.id_vendor" class="summary-vendor-row">
               <div class="sv-info">
                 <span class="sv-name">{{ v.business_name }}</span>
                 <span class="sv-cat">{{ v.category }}</span>
+                <span class="sv-pkg" v-if="v.package_name">{{ v.package_name }}</span>
               </div>
               <span class="sv-price">{{ formatPrice(v.starting_price) }}</span>
             </div>
@@ -726,7 +737,14 @@ textarea {
   font-size: 0.8rem;
   color: #86868b;
   display: block;
-  margin-bottom: 6px;
+}
+
+.vendor-package {
+  font-size: 0.8rem;
+  color: #1d1d1f;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
 }
 
 .vendor-meta {
@@ -1011,6 +1029,11 @@ textarea {
 .sv-cat {
   font-size: 0.75rem;
   color: #86868b;
+}
+.sv-pkg {
+  font-size: 0.75rem;
+  color: #1d1d1f;
+  font-weight: 600;
 }
 
 .sv-price {
