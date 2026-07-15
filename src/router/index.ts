@@ -5,6 +5,7 @@ import PhotographyView from '../views/PhotographyView.vue'
 import MUAView from '../views/MUAView.vue'
 import BouquetView from '../views/BouquetView.vue'
 import PortfolioDetailView from '../views/PortfolioDetailView.vue'
+import VendorProfileView from '../views/VendorProfileView.vue'
 import BookingView from '../views/BookingView.vue'
 
 const routes: RouteRecordRaw[] = [
@@ -44,6 +45,11 @@ const routes: RouteRecordRaw[] = [
     path: '/portfolio/:id',
     name: 'portfolio-detail',
     component: PortfolioDetailView
+  },
+  {
+    path: '/vendor/:id',
+    name: 'vendor-profile',
+    component: VendorProfileView
   },
   {
     path: '/booking',
