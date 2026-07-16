@@ -5,6 +5,8 @@ import PhotographyView from '../views/PhotographyView.vue'
 import MUAView from '../views/MUAView.vue'
 import BouquetView from '../views/BouquetView.vue'
 import ServicesView from '../views/ServicesView.vue'
+import ContactView from '../views/ContactView.vue'
+import LoginView from '../views/LoginView.vue'
 import PortfolioDetailView from '../views/PortfolioDetailView.vue'
 import VendorProfileView from '../views/VendorProfileView.vue'
 import BookingView from '../views/BookingView.vue'
@@ -69,10 +71,14 @@ const routes: RouteRecordRaw[] = [
     props: { title: 'About Us' }
   },
   {
+    path: '/login',
+    name: 'login',
+    component: LoginView
+  },
+  {
     path: '/contact',
     name: 'contact',
-    component: BaseView,
-    props: { title: 'Contact Us' }
+    component: ContactView
   },
   {
     path: '/cart',

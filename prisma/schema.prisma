@@ -334,3 +334,16 @@ model CompanyInfo {
 
   @@schema("sigyn")
 }
+
+model ContactMessage {
+  id_message    Int      @id @default(autoincrement())
+  name          String
+  email         String
+  subject       String?
+  message       String
+  is_read       Boolean  @default(false)
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+
+  @@schema("sigyn")
+}
