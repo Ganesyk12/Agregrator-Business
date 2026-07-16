@@ -28,9 +28,17 @@
                 <li class="nav-item"><a class="nav-link" href="/bouquet">Bouquet Flowers</a></li>
                 <li class="nav-item"><a class="nav-link" href="/services">More Service</a></li>
                 <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
-                <li class="nav-item d-lg-none">
-                  <a v-if="!auth.isLoggedIn" class="nav-link" href="/login">Sign In</a>
-                  <a v-else class="nav-link" :href="auth.isCustomer ? '/' : '/dashboard'">{{ auth.user?.full_name }}</a>
+                <li v-if="!auth.isLoggedIn" class="nav-item d-lg-none">
+                  <a class="nav-link" href="/login">Sign In</a>
+                </li>
+                <li v-if="auth.isLoggedIn" class="nav-item d-lg-none">
+                  <span class="nav-link fw-bold">{{ auth.user?.full_name }}</span>
+                </li>
+                <li v-if="auth.isLoggedIn && !auth.isCustomer" class="nav-item d-lg-none">
+                  <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+                <li v-if="auth.isLoggedIn" class="nav-item d-lg-none">
+                  <a class="nav-link" href="#" @click.prevent="handleLogout">Logout</a>
                 </li>
                 <li class="nav-item d-lg-none"><a class="nav-link" href="/wishlist">Wishlist <span class="wishlist-count">(0)</span></a></li>
                 <li class="nav-item d-lg-none">
@@ -53,16 +61,28 @@
                 Cart <span class="cart-count">(0)</span>
               </a>
             </li>
-            <li class="d-none d-lg-block ms-3">
-              <a v-if="!auth.isLoggedIn" href="/login" class="text-uppercase" title="Sign In">
+            <li class="d-none d-lg-block ms-3 dropdown">
+              <a href="#" class="text-uppercase" data-bs-toggle="dropdown" title="Account">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
               </a>
-              <a v-else :href="auth.isCustomer ? '/' : '/dashboard'" class="text-uppercase" title="My Account">
-                {{ auth.user?.full_name?.split(' ')[0] }}
-              </a>
+              <ul class="dropdown-menu dropdown-menu-end text-uppercase">
+                <li v-if="!auth.isLoggedIn">
+                  <a class="dropdown-item fw-bold" href="/login">Sign In</a>
+                </li>
+                <li v-else>
+                  <span class="dropdown-item-text fw-bold">{{ auth.user?.full_name }}</span>
+                </li>
+                <li v-if="auth.isLoggedIn"><hr class="dropdown-divider"></li>
+                <li v-if="auth.isLoggedIn && !auth.isCustomer">
+                  <a class="dropdown-item" href="/dashboard">Dashboard</a>
+                </li>
+                <li v-if="auth.isLoggedIn">
+                  <a class="dropdown-item" href="#" @click.prevent="handleLogout">Logout</a>
+                </li>
+              </ul>
             </li>
 
           </ul>
@@ -78,6 +98,11 @@ import { useAuthStore } from '@/stores/auth'
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
 
 const auth = useAuthStore()
+
+function handleLogout() {
+  auth.logout()
+  window.location.href = '/'
+}
 
 onMounted(() => {
   // hydrate from localStorage

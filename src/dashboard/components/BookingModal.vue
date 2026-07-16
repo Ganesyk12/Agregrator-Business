@@ -265,32 +265,7 @@ function getVendorName(vendorId: number) {
                             {{ p.name }} ({{ formatCurrency(p.price) }})
                           </label>
                         </div>
-</template>
-
-<style scoped>
-.checkbox input[type="checkbox"] {
-  position: static;
-  opacity: 1;
-  width: auto;
-  height: auto;
-  margin-right: 6px;
-  margin-left: 0;
-  vertical-align: middle;
-  display: inline-block;
-  pointer-events: auto;
-}
-.checkbox label {
-  display: inline-flex;
-  align-items: center;
-  padding-left: 0;
-  min-height: auto;
-}
-.checkbox label::before,
-.checkbox label::after {
-  display: none !important;
-  content: none !important;
-}
-</style>
+                      </template>
                       <div v-if="!Object.keys(packagesByVendor).length" style="color: #999;">No packages available</div>
                     </div>
                     <small style="color: #999;">Select one or more packages from any vendor</small>
@@ -347,3 +322,28 @@ function getVendorName(vendorId: number) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.checkbox input[type="checkbox"] {
+  position: static;
+  opacity: 1;
+  width: auto;
+  height: auto;
+  margin-right: 6px;
+  margin-left: 0;
+  vertical-align: middle;
+  display: inline-block;
+  pointer-events: auto;
+}
+.checkbox label {
+  display: inline-flex;
+  align-items: center;
+  padding-left: 0;
+  min-height: auto;
+}
+.checkbox label::before,
+.checkbox label::after {
+  display: none !important;
+  content: none !important;
+}
+</style>

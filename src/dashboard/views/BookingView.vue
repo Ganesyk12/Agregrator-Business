@@ -30,6 +30,19 @@ interface Booking {
 const bookings = ref<Booking[]>([])
 const search = ref('')
 const sortColumn = ref<keyof Booking | 'customer_name' | 'vendor_name' | 'package_name'>('date_created')
+
+const userRoles = ref<string[]>([])
+function loadRoles() {
+  try {
+    const raw = localStorage.getItem('sigyn_user')
+    if (raw) {
+      const user = JSON.parse(raw)
+      userRoles.value = (user.roles || []).map((r: any) => r.role_code)
+    }
+  } catch { userRoles.value = [] }
+}
+loadRoles()
+const isSuperAdmin = computed(() => userRoles.value.includes('eUser-SuperAdmin'))
 const sortDirection = ref<'asc' | 'desc'>('desc')
 const currentPage = ref(1)
 const perPage = ref(5)
@@ -340,8 +353,8 @@ function formatCurrency(value: number) {
               </td>
               <td style="white-space: nowrap;">
                 <button class="btn btn-primary" @click="openDetail(b)"><i class="fa fa-eye"></i></button>
-                <button class="btn btn-info" @click="openEdit(b)"><i class="fa fa-pencil"></i></button>
-                <button class="btn btn-danger" @click="handleDelete(b.id_booking)"><i class="fa fa-trash"></i></button>
+                <button v-if="isSuperAdmin" class="btn btn-info" @click="openEdit(b)"><i class="fa fa-pencil"></i></button>
+                <button v-if="isSuperAdmin" class="btn btn-danger" @click="handleDelete(b.id_booking)"><i class="fa fa-trash"></i></button>
               </td>
             </tr>
             <tr v-if="paginated.length === 0">
