@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer.vue'
 import HeroBanner from '@/components/home/HeroBanner.vue'
 import FeaturesSection from '@/components/home/FeaturesSection.vue'
 import CategorySection from '@/components/home/CategorySection.vue'
+import PackageSection from '@/components/home/PackageSection.vue'
 import ProductSection from '@/components/home/ProductSection.vue'
 import VideoSection from '@/components/home/VideoSection.vue'
 import TestimonialSection from '@/components/home/TestimonialSection.vue'
@@ -67,6 +68,8 @@ const relatedProducts: Product[] = [
     <HeroBanner />
     <FeaturesSection />
     <CategorySection />
+    
+    <PackageSection />
     
     <ProductSection 
       title="Our New Arrivals"

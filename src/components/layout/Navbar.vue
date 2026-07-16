@@ -26,7 +26,7 @@
                 <li class="nav-item"><a class="nav-link" href="/photography">Photography</a></li>
                 <li class="nav-item"><a class="nav-link" href="/mua">MUA</a></li>
                 <li class="nav-item"><a class="nav-link" href="/bouquet">Bouquet Flowers</a></li>
-                <li class="nav-item"><a class="nav-link" href="/more-service">More Service</a></li>
+                <li class="nav-item"><a class="nav-link" href="/services">More Service</a></li>
                 <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
                 <li class="nav-item d-lg-none"><a class="nav-link" href="/wishlist">Wishlist <span class="wishlist-count">(0)</span></a></li>
                 <li class="nav-item d-lg-none">

@@ -4,6 +4,7 @@ import BaseView from '../views/BaseView.vue'
 import PhotographyView from '../views/PhotographyView.vue'
 import MUAView from '../views/MUAView.vue'
 import BouquetView from '../views/BouquetView.vue'
+import ServicesView from '../views/ServicesView.vue'
 import PortfolioDetailView from '../views/PortfolioDetailView.vue'
 import VendorProfileView from '../views/VendorProfileView.vue'
 import BookingView from '../views/BookingView.vue'
@@ -25,6 +26,11 @@ const routes: RouteRecordRaw[] = [
     name: 'product',
     component: BaseView,
     props: { title: 'Product Detail' }
+  },
+  {
+    path: '/services',
+    name: 'services',
+    component: ServicesView
   },
   {
     path: '/photography',

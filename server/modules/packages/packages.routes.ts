@@ -82,6 +82,7 @@ router.post('/', packageCtrl.create)
  *                     $ref: '#/components/schemas/Package'
  */
 router.get('/vendor/:vendorId', packageCtrl.getByVendor)
+router.get('/category/:categoryId', packageCtrl.getByCategory)
 
 /**
  * @openapi
