@@ -46,7 +46,7 @@
               <li class="menu-item"><a href="/photography" class="item-anchor">Photography</a></li>
               <li class="menu-item"><a href="/mua" class="item-anchor">MUA</a></li>
               <li class="menu-item"><a href="/bouquet" class="item-anchor">Bouquet Flowers</a></li>
-              <li class="menu-item"><a href="/more-service" class="item-anchor">More Service</a></li>
+              <li class="menu-item"><a href="/services" class="item-anchor">More Service</a></li>
               <li class="menu-item"><a href="/contact" class="item-anchor">Contact</a></li>
             </ul>
           </div>
@@ -54,8 +54,9 @@
         <div class="col-md-3 col-sm-6">
           <div class="footer-menu footer-menu-004 border-animation-left">
             <h5 class="widget-title text-uppercase mb-4">Contact Us</h5>
-            <p>Do you have any questions or suggestions? <a href="mailto:contact@yourcompany.com" class="item-anchor">contact@yourcompany.com</a></p>
-            <p>Do you need support? Give us a call. <a href="tel:+43 720 11 52 78" class="item-anchor">+43 720 11 52 78</a></p>
+            <p v-if="company.email">Do you have any questions or suggestions? <a :href="'mailto:' + company.email" class="item-anchor">{{ company.email }}</a></p>
+            <p v-if="company.phone">Do you need support? Give us a call. <a :href="'tel:' + company.phone" class="item-anchor">{{ company.phone }}</a></p>
+            <p v-if="company.address" class="mt-2">{{ company.address }}</p>
             <ul class="menu-list list-unstyled text-uppercase border-animation-left fs-6 mt-3">
               <li class="menu-item"><a href="/faqs" class="item-anchor">FAQs</a></li>
             </ul>
@@ -69,7 +70,7 @@
           <div class="col-md-6 d-flex flex-wrap">
           </div>
           <div class="col-md-6 text-end">
-            <p>@ 2026 SIGYN CORPORATION . All Right Reserved</p>
+            <p>@ 2026 {{ (company.company_name || 'SIGYN').toUpperCase() }} . All Right Reserved</p>
           </div>
         </div>
       </div>
@@ -78,5 +79,38 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
+
+interface CompanyInfo {
+  company_name: string
+  address: string
+  phone: string
+  email: string
+  website: string
+  footer_text: string
+  logo_url: string
+}
+
+const company = ref<CompanyInfo>({
+  company_name: 'Sigyn',
+  address: '',
+  phone: '',
+  email: '',
+  website: '',
+  footer_text: '',
+  logo_url: '',
+})
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/company-info')
+    const json = await res.json()
+    if (res.ok && json.data) {
+      company.value = { ...company.value, ...json.data }
+    }
+  } catch {
+    // fallback
+  }
+})
 </script>
