@@ -52,7 +52,7 @@
                   <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
                     <span class="icon-label ms-1">Cart</span>
-                    <span class="badge bg-danger ms-1">0</span>
+                    <span class="badge bg-danger ms-1">{{ cart.count }}</span>
                   </a>
                 </li>
               </ul>
@@ -75,7 +75,7 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>
                 </svg>
-                <span class="badge-icon bg-danger">0</span>
+                <span class="badge-icon bg-danger">{{ cart.count }}</span>
               </a>
             </li>
             <li class="d-none d-lg-block ms-3 dropdown">
@@ -115,9 +115,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
 
 const auth = useAuthStore()
+const cart = useCartStore()
 
 function handleLogout() {
   auth.logout()
@@ -129,6 +131,7 @@ onMounted(() => {
   const user = localStorage.getItem('sigyn_user')
   if (token && user) {
     auth.setAuth({ token, user: JSON.parse(user) })
+    cart.fetchCart()
   }
 })
 </script>

@@ -144,6 +144,31 @@ onMounted(async () => {
       }
     }
   }
+  // load cart items if coming from cart
+  const cartData = localStorage.getItem('sigyn_cart_checkout')
+  if (cartData) {
+    localStorage.removeItem('sigyn_cart_checkout')
+    try {
+      const items = JSON.parse(cartData)
+      for (const item of items) {
+        const pkg = item.package
+        if (!pkg || bookedVendors.value.some(v => v.id_package === pkg.id_package)) continue
+        bookedVendors.value.push({
+          id_vendor: pkg.vendor?.id_vendor || 0,
+          id_package: pkg.id_package,
+          package_name: pkg.name,
+          business_name: pkg.vendor?.business_name || 'Vendor',
+          category: 'Services',
+          starting_price: pkg.price || 0,
+          description: pkg.description || '',
+          cover_url: '',
+          rating: 0,
+          selectedExtras: [],
+          expanded: false,
+        })
+      }
+    } catch { /* fallback */ }
+  }
 })
 
 function addVendorToBooking(v: VendorInfo) {

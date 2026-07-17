@@ -2,8 +2,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 
 const auth = useAuthStore()
+const cart = useCartStore()
 const router = useRouter()
 
 interface Category {
@@ -72,6 +74,14 @@ async function toggleFavorite(packageId: number) {
       auth.refreshWishlistCount()
     }
   }
+}
+
+async function addToCart(packageId: number) {
+  if (!auth.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  await cart.addItem(packageId)
 }
 
 onMounted(async () => {
@@ -143,6 +153,11 @@ onMounted(async () => {
             <button class="btn-wishlist" @click="toggleFavorite(pkg.id_package)" :title="favoriteIds.has(pkg.id_package) ? 'Remove from wishlist' : 'Add to wishlist'">
               <svg width="18" height="18" viewBox="0 0 24 24" :fill="favoriteIds.has(pkg.id_package) ? '#e74c3c' : 'none'" :stroke="favoriteIds.has(pkg.id_package) ? '#e74c3c' : '#999'" stroke-width="2">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </button>
+            <button class="btn-cart" @click="addToCart(pkg.id_package)" title="Add to cart">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>
               </svg>
             </button>
             <div class="package-icon">
@@ -233,6 +248,21 @@ onMounted(async () => {
 }
 
 .btn-wishlist:hover {
+  transform: scale(1.2);
+}
+
+.btn-cart {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s;
+  z-index: 2;
+}
+.btn-cart:hover {
   transform: scale(1.2);
 }
 

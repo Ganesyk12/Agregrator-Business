@@ -8,12 +8,12 @@ datasource db {
 }
 
 model Role {
-  id_role       Int         @id @default(autoincrement())
-  role_code     String      @unique
+  id_role       Int      @id @default(autoincrement())
+  role_code     String   @unique
   name          String
-  status        String      @default("active")
-  date_created  DateTime    @default(now())
-  date_modified DateTime    @updatedAt
+  status        String   @default("active")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
   user_created  String?
   user_modified String?
 
@@ -24,24 +24,25 @@ model Role {
 }
 
 model User {
-  id_user       Int         @id @default(autoincrement())
-  email         String      @unique
+  id_user       Int      @id @default(autoincrement())
+  email         String   @unique
   password      String
   full_name     String
   phone         String?
   avatar_url    String?
-  is_active     Boolean     @default(true)
-  status        String      @default("active")
-  date_created  DateTime    @default(now())
-  date_modified DateTime    @updatedAt
+  is_active     Boolean  @default(true)
+  status        String   @default("active")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
   user_created  String?
   user_modified String?
 
   vendor     Vendor?
-  bookings   Booking[] @relation("CustomerBookings")
+  bookings   Booking[]      @relation("CustomerBookings")
   reviews    Review[]
   user_roles User_Role[]
   favorites  UserFavorite[]
+  cart       Cart?
 
   @@index([status])
   @@schema("sigyn")
@@ -66,22 +67,22 @@ model User_Role {
 }
 
 model Vendor {
-  id_vendor     Int      @id @default(autoincrement())
-  id_user       Int      @unique
-  vendor_code   String   @unique @default(uuid())
+  id_vendor     Int       @id @default(autoincrement())
+  id_user       Int       @unique
+  vendor_code   String    @unique @default(uuid())
   business_name String
   description   String?
   category      String
   location      String?
-  years_exp     Int      @default(0)
-  status        String   @default("pending")
+  years_exp     Int       @default(0)
+  status        String    @default("pending")
   verified_at   DateTime?
-  date_created  DateTime @default(now())
-  date_modified DateTime @updatedAt
+  date_created  DateTime  @default(now())
+  date_modified DateTime  @updatedAt
   user_created  String?
   user_modified String?
 
-  user         User                @relation(fields: [id_user], references: [id_user])
+  user         User                 @relation(fields: [id_user], references: [id_user])
   portfolios   Portfolio[]
   packages     Package[]
   availability VendorAvailability[]
@@ -171,6 +172,7 @@ model Package {
   booking_packages BookingPackage[]
   portfolios       Portfolio[]
   favorites        UserFavorite[]
+  cart_items       CartItem[]
 
   @@index([id_vendor])
   @@index([id_category])
@@ -318,15 +320,40 @@ model Payout {
 }
 
 model UserFavorite {
-  id_favorite   Int      @id @default(autoincrement())
-  id_user       Int
-  id_package    Int
-  date_created  DateTime @default(now())
+  id_favorite  Int      @id @default(autoincrement())
+  id_user      Int
+  id_package   Int
+  date_created DateTime @default(now())
 
   user    User    @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
   package Package @relation(fields: [id_package], references: [id_package], onDelete: Cascade)
 
   @@unique([id_user, id_package])
+  @@schema("sigyn")
+}
+
+model Cart {
+  id_cart       Int      @id @default(autoincrement())
+  id_user       Int      @unique
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+
+  user  User       @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
+  items CartItem[]
+
+  @@schema("sigyn")
+}
+
+model CartItem {
+  id_cart_item Int      @id @default(autoincrement())
+  id_cart      Int
+  id_package   Int
+  date_created DateTime @default(now())
+
+  cart    Cart    @relation(fields: [id_cart], references: [id_cart], onDelete: Cascade)
+  package Package @relation(fields: [id_package], references: [id_package])
+
+  @@unique([id_cart, id_package])
   @@schema("sigyn")
 }
 
