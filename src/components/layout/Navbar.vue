@@ -49,7 +49,7 @@
                   <span v-if="auth.wishlistCount > 0" class="badge bg-danger ms-1">{{ auth.wishlistCount }}</span>
                 </a></li>
                 <li class="nav-item d-lg-none">
-                  <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+                  <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart" :class="{ shake: shaking }">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
                     <span class="icon-label ms-1">Cart</span>
                     <span class="badge bg-danger ms-1">{{ cart.count }}</span>
@@ -71,7 +71,7 @@
               </a>
             </li>
             <li class="d-none d-lg-block position-relative mx-2">
-              <a href="#" class="text-uppercase" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart" title="Cart">
+              <a href="#" class="text-uppercase" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart" title="Cart" :class="{ shake: shaking }">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>
                 </svg>
@@ -113,13 +113,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
 
 const auth = useAuthStore()
 const cart = useCartStore()
+const shaking = ref(false)
+
+watch(() => cart.count, (newVal, oldVal) => {
+  if (newVal > oldVal) {
+    shaking.value = true
+    setTimeout(() => shaking.value = false, 600)
+  }
+})
 
 function handleLogout() {
   auth.logout()
@@ -148,5 +156,15 @@ onMounted(() => {
   text-align: center;
   line-height: 1;
   color: #fff;
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
 }
 </style>
