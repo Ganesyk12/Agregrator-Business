@@ -11,6 +11,16 @@ export async function getAll(_req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export async function getMyBookings(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.id_user
+    const bookings = await bookingService.findByUser(userId)
+    res.json({ data: bookings })
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function getById(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)

@@ -7,6 +7,8 @@ defineProps<{
     status: string
   }
   availability: string | null
+  saving?: boolean
+  saved?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -21,6 +23,11 @@ function formatPrice(price: number): string {
 
 <template>
   <div class="booking-card">
+    <button class="btn-wishlist" :disabled="saving" @click="emit('save')" :title="saved ? 'Remove from wishlist' : 'Add to wishlist'">
+      <svg width="18" height="18" viewBox="0 0 24 24" :fill="saved ? '#e74c3c' : 'none'" :stroke="saved ? '#e74c3c' : '#999'" stroke-width="2">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    </button>
     <div class="booking-vendor">
       <h3 class="booking-vendor-name">{{ vendor.business_name }}</h3>
       <p class="booking-price">
@@ -33,7 +40,6 @@ function formatPrice(price: number): string {
     </div>
     <div class="booking-actions">
       <button class="btn-book" @click="emit('book')">Book Now</button>
-      <button class="btn-save" @click="emit('save')">Save Portfolio</button>
     </div>
   </div>
 </template>
@@ -47,6 +53,24 @@ function formatPrice(price: number): string {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 100px;
+  position: relative;
+}
+.btn-wishlist {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s;
+  z-index: 2;
+}
+.btn-wishlist:hover:not(:disabled) {
+  transform: scale(1.2);
+}
+.btn-wishlist:disabled {
+  cursor: not-allowed;
 }
 .booking-vendor { margin-bottom: 20px; }
 .booking-vendor-name {
@@ -96,20 +120,4 @@ function formatPrice(price: number): string {
   transition: background 0.2s;
 }
 .btn-book:hover { background: #444; }
-.btn-save {
-  width: 100%;
-  padding: 14px;
-  background: #fff;
-  color: #222;
-  border: 2px solid #222;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-save:hover {
-  background: #222;
-  color: #fff;
-}
 </style>

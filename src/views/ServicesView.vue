@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import Navbar from '@/components/layout/Navbar.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
+
+const auth = useAuthStore()
+const router = useRouter()
 
 interface Category {
   id_category: number
@@ -26,6 +31,7 @@ const categories = ref<Category[]>([])
 const packages = ref<PackageItem[]>([])
 const activeCategory = ref<number | null>(null)
 const loading = ref(true)
+const favoriteIds = ref<Set<number>>(new Set())
 
 const filteredPackages = computed(() => {
   if (activeCategory.value === null) return packages.value
@@ -36,6 +42,41 @@ const filteredPackages = computed(() => {
 
 function formatPrice(price: number) {
   return 'Rp ' + price.toLocaleString('id-ID')
+}
+
+async function fetchFavorites() {
+  if (!auth.isLoggedIn) return
+  try {
+    const res = await auth.authFetch('/api/favorites')
+    const json = await res.json()
+    if (res.ok) {
+      favoriteIds.value = new Set((json.data || []).map((f: any) => f.id_package))
+    }
+  } catch { /* fallback */ }
+}
+
+async function toggleFavorite(packageId: number) {
+  if (!auth.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  if (favoriteIds.value.has(packageId)) {
+    const res = await auth.authFetch(`/api/favorites/${packageId}`, { method: 'DELETE' })
+    if (res.ok) {
+      const next = new Set(favoriteIds.value)
+      next.delete(packageId)
+      favoriteIds.value = next
+      auth.refreshWishlistCount()
+    }
+  } else {
+    const res = await auth.authFetch('/api/favorites', { method: 'POST', body: JSON.stringify({ id_package: packageId }) })
+    if (res.ok) {
+      const next = new Set(favoriteIds.value)
+      next.add(packageId)
+      favoriteIds.value = next
+      auth.refreshWishlistCount()
+    }
+  }
 }
 
 onMounted(async () => {
@@ -57,6 +98,7 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  await fetchFavorites()
 })
 </script>
 
@@ -105,6 +147,11 @@ onMounted(async () => {
             class="col-lg-3 col-md-4 col-sm-6"
           >
             <div class="package-card">
+              <button class="btn-wishlist" @click="toggleFavorite(pkg.id_package)" :title="favoriteIds.has(pkg.id_package) ? 'Remove from wishlist' : 'Add to wishlist'">
+                <svg width="18" height="18" viewBox="0 0 24 24" :fill="favoriteIds.has(pkg.id_package) ? '#e74c3c' : 'none'" :stroke="favoriteIds.has(pkg.id_package) ? '#e74c3c' : '#999'" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
               <div class="package-icon">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
@@ -195,6 +242,23 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+}
+
+.btn-wishlist {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s;
+  z-index: 2;
+}
+
+.btn-wishlist:hover {
+  transform: scale(1.2);
 }
 
 .package-card:hover {

@@ -22,6 +22,7 @@ import commissionRoutes from './modules/commissions/commissions.routes'
 import payoutRoutes from './modules/payouts/payouts.routes'
 import companyInfoRoutes from './modules/company-info/company-info.routes'
 import contactMessageRoutes from './modules/contact-messages/contact-messages.routes'
+import favoriteRoutes from './modules/favorites/favorites.routes'
 
 const app = express()
 
@@ -56,6 +57,7 @@ app.use('/api/commissions', commissionRoutes)
 app.use('/api/payouts', payoutRoutes)
 app.use('/api/company-info', companyInfoRoutes)
 app.use('/api/contact-messages', contactMessageRoutes)
+app.use('/api/favorites', favoriteRoutes)
 
 app.use(errorHandler)
 

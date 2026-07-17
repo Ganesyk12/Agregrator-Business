@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { authenticate } from '../../middleware/auth'
 import * as bookingCtrl from './bookings.controller'
 
 const router = Router()
@@ -51,6 +52,7 @@ const router = Router()
  *                 data: { $ref: '#/components/schemas/Booking' }
  */
 router.get('/', bookingCtrl.getAll)
+router.get('/user/me', authenticate, bookingCtrl.getMyBookings)
 
 /**
  * @openapi

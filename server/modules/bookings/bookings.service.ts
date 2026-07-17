@@ -14,6 +14,9 @@ const include = {
       },
     },
   },
+  payments: {
+    orderBy: { date_created: 'desc' as const },
+  },
 } as const
 
 export async function findAll(): Promise<Booking[]> {
@@ -29,6 +32,14 @@ export async function findById(id: number): Promise<Booking | null> {
     where: { id_booking: id, status: { not: 'deleted' } },
     include,
   }) as unknown as Booking | null
+}
+
+export async function findByUser(userId: number): Promise<Booking[]> {
+  return prisma.booking.findMany({
+    where: { id_user: userId, status: { not: 'deleted' } },
+    include,
+    orderBy: { date_created: 'desc' },
+  }) as unknown as Booking[]
 }
 
 export async function create(

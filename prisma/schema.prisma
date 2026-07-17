@@ -41,6 +41,7 @@ model User {
   bookings   Booking[] @relation("CustomerBookings")
   reviews    Review[]
   user_roles User_Role[]
+  favorites  UserFavorite[]
 
   @@index([status])
   @@schema("sigyn")
@@ -169,6 +170,7 @@ model Package {
   category         Category?        @relation(fields: [id_category], references: [id_category])
   booking_packages BookingPackage[]
   portfolios       Portfolio[]
+  favorites        UserFavorite[]
 
   @@index([id_vendor])
   @@index([id_category])
@@ -312,6 +314,19 @@ model Payout {
 
   @@unique([id_booking, id_vendor])
   @@index([id_vendor])
+  @@schema("sigyn")
+}
+
+model UserFavorite {
+  id_favorite   Int      @id @default(autoincrement())
+  id_user       Int
+  id_package    Int
+  date_created  DateTime @default(now())
+
+  user    User    @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
+  package Package @relation(fields: [id_package], references: [id_package], onDelete: Cascade)
+
+  @@unique([id_user, id_package])
   @@schema("sigyn")
 }
 
