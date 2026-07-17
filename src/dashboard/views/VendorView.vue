@@ -22,6 +22,7 @@ interface Vendor {
   description: string
   category: string
   location: string
+  years_exp: number
   status: string
   verified_at: string | null
   user_modified: string | null
@@ -90,6 +91,7 @@ async function handleSave(data: VendorForm) {
           description: data.description,
           category: data.category,
           location: data.location,
+          years_exp: data.years_exp,
         })
       })
       if (!res.ok) {
@@ -118,6 +120,7 @@ async function handleSave(data: VendorForm) {
           description: data.description,
           category: data.category,
           location: data.location,
+          years_exp: data.years_exp,
         })
       })
       if (!res.ok) {

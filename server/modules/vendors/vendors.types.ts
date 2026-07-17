@@ -6,6 +6,7 @@ export interface Vendor {
   description: string | null
   category: string
   location: string | null
+  years_exp: number
   status: string
   verified_at: Date | null
   date_created: Date
