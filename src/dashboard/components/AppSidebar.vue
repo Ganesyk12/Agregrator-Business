@@ -42,8 +42,8 @@ const allSections: MenuSection[] = [
     title: 'Finance & Accounting',
     roles: ['eUser-Finance'],
     items: [
-      { label: 'Revenue Summary', icon: 'fa-line-chart', to: '/' },
-      { label: 'Payments', icon: 'fa-credit-card', to: '/payments' },
+      { label: 'Revenue Summary', icon: 'fa-line-chart', to: '/revenue-summary' },
+      { label: 'Request for Payment', icon: 'fa-credit-card', to: '/payment-requests' },
       { label: 'Commissions', icon: 'fa-percent', to: '/commissions' },
       { label: 'Payouts', icon: 'fa-money', to: '/payouts' },
       { label: 'Invoices', icon: 'fa-file-text-o', to: '/invoices' },
@@ -92,7 +92,10 @@ function hasChildren(menu: MenuItem): menu is MenuItem & { children: MenuItem[] 
 }
 
 function isActive(menu: MenuItem): boolean {
-  if (menu.to && route.path === menu.to) return true
+  if (menu.to) {
+    if (menu.to === '/') return route.path === '/'
+    if (route.path === menu.to || route.path.startsWith(menu.to + '/')) return true
+  }
   if (menu.children) return menu.children.some(isActive)
   return false
 }

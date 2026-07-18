@@ -18,6 +18,7 @@ import categoryRoutes from './modules/categories/categories.routes'
 import portfolioRoutes from './modules/portfolios/portfolios.routes'
 import uploadRoutes from './modules/upload/upload.routes'
 import paymentRoutes from './modules/payments/payments.routes'
+import paymentRequestRoutes from './modules/payment-requests/payment-requests.routes'
 import commissionRoutes from './modules/commissions/commissions.routes'
 import payoutRoutes from './modules/payouts/payouts.routes'
 import companyInfoRoutes from './modules/company-info/company-info.routes'
@@ -54,6 +55,7 @@ app.use('/api/categories', categoryRoutes)
 app.use('/api/portfolios', portfolioRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/payments', paymentRoutes)
+app.use('/api/payment-requests', paymentRequestRoutes)
 app.use('/api/commissions', commissionRoutes)
 app.use('/api/payouts', payoutRoutes)
 app.use('/api/company-info', companyInfoRoutes)

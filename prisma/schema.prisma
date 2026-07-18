@@ -43,6 +43,8 @@ model User {
   user_roles User_Role[]
   favorites  UserFavorite[]
   cart       Cart?
+  requests_created PaymentRequest[] @relation("Requester")
+  requests_reviewed PaymentRequest[] @relation("Reviewer")
 
   @@index([status])
   @@schema("sigyn")
@@ -354,6 +356,75 @@ model CartItem {
   package Package @relation(fields: [id_package], references: [id_package])
 
   @@unique([id_cart, id_package])
+  @@schema("sigyn")
+}
+
+model PaymentRequest {
+  id_request          Int       @id @default(autoincrement())
+  request_number      String    @unique
+  title               String
+  description         String?
+  request_date        DateTime  @default(now())
+  requested_by        Int
+  notes               String?
+  payment_method      String?
+  bank_account_number String?
+  payment_to          String?
+  status              String    @default("draft")
+  reviewed_by         Int?
+  reviewed_at         DateTime?
+  approval_notes      String?
+  date_created        DateTime  @default(now())
+  date_modified       DateTime  @updatedAt
+  user_created        String?
+  user_modified       String?
+
+  requester    User                  @relation("Requester", fields: [requested_by], references: [id_user])
+  reviewer     User?                 @relation("Reviewer", fields: [reviewed_by], references: [id_user])
+  items        PaymentRequestItem[]
+  transactions PaymentTransaction[]
+
+  @@index([status])
+  @@index([requested_by])
+  @@schema("sigyn")
+}
+
+model PaymentRequestItem {
+  id_item      Int      @id @default(autoincrement())
+  id_request   Int
+  description  String
+  quantity     Int      @default(1)
+  unit_price   Float    @default(0)
+  amount       Float
+  notes        String?
+  sort_order   Int      @default(0)
+  date_created DateTime @default(now())
+
+  request PaymentRequest @relation(fields: [id_request], references: [id_request], onDelete: Cascade)
+
+  @@index([id_request])
+  @@schema("sigyn")
+}
+
+model PaymentTransaction {
+  id_transaction      Int       @id @default(autoincrement())
+  id_request          Int
+  transaction_date    DateTime  @default(now())
+  transaction_type    String
+  description         String?
+  payment_proof_url   String?
+  payment_method      String?
+  bank_name           String?
+  bank_account_number String?
+  bank_account_name   String?
+  reference_number    String?
+  paid_at             DateTime?
+  created_by          String?
+  date_created        DateTime  @default(now())
+
+  request PaymentRequest @relation(fields: [id_request], references: [id_request], onDelete: Cascade)
+
+  @@index([id_request])
   @@schema("sigyn")
 }
 

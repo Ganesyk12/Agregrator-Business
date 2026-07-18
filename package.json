@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:server": "tsx watch server/index.ts",
+    "dev:server": "prisma generate && tsx watch server/index.ts",
     "dev:all": "run-p dev dev:server",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
