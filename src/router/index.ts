@@ -4,8 +4,14 @@ import BaseView from '../views/BaseView.vue'
 import PhotographyView from '../views/PhotographyView.vue'
 import MUAView from '../views/MUAView.vue'
 import BouquetView from '../views/BouquetView.vue'
+import ServicesView from '../views/ServicesView.vue'
+import ContactView from '../views/ContactView.vue'
+import LoginView from '../views/LoginView.vue'
+import WishlistView from '../views/WishlistView.vue'
 import PortfolioDetailView from '../views/PortfolioDetailView.vue'
+import VendorProfileView from '../views/VendorProfileView.vue'
 import BookingView from '../views/BookingView.vue'
+import BookingHistoryView from '../views/BookingHistoryView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -24,6 +30,11 @@ const routes: RouteRecordRaw[] = [
     name: 'product',
     component: BaseView,
     props: { title: 'Product Detail' }
+  },
+  {
+    path: '/services',
+    name: 'services',
+    component: ServicesView
   },
   {
     path: '/photography',
@@ -46,6 +57,11 @@ const routes: RouteRecordRaw[] = [
     component: PortfolioDetailView
   },
   {
+    path: '/vendor/:id',
+    name: 'vendor-profile',
+    component: VendorProfileView
+  },
+  {
     path: '/booking',
     name: 'booking',
     component: BookingView
@@ -57,10 +73,24 @@ const routes: RouteRecordRaw[] = [
     props: { title: 'About Us' }
   },
   {
+    path: '/wishlist',
+    name: 'wishlist',
+    component: WishlistView
+  },
+  {
+    path: '/booking-history',
+    name: 'booking-history',
+    component: BookingHistoryView
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginView
+  },
+  {
     path: '/contact',
     name: 'contact',
-    component: BaseView,
-    props: { title: 'Contact Us' }
+    component: ContactView
   },
   {
     path: '/cart',
@@ -73,12 +103,6 @@ const routes: RouteRecordRaw[] = [
     name: 'checkout',
     component: BaseView,
     props: { title: 'Checkout' }
-  },
-  {
-    path: '/wishlist',
-    name: 'wishlist',
-    component: BaseView,
-    props: { title: 'Wishlist' }
   },
   {
     path: '/faqs',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import Navbar from '@/components/layout/Navbar.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
@@ -9,6 +10,7 @@ import PortfolioGallery from '@/components/portfolio/PortfolioGallery.vue'
 import ReviewCard from '@/components/portfolio/ReviewCard.vue'
 import BookingCard from '@/components/portfolio/BookingCard.vue'
 
+const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const portfolio = ref<any>(null)
@@ -16,6 +18,9 @@ const vendorInfo = ref<any>(null)
 const relatedPortfolios = ref<any[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+const isSaving = ref(false)
+const isSaved = ref(false)
+const saveMessage = ref('')
 
 const hasAvailability = computed(() => {
   return vendorInfo.value?.availability !== null && vendorInfo.value?.availability !== undefined
@@ -44,6 +49,14 @@ async function fetchPortfolio() {
     const relatedRes = await fetch(`/api/portfolios/${id}/related`)
     const relatedJson = await relatedRes.json()
     if (relatedRes.ok) relatedPortfolios.value = relatedJson.data
+    // check if this portfolio's package is already favorited
+    if (auth.isLoggedIn && json.data?.id_package) {
+      try {
+        const favRes = await auth.authFetch(`/api/favorites/check/${json.data.id_package}`)
+        const favJson = await favRes.json()
+        if (favRes.ok) isSaved.value = favJson.data?.is_favorited
+      } catch { /* fallback */ }
+    }
   } catch (err: any) {
     error.value = err.message
   } finally {
@@ -62,8 +75,51 @@ function handleBookNow() {
   router.push(`/booking?${query.toString()}`)
 }
 
-function handleSavePortfolio() {
-  alert('Portfolio saved to favorites!')
+async function handleSavePortfolio() {
+  saveMessage.value = ''
+  const packageId = portfolio.value?.id_package
+  if (!packageId) {
+    saveMessage.value = 'No package linked to this portfolio.'
+    return
+  }
+  if (!auth.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  isSaving.value = true
+  try {
+    if (isSaved.value) {
+      const res = await auth.authFetch(`/api/favorites/${packageId}`, { method: 'DELETE' })
+      if (res.ok) {
+        isSaved.value = false
+        saveMessage.value = 'Removed from wishlist.'
+        auth.refreshWishlistCount()
+      } else {
+        const err = await res.json()
+        saveMessage.value = err.error?.message || 'Failed to remove.'
+      }
+    } else {
+      const res = await auth.authFetch('/api/favorites', {
+        method: 'POST',
+        body: JSON.stringify({ id_package: packageId }),
+      })
+      if (res.ok) {
+        isSaved.value = true
+        saveMessage.value = 'Saved to wishlist!'
+        auth.refreshWishlistCount()
+      } else if (res.status === 409) {
+        isSaved.value = true
+        saveMessage.value = 'Already in your wishlist.'
+      } else {
+        const err = await res.json()
+        saveMessage.value = err.error?.message || 'Failed to save.'
+      }
+    }
+  } catch {
+    saveMessage.value = 'Something went wrong. Please try again.'
+  } finally {
+    isSaving.value = false
+  }
 }
 
 function goToPortfolio(id: number) {
@@ -204,9 +260,12 @@ onMounted(fetchPortfolio)
               status: portfolio.vendor?.status || 'pending',
             }"
             :availability="hasAvailability ? 'Available' : null"
+            :saving="isSaving"
+            :saved="isSaved"
             @book="handleBookNow"
             @save="handleSavePortfolio"
           />
+          <p v-if="saveMessage" class="save-feedback mt-2 mb-0 text-center small">{{ saveMessage }}</p>
         </aside>
       </div>
     </div>
@@ -500,5 +559,11 @@ onMounted(fetchPortfolio)
   .meta-grid {
     gap: 16px;
   }
+}
+.save-feedback {
+  color: #22c55e;
+}
+.save-feedback:empty {
+  display: none;
 }
 </style>

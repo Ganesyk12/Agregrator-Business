@@ -1,0 +1,13 @@
+services:
+  backend:
+    build: .
+    container_name: sigyn-srv
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - sigyn-bucket:/app/public/uploads
+
+volumes:
+  sigyn-bucket:
