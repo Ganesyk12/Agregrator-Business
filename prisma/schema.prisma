@@ -363,7 +363,6 @@ model PaymentRequest {
   id_request          Int       @id @default(autoincrement())
   request_number      String    @unique
   title               String
-  description         String?
   request_date        DateTime  @default(now())
   requested_by        Int
   notes               String?
@@ -413,12 +412,6 @@ model PaymentTransaction {
   transaction_type    String
   description         String?
   payment_proof_url   String?
-  payment_method      String?
-  bank_name           String?
-  bank_account_number String?
-  bank_account_name   String?
-  reference_number    String?
-  paid_at             DateTime?
   created_by          String?
   date_created        DateTime  @default(now())
 

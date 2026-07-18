@@ -119,22 +119,18 @@ router.post('/', (req: any, res: any) => {
 })
 
 router.post('/payment-proof', (req: any, res: any) => {
-  const requestNumber = req.body.request_number || req.query.request_number || 'unknown'
+  const requestNumber = req.query.request_number || req.body.request_number || 'unknown'
   const targetDir = path.join(process.cwd(), 'public', 'uploads', 'payments', requestNumber)
-  if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true })
-  }
-
-  const paymentStorage = multer.diskStorage({
-    destination: (_req: any, _file: any, cb: any) => cb(null, targetDir),
-    filename: (_req: any, file: any, cb: any) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-      cb(null, uniqueSuffix + path.extname(file.originalname))
-    },
-  })
+  if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true })
 
   const paymentUpload = multer({
-    storage: paymentStorage,
+    storage: multer.diskStorage({
+      destination: (_req: any, _file: any, cb: any) => cb(null, targetDir),
+      filename: (_req: any, file: any, cb: any) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        cb(null, uniqueSuffix + path.extname(file.originalname))
+      },
+    }),
     fileFilter: (_req: any, file: any, cb: any) => {
       const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
       cb(null, allowed.includes(file.mimetype))
@@ -145,7 +141,6 @@ router.post('/payment-proof', (req: any, res: any) => {
   paymentUpload.single('file')(req, res, (err: any) => {
     if (err) return res.status(400).json({ error: { message: err.message } })
     if (!req.file) return res.status(400).json({ error: { message: 'File tidak ditemukan' } })
-
     res.json({
       url: `/uploads/payments/${requestNumber}/${req.file.filename}`,
       filename: req.file.filename,

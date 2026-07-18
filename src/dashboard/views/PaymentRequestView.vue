@@ -98,8 +98,7 @@ function openApprove(r: PaymentRequest) {
 async function uploadFile(requestNumber: string, file: File): Promise<string | null> {
   const fd = new FormData()
   fd.append('file', file)
-  fd.append('request_number', requestNumber)
-  const res = await fetch(`${apiUrl}/api/upload/payment-proof`, { method: 'POST', body: fd })
+  const res = await fetch(`${apiUrl}/api/upload/payment-proof?request_number=${encodeURIComponent(requestNumber)}`, { method: 'POST', body: fd })
   if (!res.ok) return null
   const json = await res.json()
   return json.url

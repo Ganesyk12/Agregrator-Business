@@ -14,6 +14,7 @@ const loading = ref(true)
 const modalVisible = ref(false)
 const modalMode = ref<'add' | 'edit' | 'detail' | 'approve'>('edit')
 const detailFile = ref<File | null>(null)
+const detailNotes = ref('')
 
 const Toast = Swal.mixin({
   toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true,
@@ -43,8 +44,7 @@ async function fetchRequest() {
 async function uploadFile(requestNumber: string, file: File): Promise<string | null> {
   const fd = new FormData()
   fd.append('file', file)
-  fd.append('request_number', requestNumber)
-  const res = await fetch(`${apiUrl}/api/upload/payment-proof`, { method: 'POST', body: fd })
+  const res = await fetch(`${apiUrl}/api/upload/payment-proof?request_number=${encodeURIComponent(requestNumber)}`, { method: 'POST', body: fd })
   if (!res.ok) return null
   const json = await res.json()
   return json.url
@@ -125,19 +125,12 @@ async function handleSubmit() {
         status: 'pending',
         user_modified: user?.fullname || 'SYSTEM',
         attachment_url: proofUrl,
+        approval_notes: detailNotes.value || null,
       }),
     })
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}))
       throw new Error(errBody?.error?.message || 'Failed to submit')
-    }
-
-    if (proofUrl) {
-      await fetch(`${apiUrl}/api/payment-requests/${request.value.id_request}/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transaction_type: 'submitted', description: 'Payment request submitted', payment_proof_url: proofUrl, created_by: user?.fullname || 'SYSTEM' }),
-      })
     }
 
     await fetchRequest()
@@ -301,6 +294,10 @@ onMounted(fetchRequest)
           <template v-if="request.status === 'draft' || request.status === 'revision'">
             <div class="ln_solid" style="margin:15px 0;"></div>
             <h5 style="font-weight:700; margin-bottom:10px; color:#73879C;"><i class="fa fa-send"></i> Submit Request</h5>
+            <div class="form-group" style="text-align:left;">
+              <label class="control-label" style="font-weight:bold;">Notes</label>
+              <textarea v-model="detailNotes" class="form-control" rows="2" placeholder="Notes for submission (optional)"></textarea>
+            </div>
             <div class="form-group" style="text-align:left;">
               <label class="control-label" style="font-weight:bold;">Attachment (optional)</label>
               <input type="file" class="form-control" accept="image/*,application/pdf" @change="onFileSelected" />
