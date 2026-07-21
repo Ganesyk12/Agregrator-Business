@@ -21,11 +21,13 @@ onMounted(async () => {
     const json = await res.json()
     if (res.ok) {
       const allPortfolios = json.data || []
-      images.value = allPortfolios.map((p: any) => ({
-        url: p.cover_url,
-        id_portfolio: p.id_portfolio,
-        alt: p.title,
-      }))
+      images.value = allPortfolios
+        .filter((p: any) => p.vendor?.category === 'Photography')
+        .map((p: any) => ({
+          url: p.cover_url,
+          id_portfolio: p.id_portfolio,
+          alt: p.title,
+        }))
     }
   } catch {
     // fallback

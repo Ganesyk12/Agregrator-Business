@@ -3,11 +3,17 @@ import * as portfolioService from './portfolios.service'
 import * as vendorService from '../vendors/vendors.service'
 import prisma from '../../db'
 import { createError } from '../../middleware/error-handler'
+import { attachExtras } from '../../config/extras'
 
-export async function getAll(_req: Request, res: Response, next: NextFunction) {
+export async function getAll(req: Request, res: Response, next: NextFunction) {
   try {
-    const portfolios = await portfolioService.findAll()
-    res.json({ data: portfolios })
+    const label = req.query.label as string | undefined
+    const portfolios = await portfolioService.findAll(label)
+    const data = portfolios.map((p: any) => ({
+      ...p,
+      vendor: p.vendor ? attachExtras(p.vendor) : p.vendor,
+    }))
+    res.json({ data })
   } catch (err) {
     next(err)
   }
@@ -22,7 +28,11 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
       res.status(404).json({ error: { message: 'Portfolio not found' } })
       return
     }
-    res.json({ data: portfolio })
+    const data = {
+      ...portfolio,
+      vendor: (portfolio as any).vendor ? attachExtras((portfolio as any).vendor) : (portfolio as any).vendor,
+    }
+    res.json({ data })
   } catch (err) {
     next(err)
   }
@@ -135,22 +145,24 @@ export async function getRelated(req: Request, res: Response, next: NextFunction
 export async function getVendors(_req: Request, res: Response, next: NextFunction) {
   try {
     const vendors = await vendorService.findVendorsWithPackages()
-    const data = vendors.map((v: any) => ({
-      id_vendor: v.id_vendor,
-      business_name: v.business_name,
-      category: v.category,
-      location: v.location || '',
-      description: v.description || '',
-      starting_price: v.packages.length > 0 ? v.packages[0].price : 0,
-      years_exp: v.years_exp,
-      status: v.status,
-      average_rating: 0,
-      completed_projects: v._count?.portfolios || 0,
-      cover_url: '',
-      logo_url: null,
-      availability: v.status === 'verified' ? 'available' : 'booked',
-      extras: [],
-    }))
+    const data = vendors.map((v: any) => {
+      const base = {
+        id_vendor: v.id_vendor,
+        business_name: v.business_name,
+        category: v.category,
+        location: v.location || '',
+        description: v.description || '',
+        starting_price: v.packages.length > 0 ? v.packages[0].price : 0,
+        years_exp: v.years_exp,
+        status: v.status,
+        average_rating: 0,
+        completed_projects: v._count?.portfolios || 0,
+        cover_url: '',
+        logo_url: null,
+        availability: v.status === 'verified' ? 'available' : 'booked',
+      }
+      return attachExtras(base)
+    })
     res.json({ data })
   } catch (err) {
     next(err)
@@ -172,7 +184,11 @@ export async function getPackagesByCategory(req: Request, res: Response, next: N
     const { categoryName } = req.params
     if (!categoryName) throw createError(400, 'Category name is required')
     const packages = await portfolioService.getPackagesByCategory(categoryName)
-    res.json({ data: packages })
+    const data = packages.map((p: any) => ({
+      ...p,
+      extras: p.extras || [],
+    }))
+    res.json({ data })
   } catch (err) {
     next(err)
   }
@@ -189,7 +205,14 @@ export async function getVendorInfo(req: Request, res: Response, next: NextFunct
     const reviews = await portfolioService.getVendorReviews(vendorId)
     const packages = await portfolioService.getVendorPackages(vendorId)
     const availability = await portfolioService.getVendorAvailability(vendorId)
-    res.json({ data: { vendor, reviews, packages, availability } })
+    const vendorData = attachExtras(vendor)
+    const extras = packages.length > 0
+      ? await prisma.packageExtra.findMany({
+          where: { id_package: packages[0].id_package, status: 'active' },
+          select: { id_extra: true, name: true, price: true, icon: true },
+        })
+      : []
+    res.json({ data: { vendor: { ...vendorData, extras }, reviews, packages, availability } })
   } catch (err) {
     next(err)
   }

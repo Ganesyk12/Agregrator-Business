@@ -10,379 +10,350 @@ const pool = new pg.Pool({ connectionString })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
-const portfolioImages = [
-  'banner-image-1.jpg', 'banner-image-2.jpg', 'banner-image-3.jpg',
-  'banner-image-4.jpg', 'banner-image-5.jpg', 'banner-image-6.jpg',
-  'collection-banner.jpg', 'newsletter-image.jpg', 'bg-newsletter.jpg',
-  'single-image-2.jpg', 'post-image1.jpg', 'post-image2.jpg',
-  'post-image3.jpg', 'post-image4.jpg', 'post-image5.jpg',
-  'post-image6.jpg', 'post-image7.jpg', 'post-image8.jpg',
-  'post-image9.jpg', 'post-image1.jpg', 'post-image2.jpg',
+const CAT_PHOTOGRAPHY = 'Photography'
+const CAT_MUA = 'MUA'
+const CAT_BOUQUET = 'Bouquet Flowers'
+
+const vendorsByCategory: Record<string, string[]> = {
+  [CAT_PHOTOGRAPHY]: [
+    'Lensa Abadi Photography', 'Cahaya Senja Visual', 'Frame Indah Photography',
+    'Momen Abadi Photo', 'Golden Lens Studio', 'Shutter Paradise',
+    'Pixel Indah Visual', 'Angkasa Fotografi', 'Biru Langit Photo',
+    'Elok Visual Studio', 'Karya Lensa', 'Fokus Abadi', 'Pelangi Visual Art',
+  ],
+  [CAT_MUA]: [
+    'Bidadari Makeup', 'Cantik Natural MUA', 'Pesona Rias Pengantin',
+    'Glow Artistry', 'Ratu Rias Modern', 'Anggun Makeup Studio',
+    'Berseri MUA', 'Dewi Rias Bridal', 'Elegan Makeup Art',
+    'Flawless Beauty', 'MUA Impian', 'Cahaya Ayu Rias', 'Rias Pesona',
+  ],
+  [CAT_BOUQUET]: [
+    'Bouquet Cantik', 'Floral Indah', 'Rangkaian Bunga Nusantara',
+    'Blooming Flowers', 'Bouquet Pesona', 'Floral Harmony',
+    'Bunga Indah Florist', 'Rose Petal Bouquet', 'Mekar Florist',
+    'Bouquet Anggun', 'Floral Paradise', 'Segar Bunga Florist',
+    'Bouquet Elok', 'Wonderful Blooms',
+  ],
+}
+
+type VendorPkg = { name: string; price: number; duration: string; whats_included: string }
+
+const pkgsByCategory: Record<string, VendorPkg[]> = {
+  [CAT_PHOTOGRAPHY]: [
+    { name: 'Paket Basic Photo', price: 1500000, duration: '2 Jam', whats_included: '1 Fotografer, 50+ foto edit, gallery online' },
+    { name: 'Paket Standar Photo', price: 2500000, duration: '4 Jam', whats_included: '1 Fotografer, 100+ foto edit, album 8x12' },
+    { name: 'Paket Premium Photo', price: 4000000, duration: '6 Jam', whats_included: '2 Fotografer, 200+ foto edit, album 10x14' },
+    { name: 'Paket Video Basic', price: 2000000, duration: '3 Jam', whats_included: '1 Videografer, video highlight 3 menit' },
+    { name: 'Paket Video Premium', price: 3500000, duration: '6 Jam', whats_included: '1 Videografer, video highlight 5 menit, full video' },
+  ],
+  [CAT_MUA]: [
+    { name: 'Paket Makeup Basic', price: 800000, duration: '1 Sesi', whats_included: 'Makeup natural, touch-up kit, trial 1x' },
+    { name: 'Paket Makeup Standar', price: 1500000, duration: '1 Sesi', whats_included: 'Makeup bridal, trial 1x, touch-up kit, lashes' },
+    { name: 'Paket Makeup Premium', price: 2500000, duration: '2 Sesi', whats_included: 'Makeup bridal + ibu, trial 2x, hair do' },
+    { name: 'Paket Makeup VIP', price: 3500000, duration: '2 Sesi', whats_included: 'Makeup bridal + ibu + 2 bridesmaid, trial 2x' },
+    { name: 'Paket Makeup Eksklusif', price: 5000000, duration: 'Full Day', whats_included: 'Makeup seluruh keluarga, trial unlimited, on-site' },
+  ],
+  [CAT_BOUQUET]: [
+    { name: 'Buket Basic', price: 150000, duration: '1 Ikat', whats_included: 'Bunga segar pilihan, wrapping kertas kraft' },
+    { name: 'Buket Standar', price: 350000, duration: '1 Ikat', whats_included: 'Bunga segar premium, wrapping luxury, pita' },
+    { name: 'Buket Premium', price: 600000, duration: '1 Ikat', whats_included: 'Bunga import, wrapping eksklusif, kartu ucapan' },
+    { name: 'Arrangement Meja', price: 500000, duration: '1 Set', whats_included: 'Vas + rangkaian bunga segar untuk meja' },
+    { name: 'Dekorasi Bunga', price: 2000000, duration: '1 Event', whats_included: 'Rangkaian bunga untuk panggung/pelaminan' },
+  ],
+}
+
+const portfolioTitles: Record<string, string[]> = {
+  [CAT_PHOTOGRAPHY]: [
+    'Prewedding Outdoor Classic', 'Wedding Ceremony Indoor', 'Engagement Session',
+    'Family Portrait Studio', 'Graduation Photoshoot', 'Maternity Photo Session',
+    'Birthday Celebration', 'Corporate Event Coverage', 'Product Photography',
+    'Couple Romantic Session',
+  ],
+  [CAT_MUA]: [
+    'Bridal Makeup Traditional', 'Modern Wedding Look', 'Natural Glam Makeup',
+    'Makeup Ibu Pengantin', 'Bridesmaid Makeup Set', 'Makeup Wisuda Natural',
+    'Party Glam Look', 'Engagement Makeup Look', 'Makeup Prewedding',
+    'Editorial Makeup Shoot',
+  ],
+  [CAT_BOUQUET]: [
+    'Buket Bunga Mawar Merah', 'Buket Bunga Tulip', 'Buket Bunga Campuran',
+    'Rangkaian Meja Minimalis', 'Dekorasi Pelaminan Bunga', 'Buket Wisuda',
+    'Buket Bunga Kering', 'Rangkaian Bunga Meja Tamu', 'Buket Pernikahan Putih',
+    'Arrangement Bunga Import',
+  ],
+}
+
+const locations = [
+  'Jakarta Pusat', 'Jakarta Selatan', 'Jakarta Barat', 'Jakarta Timur', 'Jakarta Utara',
+  'Bandung', 'Surabaya', 'Yogyakarta', 'Semarang', 'Medan',
+  'Makassar', 'Denpasar', 'Palembang', 'Bogor', 'Tangerang',
+  'Bekasi', 'Depok', 'Malang', 'Solo', 'Balikpapan',
 ]
 
-function img(file: string) {
-  return `/src/assets/kaira/images/${file}`
+function img(category: string, vendorIdx: number, portfolioIdx: number, w = 800, h = 600) {
+  const seed = `${category.toLowerCase().replace(/\s+/g, '-')}-${vendorIdx}-${portfolioIdx}`
+  return `https://picsum.photos/seed/${seed}/${w}/${h}`
 }
 
 async function main() {
-  // ── Roles ──
-  console.log('Seeding database roles...')
-  const roles = [
+  console.log('Cleaning existing data...')
+  await prisma.payout.deleteMany()
+  await prisma.commission.deleteMany()
+  await prisma.payment.deleteMany()
+  await prisma.bookingPackageExtra.deleteMany()
+  await prisma.bookingPackage.deleteMany()
+  await prisma.booking.deleteMany()
+  await prisma.review.deleteMany()
+  await prisma.packageExtra.deleteMany()
+  await prisma.portfolioImage.deleteMany()
+  await prisma.portfolio.deleteMany()
+  await prisma.package.deleteMany()
+  await prisma.vendorAvailability.deleteMany()
+  await prisma.vendor.deleteMany()
+  await prisma.user_Role.deleteMany({ where: { email: { not: 'rivanapta53@gmail.com' } } })
+  await prisma.user.deleteMany({ where: { id_user: { gt: 1 } } })
+  console.log('Cleaned.\n')
+
+  console.log('Seeding roles...')
+  const roleData = [
+    { role_code: 'eUser-SuperAdmin', name: 'Super Admin' },
     { role_code: 'eUser-Admin', name: 'Admin' },
     { role_code: 'eUser-Vendor', name: 'Vendor' },
     { role_code: 'eUser-Customer', name: 'Customer' },
     { role_code: 'eUser-Finance', name: 'Finance' },
-    { role_code: 'eUser-SuperAdmin', name: 'Super Admin' },
   ]
-  for (const r of roles) {
+  for (const r of roleData) {
     await prisma.role.upsert({
       where: { role_code: r.role_code },
-      update: {},
+      update: { name: r.name },
       create: r,
     })
   }
-  console.log('Database roles seeded successfully.')
-  // ── Categories ──
+  console.log('Roles seeded.\n')
+
   console.log('Seeding categories...')
-  const categoryData = [
-    { category_name: 'Fotografi' },
-    { category_name: 'Videografi' },
-    { category_name: 'Tata Rias' },
-    { category_name: 'Dekorasi' },
-    { category_name: 'Katering' },
-  ]
-  const categories: Record<string, any> = {}
-  for (const c of categoryData) {
-    categories[c.category_name] = await prisma.category.upsert({
-      where: { category_name: c.category_name },
+  const catNames = [CAT_PHOTOGRAPHY, CAT_MUA, CAT_BOUQUET]
+  const catMap: Record<string, any> = {}
+  for (const name of catNames) {
+    catMap[name] = await prisma.category.upsert({
+      where: { category_name: name },
       update: {},
-      create: c,
+      create: { category_name: name },
     })
   }
-  console.log('Categories seeded successfully.')
+  console.log(`Categories: ${Object.keys(catMap).join(', ')}\n`)
 
-  // ── Users ──
-  console.log('Seeding users...')
-  const customerUser = await prisma.user.upsert({
-    where: { email: 'customer@demo.com' },
-    update: {},
-    create: {
-      email: 'customer@demo.com',
-      password: '123456',
-      full_name: 'Budi Santoso',
-      phone: '081234567890',
-    },
-  })
-
-  const vendorUser1 = await prisma.user.upsert({
-    where: { email: 'vendor1@demo.com' },
-    update: {},
-    create: {
-      email: 'vendor1@demo.com',
-      password: '123456',
-      full_name: 'Sari Wedding Photography',
-      phone: '081298765432',
-    },
-  })
-
-  const vendorUser2 = await prisma.user.upsert({
-    where: { email: 'vendor2@demo.com' },
-    update: {},
-    create: {
-      email: 'vendor2@demo.com',
-      password: '123456',
-      full_name: 'Indah Catering',
-      phone: '081234567891',
-    },
-  })
-
-  const superAdminUser = await prisma.user.upsert({
-    where: { email: 'superadmin@sigyn.com' },
-    update: {},
-    create: {
-      email: 'superadmin@sigyn.com',
-      password: '123456',
-      full_name: 'Super Admin',
-      phone: '081234567892',
-    },
-  })
-  console.log('Users seeded successfully.')
-
-  // ── User Roles ──
-  console.log('Seeding user roles...')
-  await prisma.user_Role.upsert({
-    where: { email_role_code: { email: customerUser.email, role_code: 'eUser-Customer' } },
-    update: {},
-    create: { email: customerUser.email, role_code: 'eUser-Customer' },
-  })
-  await prisma.user_Role.upsert({
-    where: { email_role_code: { email: vendorUser1.email, role_code: 'eUser-Vendor' } },
-    update: {},
-    create: { email: vendorUser1.email, role_code: 'eUser-Vendor' },
-  })
-  await prisma.user_Role.upsert({
-    where: { email_role_code: { email: vendorUser2.email, role_code: 'eUser-Vendor' } },
-    update: {},
-    create: { email: vendorUser2.email, role_code: 'eUser-Vendor' },
-  })
-  await prisma.user_Role.upsert({
-    where: { email_role_code: { email: superAdminUser.email, role_code: 'eUser-SuperAdmin' } },
-    update: {},
-    create: { email: superAdminUser.email, role_code: 'eUser-SuperAdmin' },
-  })
-  console.log('User roles seeded successfully.')
-
-  // ── Vendors ──
   console.log('Seeding vendors...')
-  const vendor1 = await prisma.vendor.upsert({
-    where: { id_user: vendorUser1.id_user },
-    update: {},
-    create: {
-      id_user: vendorUser1.id_user,
-      business_name: 'Sari Wedding Photography',
-      description: 'Vendor fotografi & videografi pernikahan profesional',
-      category: 'Fotografi',
-      location: 'Jakarta Selatan',
-      years_exp: 8,
-      status: 'verified',
-      verified_at: new Date('2024-06-01'),
-    },
-  })
+  const vendorEntries: Array<{
+    vendor: any
+    categoryName: string
+  }> = []
 
-  const vendor2 = await prisma.vendor.upsert({
-    where: { id_user: vendorUser2.id_user },
-    update: {},
-    create: {
-      id_user: vendorUser2.id_user,
-      business_name: 'Indah Catering',
-      description: 'Katering pernikahan dengan menu prasmanan & fine dining',
-      category: 'Katering',
-      location: 'Jakarta Pusat',
-      years_exp: 5,
-      status: 'verified',
-      verified_at: new Date(),
-    },
-  })
-  console.log('Vendors seeded successfully.')
+  let vendorIdx = 0
+  for (const catName of catNames) {
+    const names = vendorsByCategory[catName]
+    for (let vi = 0; vi < names.length; vi++) {
+      const bizName = names[vi]
+      const catVal = catName === CAT_BOUQUET ? 'Bouquet' : catName
+      const email = `${catVal.toLowerCase().replace(/\s+/g, '')}${vi + 1}@demo.com`
+      const loc = locations[vendorIdx % locations.length]
 
-  // ── Portfolios ──
-  console.log('Seeding portfolios...')
-  const vendorPortfolios: { vendorId: number; name: string; cat: string }[] = [
-    { vendorId: vendor1.id_vendor, name: 'Akbar & Sarah Wedding', cat: 'Wedding' },
-    { vendorId: vendor1.id_vendor, name: 'Rina Graduation Photos', cat: 'Graduation' },
-    { vendorId: vendor1.id_vendor, name: 'Budi Family Session', cat: 'Family' },
-    { vendorId: vendor2.id_vendor, name: 'TechCorp Annual Event', cat: 'Corporate' },
-    { vendorId: vendor2.id_vendor, name: 'Dian & Adi Wedding Video', cat: 'Wedding' },
-  ]
-
-  for (let i = 0; i < vendorPortfolios.length; i++) {
-    const vp = vendorPortfolios[i]
-    const code = `PRT-${String(i + 1).padStart(4, '0')}`
-    const coverIdx = (i * 3) % portfolioImages.length
-
-    const existing = await prisma.portfolio.findUnique({ where: { code } })
-    if (existing) {
-      await prisma.portfolioImage.deleteMany({ where: { id_portfolio: existing.id_portfolio } })
-      await prisma.portfolio.delete({ where: { code } })
-    }
-
-    const portfolio = await prisma.portfolio.create({
-      data: {
-        id_vendor: vp.vendorId,
-        title: vp.name,
-        code,
-        cover_url: img(portfolioImages[coverIdx]),
-        description: `A beautiful ${vp.cat.toLowerCase()} project captured by our talented team.`,
-      },
-    })
-
-    const imageIndices = [
-      (coverIdx + 1) % portfolioImages.length,
-      (coverIdx + 2) % portfolioImages.length,
-      (coverIdx + 3) % portfolioImages.length,
-      (coverIdx + 4) % portfolioImages.length,
-    ]
-
-    for (let j = 0; j < imageIndices.length; j++) {
-      await prisma.portfolioImage.create({
+      const user = await prisma.user.create({
         data: {
-          id_portfolio: portfolio.id_portfolio,
-          image_url: img(portfolioImages[imageIndices[j]]),
-          caption: j === 0 ? 'Main highlight' : j === 1 ? 'Behind the scenes' : `Photo ${j + 1}`,
-          sort_order: j,
+          email,
+          password: '123456',
+          full_name: bizName,
+          phone: `081${String(100000000 + vendorIdx).slice(0, 10)}`,
+          user_created: 'SYSTEM',
+        },
+      })
+
+      await prisma.user_Role.create({
+        data: { email: user.email, role_code: 'eUser-Vendor', user_created: 'SYSTEM' },
+      })
+
+      const vendor = await prisma.vendor.create({
+        data: {
+          id_user: user.id_user,
+          business_name: bizName,
+          description: `${bizName} adalah vendor ${catVal} profesional dan berpengalaman di ${loc}.`,
+          category: catVal,
+          location: loc,
+          years_exp: Math.floor(Math.random() * 15) + 1,
+          status: 'verified',
+          verified_at: new Date(),
+          user_created: 'SYSTEM',
+        },
+      })
+
+      vendorEntries.push({ vendor, categoryName: catName })
+      vendorIdx++
+    }
+  }
+  console.log(`Total ${vendorEntries.length} vendors created.\n`)
+
+  console.log('Seeding packages...')
+  for (const { vendor, categoryName } of vendorEntries) {
+    const pkgList = pkgsByCategory[categoryName]
+    for (const p of pkgList) {
+      await prisma.package.create({
+        data: {
+          id_vendor: vendor.id_vendor,
+          id_category: catMap[categoryName].id_category,
+          name: p.name,
+          description: `${p.name} - ${p.duration}`,
+          price: p.price,
+          duration: p.duration,
+          whats_included: p.whats_included,
+          user_created: 'SYSTEM',
         },
       })
     }
   }
-  console.log('Portfolios seeded successfully.')
+  console.log('Packages created.\n')
 
-  // ── Packages ──
-  console.log('Seeding packages...')
-  const pkg1 = await prisma.package.upsert({
-    where: { id_package: 1 },
-    update: {},
-    create: {
-      id_vendor: vendor1.id_vendor,
-      id_category: categories['Fotografi'].id_category,
-      name: 'Paket Foto Basic',
-      description: 'Paket foto pernikahan basic dengan 1 fotografer',
-      price: 2500000,
-      duration: '4 Jam',
-      whats_included: '1 Fotografer, 100+ foto edit, album 8x12',
-    },
-  })
-  const pkg2 = await prisma.package.upsert({
-    where: { id_package: 2 },
-    update: {},
-    create: {
-      id_vendor: vendor1.id_vendor,
-      id_category: categories['Videografi'].id_category,
-      name: 'Paket Video Cinematic',
-      description: 'Video sinematik pernikahan full ceremony',
-      price: 3500000,
-      duration: '6 Jam',
-      whats_included: '1 Videografer, video highlight 3-5 menit, video full duration',
-    },
-  })
-  const pkg3 = await prisma.package.upsert({
-    where: { id_package: 3 },
-    update: {},
-    create: {
-      id_vendor: vendor1.id_vendor,
-      id_category: categories['Tata Rias'].id_category,
-      name: 'Paket Makeup Bridal',
-      description: 'Makeup pengantin dengan trial session',
-      price: 1500000,
-      duration: '1 Sesi',
-      whats_included: 'Trial makeup, makeup on the day, retouch touch-up',
-    },
-  })
-  const pkg4 = await prisma.package.upsert({
-    where: { id_package: 4 },
-    update: {},
-    create: {
-      id_vendor: vendor2.id_vendor,
-      id_category: categories['Katering'].id_category,
-      name: 'Paket Catering Prasmanan',
-      description: 'Menu prasmanan untuk 100 tamu',
-      price: 5000000,
-      duration: '1 Hari',
-      whats_included: 'Menu prasmanan 5 menu, dessert, minuman',
-    },
-  })
-  const pkg5 = await prisma.package.upsert({
-    where: { id_package: 5 },
-    update: {},
-    create: {
-      id_vendor: vendor2.id_vendor,
-      id_category: categories['Dekorasi'].id_category,
-      name: 'Paket Dekorasi Pelaminan',
-      description: 'Dekorasi pelaminan dan tenda resepsi',
-      price: 3000000,
-      duration: '1 Hari',
-      whats_included: 'Pelaminan, dekorasi tenda, lighting, backdrop',
-    },
-  })
-  console.log('Packages seeded successfully.')
-
-  // ── Booking ──
-  console.log('Seeding booking with multi-vendor packages...')
-  const totalPrice = pkg1.price + pkg2.price + pkg3.price + pkg4.price + pkg5.price
-  const booking = await prisma.booking.create({
-    data: {
-      customer: { connect: { id_user: customerUser.id_user } },
-      event_date: new Date('2026-08-17T09:00:00Z'),
-      event_location: 'Hotel Indonesia Kempinski, Jakarta',
-      total_price: totalPrice,
-      dp_amount: totalPrice * 0.3,
-      status: 'confirmed',
-      notes: 'Mohon persiapan maksimal untuk hari H',
-      user_created: 'SYSTEM',
-    },
-  })
-  await prisma.bookingPackage.createMany({
-    data: [
-      { id_booking: booking.id_booking, id_package: pkg1.id_package, user_created: 'SYSTEM' },
-      { id_booking: booking.id_booking, id_package: pkg2.id_package, user_created: 'SYSTEM' },
-      { id_booking: booking.id_booking, id_package: pkg3.id_package, user_created: 'SYSTEM' },
-      { id_booking: booking.id_booking, id_package: pkg4.id_package, user_created: 'SYSTEM' },
-      { id_booking: booking.id_booking, id_package: pkg5.id_package, user_created: 'SYSTEM' },
+  console.log('Seeding package extras...')
+  const extraTemplates: Record<string, Array<{ name: string; price: number; icon: string }>> = {
+    'Paket Basic Photo': [
+      { name: 'Extra Photographer', price: 500000, icon: '📷' },
+      { name: 'Printed Album', price: 350000, icon: '📔' },
     ],
-  })
-  console.log(`Booking #${booking.id_booking} created with 5 packages from 2 vendors (total: Rp${totalPrice.toLocaleString()})`)
+    'Paket Standar Photo': [
+      { name: 'Extra Photographer', price: 500000, icon: '📷' },
+      { name: 'Printed Album', price: 350000, icon: '📔' },
+      { name: 'Express Editing', price: 400000, icon: '⚡' },
+    ],
+    'Paket Premium Photo': [
+      { name: 'Extra Photographer', price: 500000, icon: '📷' },
+      { name: 'Drone', price: 750000, icon: '🛸' },
+      { name: 'Printed Album', price: 350000, icon: '📔' },
+      { name: 'Express Editing', price: 400000, icon: '⚡' },
+    ],
+    'Paket Video Basic': [
+      { name: 'Extra Camera', price: 600000, icon: '🎥' },
+      { name: 'Highlight Reel', price: 500000, icon: '🎬' },
+    ],
+    'Paket Video Premium': [
+      { name: 'Extra Camera', price: 600000, icon: '🎥' },
+      { name: 'Drone', price: 750000, icon: '🛸' },
+      { name: 'Highlight Reel', price: 500000, icon: '🎬' },
+      { name: 'Live Streaming', price: 1000000, icon: '📺' },
+    ],
+    'Paket Makeup Basic': [
+      { name: 'Hairdo', price: 300000, icon: '💇' },
+      { name: 'Nail Art', price: 200000, icon: '💅' },
+    ],
+    'Paket Makeup Standar': [
+      { name: 'Hairdo', price: 300000, icon: '💇' },
+      { name: 'Nail Art', price: 200000, icon: '💅' },
+      { name: 'Hijab Styling', price: 250000, icon: '🧕' },
+    ],
+    'Paket Makeup Premium': [
+      { name: 'Hairdo', price: 300000, icon: '💇' },
+      { name: 'Nail Art', price: 200000, icon: '💅' },
+      { name: 'Hijab Styling', price: 250000, icon: '🧕' },
+      { name: 'Touch Up During Event', price: 500000, icon: '✨' },
+    ],
+    'Paket Makeup VIP': [
+      { name: 'Hairdo', price: 300000, icon: '💇' },
+      { name: 'Nail Art', price: 200000, icon: '💅' },
+      { name: 'Hijab Styling', price: 250000, icon: '🧕' },
+      { name: 'Touch Up During Event', price: 500000, icon: '✨' },
+    ],
+    'Paket Makeup Eksklusif': [
+      { name: 'Hairdo', price: 300000, icon: '💇' },
+      { name: 'Nail Art', price: 200000, icon: '💅' },
+      { name: 'Hijab Styling', price: 250000, icon: '🧕' },
+      { name: 'Touch Up During Event', price: 500000, icon: '✨' },
+    ],
+    'Buket Basic': [
+      { name: 'Premium Wrapping', price: 150000, icon: '🎀' },
+      { name: 'Custom Greeting Card', price: 50000, icon: '💌' },
+    ],
+    'Buket Standar': [
+      { name: 'Premium Wrapping', price: 150000, icon: '🎀' },
+      { name: 'Custom Greeting Card', price: 50000, icon: '💌' },
+      { name: 'Same Day Delivery', price: 100000, icon: '🚚' },
+    ],
+    'Buket Premium': [
+      { name: 'Premium Wrapping', price: 150000, icon: '🎀' },
+      { name: 'Custom Greeting Card', price: 50000, icon: '💌' },
+      { name: 'Extra Florist', price: 400000, icon: '🌸' },
+    ],
+    'Arrangement Meja': [
+      { name: 'Extra Florist', price: 400000, icon: '🌸' },
+      { name: 'Premium Wrapping', price: 150000, icon: '🎀' },
+    ],
+    'Dekorasi Bunga': [
+      { name: 'Extra Florist', price: 400000, icon: '🌸' },
+      { name: 'Weekly Flower Subscription', price: 200000, icon: '🌷' },
+    ],
+  }
 
-  // ── Payment ──
-  console.log('Seeding payment...')
-  const dpAmount = totalPrice * 0.3
-  await prisma.payment.create({
-    data: {
-      id_booking: booking.id_booking,
-      amount: dpAmount,
-      payment_type: 'dp',
-      status: 'paid',
-      paid_at: new Date(),
-      user_created: 'SYSTEM',
-    },
-  })
-  console.log(`Payment created for booking #${booking.id_booking} (DP: Rp${dpAmount.toLocaleString()})`)
+  const allPackages = await prisma.package.findMany()
+  for (const pkg of allPackages) {
+    const extras = extraTemplates[pkg.name] || extraTemplates['Paket Basic Photo']
+    for (const ex of extras) {
+      await prisma.packageExtra.create({
+        data: {
+          id_package: pkg.id_package,
+          name: ex.name,
+          price: ex.price,
+          icon: ex.icon,
+          user_created: 'SYSTEM',
+        },
+      })
+    }
+  }
+  console.log('Package extras created.\n')
 
-  // ── Commissions ──
-  console.log('Seeding commissions...')
-  const commissionPct = 10
-  const vendor1PackagesTotal = pkg1.price + pkg2.price + pkg3.price
-  const vendor2PackagesTotal = pkg4.price + pkg5.price
+  console.log('Seeding portfolios with category-specific images...')
+  let portfolioCode = 1
+  for (const { vendor, categoryName } of vendorEntries) {
+    const vendorPackages = await prisma.package.findMany({
+      where: { id_vendor: vendor.id_vendor },
+    })
+    const titles = portfolioTitles[categoryName]
 
-  await prisma.commission.create({
-    data: {
-      id_booking: booking.id_booking,
-      id_vendor: vendor1.id_vendor,
-      percentage: commissionPct,
-      amount: vendor1PackagesTotal * (commissionPct / 100),
-      status: 'pending',
-      user_created: 'SYSTEM',
-    },
-  })
-  await prisma.commission.create({
-    data: {
-      id_booking: booking.id_booking,
-      id_vendor: vendor2.id_vendor,
-      percentage: commissionPct,
-      amount: vendor2PackagesTotal * (commissionPct / 100),
-      status: 'pending',
-      user_created: 'SYSTEM',
-    },
-  })
-  console.log(`Commissions created for both vendors (${commissionPct}% each)`)
+    for (let pi = 0; pi < 10; pi++) {
+      const pkg = vendorPackages[pi % vendorPackages.length]
+      const code = `PRT-${String(portfolioCode).padStart(4, '0')}`
+      const title = titles[pi % titles.length]
+      const coverUrl = img(categoryName, vendor.id_vendor, pi)
 
-  // ── Payouts ──
-  console.log('Seeding payouts...')
-  await prisma.payout.create({
-    data: {
-      id_booking: booking.id_booking,
-      id_vendor: vendor1.id_vendor,
-      amount: vendor1PackagesTotal - (vendor1PackagesTotal * (commissionPct / 100)),
-      status: 'pending',
-      user_created: 'SYSTEM',
-    },
-  })
-  await prisma.payout.create({
-    data: {
-      id_booking: booking.id_booking,
-      id_vendor: vendor2.id_vendor,
-      amount: vendor2PackagesTotal - (vendor2PackagesTotal * (commissionPct / 100)),
-      status: 'pending',
-      user_created: 'SYSTEM',
-    },
-  })
-  console.log('Payouts created for both vendors')
+      const portfolio = await prisma.portfolio.create({
+        data: {
+          id_vendor: vendor.id_vendor,
+          id_package: pkg.id_package,
+          id_category: catMap[categoryName].id_category,
+          title,
+          code,
+          cover_url: coverUrl,
+          description: `Proyek ${title.toLowerCase()} oleh ${vendor.business_name}.`,
+          location: vendor.location,
+          label: categoryName,
+          sort_order: pi,
+          user_created: 'SYSTEM',
+        },
+      })
 
-  // ── Company Info ──
+      const imageData = Array.from({ length: 4 }, (_, i) => ({
+        id_portfolio: portfolio.id_portfolio,
+        image_url: img(categoryName, vendor.id_vendor, pi * 10 + i),
+        caption: i === 0 ? 'Main highlight' : i === 1 ? 'Behind the scenes' : `Photo ${i + 1}`,
+        sort_order: i,
+      }))
+      await prisma.portfolioImage.createMany({ data: imageData })
+      portfolioCode++
+    }
+  }
+  console.log(`${portfolioCode - 1} portfolios created.\n`)
+
   console.log('Seeding company info...')
   await prisma.companyInfo.upsert({
     where: { id_company: 1 },
     update: {},
     create: {
-      id_company: 1,
       company_name: 'Agregrator Business',
       address: 'Jl. Sudirman No. 123, Jakarta Pusat',
       phone: '(021) 1234-5678',
@@ -393,10 +364,18 @@ async function main() {
       footer_text: 'Terima kasih telah menggunakan layanan kami.',
     },
   })
-  console.log('Company info seeded successfully.')
+  console.log('Company info seeded.\n')
 
-  console.log('Seed completed successfully!')
->>>>>>> main
+  console.log('=== SEED COMPLETED ===')
+  console.log(`Vendors: ${vendorEntries.length}`)
+  console.log(`Portfolios: ${portfolioCode - 1}`)
+  console.log('')
+  console.log('Login credentials (password: 123456):')
+  for (const catName of catNames) {
+    const names = vendorsByCategory[catName]
+    const catVal = catName === CAT_BOUQUET ? 'Bouquet' : catName
+    console.log(`  ${catName}: ${catVal.toLowerCase()}1@demo.com - ${catVal.toLowerCase()}${names.length}@demo.com`)
+  }
 }
 
 main()

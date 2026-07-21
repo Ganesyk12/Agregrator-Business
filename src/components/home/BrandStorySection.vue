@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import brandImage from '@/assets/kaira/images/banner-image-1.jpg'
+import logoImage from '@/assets/kaira/images/logosigyn.png'
 </script>
 
 <template>
@@ -8,8 +8,8 @@ import brandImage from '@/assets/kaira/images/banner-image-1.jpg'
       <div class="row align-items-center g-5">
         <div class="col-lg-6" data-aos="fade-right">
           <div class="story-image image-zoom-effect">
-            <div class="image-holder">
-              <img :src="brandImage" alt="Tentang Sigyn" class="img-fluid">
+            <div class="image-holder d-flex align-items-center justify-content-center p-5 bg-light rounded-4">
+              <img :src="logoImage" alt="Sigyn Logo" class="img-fluid" style="max-height: 300px; object-fit: contain;">
             </div>
           </div>
         </div>

@@ -1,3 +1,13 @@
+export interface PackageExtra {
+  id_extra: number
+  id_package: number
+  name: string
+  description: string | null
+  price: number
+  icon: string | null
+  status: string
+}
+
 export interface Package {
   id_package: number
   id_vendor: number
@@ -18,4 +28,5 @@ export interface Package {
   category?: {
     category_name: string
   }
+  extras?: PackageExtra[]
 }

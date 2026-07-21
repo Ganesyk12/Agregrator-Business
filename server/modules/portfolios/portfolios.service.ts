@@ -2,14 +2,17 @@ import prisma from '../../db'
 import type { Portfolio } from './portfolios.types'
 
 const includeRelations = {
-  vendor: { select: { id_vendor: true, business_name: true, category: true, location: true, description: true, status: true, _count: { select: { portfolios: true } } } },
-  package: { select: { name: true } },
+  vendor: { select: { id_vendor: true, business_name: true, category: true, location: true, description: true, status: true, _count: { select: { portfolios: true, reviews: true } } } },
+  package: { select: { name: true, price: true } },
   category: { select: { category_name: true } },
 }
 
-export async function findAll(): Promise<Portfolio[]> {
+export async function findAll(label?: string): Promise<Portfolio[]> {
+  const where: any = { status: { not: 'deleted' } }
+  if (label) where.label = label
+
   return prisma.portfolio.findMany({
-    where: { status: { not: 'deleted' } },
+    where,
     include: {
       ...includeRelations,
       images: { orderBy: { sort_order: 'asc' } },
@@ -152,6 +155,10 @@ export async function getPackagesByCategory(categoryName: string) {
         },
       },
       category: { select: { category_name: true } },
+      extras: {
+        where: { status: 'active' },
+        select: { id_extra: true, name: true, price: true, icon: true, description: true },
+      },
     },
     orderBy: [{ vendor: { business_name: 'asc' } }, { price: 'asc' }],
   })

@@ -91,6 +91,15 @@ onMounted(async () => {
           selectedExtras: [],
           expanded: false,
         })
+        if (vendorData.vendor.extras?.length) {
+          vendorExtrasCache.value[vendorData.vendor.id_vendor] = vendorData.vendor.extras.map((e: any) => ({
+            id: String(e.id_extra || e.id),
+            name: e.name,
+            price: e.price,
+            icon: e.icon || '',
+            selected: false,
+          }))
+        }
       }
     } catch {
       if (name) {
@@ -110,24 +119,15 @@ onMounted(async () => {
   }
 })
 
-function addVendorToBooking(v: VendorInfo) {
-  if (bookedVendors.value.some((b) => b.id_vendor === v.id_vendor)) return
-  bookedVendors.value.push({
-    id_vendor: v.id_vendor,
-    business_name: v.business_name,
-    category: v.category,
-    starting_price: v.starting_price,
-    description: v.description,
-    cover_url: v.cover_url,
-    rating: v.average_rating,
-    selectedExtras: [],
-    expanded: false,
-  })
-  vendorExtrasCache.value[v.id_vendor] = v.extras.map((e) => ({ ...e, selected: false }))
-}
-
 function addPackageToBooking(p: PackageItem) {
   if (bookedVendors.value.some((b) => b.id_package === p.id_package)) return
+  const extras = ((p as any).extras || []).map((e: any) => ({
+    id: String(e.id_extra || e.id),
+    name: e.name,
+    price: e.price,
+    icon: e.icon || '',
+    selected: false,
+  }))
   bookedVendors.value.push({
     id_vendor: p.vendor.id_vendor,
     id_package: p.id_package,
@@ -138,9 +138,12 @@ function addPackageToBooking(p: PackageItem) {
     description: p.vendor.description || p.description || '',
     cover_url: '',
     rating: 0,
-    selectedExtras: [],
+    selectedExtras: extras.filter((e: any) => e.selected),
     expanded: false,
   })
+  if (extras.length > 0) {
+    vendorExtrasCache.value[p.vendor.id_vendor] = extras
+  }
 }
 
 function toggleVendorExpand(id: number, idPackage?: number) {
