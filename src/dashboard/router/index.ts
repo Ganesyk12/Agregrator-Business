@@ -94,11 +94,15 @@ const router = createRouter({
 
 router.beforeEach((to, _, next) => {
   const token = localStorage.getItem('sigyn_token')
+  const user = localStorage.getItem('sigyn_user')
   const isAuthenticated = !!token && token !== 'undefined' && token !== 'null'
+  const isCustomer = isAuthenticated && user ? (JSON.parse(user).roles || []).some((r: any) => r.role_code === 'eUser-Customer') : false
   if (to.name !== 'login' && !isAuthenticated) {
     next({ name: 'login' })
   } else if (to.name === 'login' && isAuthenticated) {
     next({ name: 'dashboard' })
+  } else if (isCustomer && to.name !== 'login') {
+    window.location.href = '/'
   } else {
     next()
   }

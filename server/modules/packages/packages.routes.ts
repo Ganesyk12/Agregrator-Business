@@ -7,6 +7,7 @@ router.get('/', packageCtrl.getAll)
 router.post('/', packageCtrl.create)
 
 router.get('/vendor/:vendorId', packageCtrl.getByVendor)
+router.get('/category/:categoryId', packageCtrl.getByCategory)
 
 router.get('/:id', packageCtrl.getById)
 router.put('/:id', packageCtrl.update)

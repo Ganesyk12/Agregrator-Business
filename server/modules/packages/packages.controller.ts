@@ -34,6 +34,15 @@ export async function getByVendor(req: Request, res: Response, next: NextFunctio
   }
 }
 
+export async function getByCategory(req: Request, res: Response, next: NextFunction) {
+  try {
+    const packages = await packageService.findByCategory(Number(req.params.categoryId))
+    res.json({ data: packages.length === 0 ? null : packages })
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const { id_vendor, id_category, name, price, description, duration, whats_included, extras } = req.body

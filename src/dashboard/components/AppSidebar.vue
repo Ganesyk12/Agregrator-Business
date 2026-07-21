@@ -29,24 +29,15 @@ const allSections: MenuSection[] = [
     ],
   },
   {
-    title: 'Service Management',
+    title: 'Vendor Management',
     roles: ['eUser-Vendor'],
     items: [
       { label: 'Vendors', icon: 'fa-building', to: '/vendors' },
       { label: 'Packages', icon: 'fa-cube', to: '/packages' },
       { label: 'Portfolio', icon: 'fa-picture-o', to: '/portfolios' },
-    ],
-  },
-  {
-    title: 'Vendor Management',
-    roles: ['eUser-Admin'],
-    items: [
       { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' },
-      { label: 'Categories', icon: 'fa-tags', to: '/categories' },
-      { label: 'Users', icon: 'fa-users', to: '/users' },
     ],
   },
-
   {
     title: 'Finance & Accounting',
     roles: ['eUser-Finance'],
@@ -60,8 +51,10 @@ const allSections: MenuSection[] = [
   },
   {
     title: 'System',
-    roles: ['eUser-SuperAdmin'],
+    roles: ['eUser-Admin', 'eUser-SuperAdmin'],
     items: [
+      { label: 'Categories', icon: 'fa-tags', to: '/categories' },
+      { label: 'Users', icon: 'fa-users', to: '/users' },
       { label: 'Roles', icon: 'fa-lock', to: '/roles' },
       { label: 'User Access', icon: 'fa-tag', to: '/user-roles' },
       { label: 'Company Info', icon: 'fa-building-o', to: '/company-info' },

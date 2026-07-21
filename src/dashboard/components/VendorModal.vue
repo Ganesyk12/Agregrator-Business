@@ -7,6 +7,7 @@ export interface VendorForm {
   description: string
   category: string
   location: string
+  years_exp: number
 }
 
 interface UserOption {
@@ -26,7 +27,7 @@ const emit = defineEmits<{
   save: [data: VendorForm]
 }>()
 
-const categories = ['mua', 'fotografer', 'wo', 'catering', 'dekorasi', 'venue', 'hiburan', 'transportasi']
+const categories = ref<string[]>([])
 const locations = ref<string[]>([])
 const users = ref<UserOption[]>([])
 
@@ -36,9 +37,22 @@ const form = ref<VendorForm>({
   description: '',
   category: '',
   location: '',
+  years_exp: 0,
 })
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+async function fetchCategories() {
+  try {
+    const res = await fetch(`${apiUrl}/api/categories`)
+    if (!res.ok) throw new Error('Failed to fetch categories')
+    const json = await res.json()
+    categories.value = (json.data || []).map((c: any) => c.category_name)
+  } catch (err) {
+    console.error('Error fetching categories:', err)
+    categories.value = []
+  }
+}
 
 async function fetchLocations() {
   try {
@@ -73,9 +87,9 @@ async function fetchUsers() {
 
 watch(() => props.visible, async (val) => {
   if (val) {
-    await Promise.all([fetchUsers(), fetchLocations()])
+    await Promise.all([fetchUsers(), fetchLocations(), fetchCategories()])
     if (props.mode === 'add') {
-      form.value = { id_user: '', business_name: '', description: '', category: '', location: '' }
+      form.value = { id_user: '', business_name: '', description: '', category: '', location: '', years_exp: 0 }
     } else if (props.vendor) {
       if (props.vendor.location && !locations.value.includes(props.vendor.location)) {
         locations.value.push(props.vendor.location)
@@ -86,6 +100,7 @@ watch(() => props.visible, async (val) => {
         description: props.vendor.description || '',
         category: props.vendor.category,
         location: props.vendor.location || '',
+        years_exp: props.vendor.years_exp ?? 0,
       }
     }
   }
@@ -130,6 +145,10 @@ function save() {
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Location</label>
                     <input class="form-control" :value="vendor.location || '-'" readonly />
+                  </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Years Experience</label>
+                    <input class="form-control" :value="vendor.years_exp ?? 0" readonly />
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -189,6 +208,10 @@ function save() {
                       <option value="">Select location</option>
                       <option v-for="loc in locations" :key="loc" :value="loc">{{ loc }}</option>
                     </select>
+                  </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Years Experience</label>
+                    <input type="number" class="form-control" v-model.number="form.years_exp" placeholder="Years of experience" min="0" />
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Description</label>

@@ -34,6 +34,20 @@ export async function findByVendor(vendorId: number): Promise<Package[]> {
   }) as unknown as Package[]
 }
 
+export async function findByCategory(categoryId: number): Promise<Package[]> {
+  return prisma.package.findMany({
+    where: {
+      id_category: categoryId,
+      status: { not: 'deleted' },
+    },
+    orderBy: { date_created: 'desc' },
+    include: {
+      vendor: { select: { business_name: true, location: true } },
+      category: { select: { category_name: true } }
+    }
+  }) as unknown as Package[]
+}
+
 export async function create(
   data: Pick<Package, 'id_vendor' | 'id_category' | 'name' | 'price' | 'description' | 'duration' | 'whats_included'> &
     Partial<Pick<Package, 'user_created' | 'user_modified'>> & { extras?: Array<{ name: string; price: number; description?: string; icon?: string }> }
