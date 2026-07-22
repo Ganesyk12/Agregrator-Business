@@ -7,26 +7,26 @@ const blogPosts = [
   {
     id: 1,
     image: postImage1,
-    category: 'Fashion',
-    date: 'jul 11, 2022',
-    title: 'How to look outstanding in pastel',
-    description: 'Dignissim lacus,turpis ut suspendisse vel tellus.Turpis purus,gravida orci,fringilla...'
+    category: 'Wedding Tips',
+    date: 'Jan 15, 2025',
+    title: '5 Tips Memilih Fotografer Wedding yang Tepat',
+    description: 'Temukan fotografer wedding yang sesuai dengan gaya dan budget Anda. Simak tips lengkapnya disini.'
   },
   {
     id: 2,
     image: postImage2,
-    category: 'Fashion',
-    date: 'jul 11, 2022',
-    title: 'Top 10 fashion trend for summer',
-    description: 'Turpis purus, gravida orci, fringilla dignissim lacus, turpis ut suspendisse vel tellus...'
+    category: 'Makeup',
+    date: 'Feb 20, 2025',
+    title: 'Inspirasi Makeup Look untuk Prewedding',
+    description: 'Dari natural glam hingga bold look, temukan inspirasi makeup prewedding yang sempurna untukmu.'
   },
   {
     id: 3,
     image: postImage3,
-    category: 'Fashion',
-    date: 'jul 11, 2022',
-    title: 'Crazy fashion with unique moment',
-    description: 'Turpis purus, gravida orci, fringilla dignissim lacus, turpis ut suspendisse vel tellus...'
+    category: 'Bouquet',
+    date: 'Mar 10, 2025',
+    title: '5 Rangkaian Bouquet untuk Lamaran',
+    description: 'Bingung pilih bouquet untuk momen lamaran? Ini dia 5 rekomendasi rangkaian bunga terbaik.'
   }
 ]
 </script>

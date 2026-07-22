@@ -12,6 +12,8 @@ import PortfolioDetailView from '../views/PortfolioDetailView.vue'
 import VendorProfileView from '../views/VendorProfileView.vue'
 import BookingView from '../views/BookingView.vue'
 import BookingHistoryView from '../views/BookingHistoryView.vue'
+import ShopView from '../views/ShopView.vue'
+import AboutView from '../views/AboutView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -22,8 +24,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/shop',
     name: 'shop',
-    component: BaseView,
-    props: { title: 'Shop' }
+    component: ShopView
   },
   {
     path: '/product/:id',
@@ -69,8 +70,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/about',
     name: 'about',
-    component: BaseView,
-    props: { title: 'About Us' }
+    component: AboutView
   },
   {
     path: '/wishlist',

@@ -39,7 +39,7 @@ function loadRoles() {
       const user = JSON.parse(raw)
       userRoles.value = (user.roles || []).map((r: any) => r.role_code)
     }
-  } catch { userRoles.value = [] }
+  } catch (_) { userRoles.value = [] }
 }
 loadRoles()
 const isSuperAdmin = computed(() => userRoles.value.includes('eUser-SuperAdmin'))

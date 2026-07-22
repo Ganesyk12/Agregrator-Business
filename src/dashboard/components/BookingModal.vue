@@ -232,8 +232,8 @@ function getVendorName(vendorId: number) {
                   </div>
                 </div>
               </div>
-            </div>
-          </template>
+  </div>
+</template>
 
           <template v-else>
             <form @submit.prevent="save" class="form">
@@ -264,8 +264,8 @@ function getVendorName(vendorId: number) {
                             />
                             {{ p.name }} ({{ formatCurrency(p.price) }})
                           </label>
-                        </div>
-                      </template>
+  </div>
+</template>
                       <div v-if="!Object.keys(packagesByVendor).length" style="color: #999;">No packages available</div>
                     </div>
                     <small style="color: #999;">Select one or more packages from any vendor</small>

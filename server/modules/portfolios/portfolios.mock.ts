@@ -2,20 +2,10 @@ import { Router } from 'express'
 import type { Request, Response } from 'express'
 import type { Portfolio } from './portfolios.types'
 
-const img = (file: string) => `/src/assets/kaira/images/${file}`
 const pImg = (i: number) => {
-  const files = [
-    'banner-image-1.jpg', 'banner-image-2.jpg', 'banner-image-3.jpg',
-    'banner-image-4.jpg', 'banner-image-5.jpg', 'banner-image-6.jpg',
-    'collection-banner.jpg', 'post-image1.jpg', 'post-image2.jpg',
-    'post-image3.jpg', 'post-image4.jpg', 'post-image5.jpg',
-    'post-image6.jpg', 'post-image7.jpg', 'post-image8.jpg',
-    'post-image9.jpg', 'post-large-image1.jpg', 'post-large-image2.jpg',
-    'post-large-image3.jpg', 'insta-item1.jpg', 'insta-item2.jpg',
-    'product-item-1.jpg', 'product-item-2.jpg', 'product-item-3.jpg',
-    'product-item-4.jpg', 'product-item-5.jpg',
-  ]
-  return img(files[i % files.length])
+  const seeds = [30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240, 255, 270, 285, 300, 315, 330, 345, 360, 375, 390]
+  const seed = seeds[i % seeds.length]
+  return `https://picsum.photos/seed/${seed}/800/600`
 }
 
 const vendors = [

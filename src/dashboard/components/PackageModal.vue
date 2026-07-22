@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 
+export interface ExtraForm {
+  id_extra?: number
+  name: string
+  price: number
+  icon: string
+  description: string
+}
+
 export interface PackageForm {
   id_vendor: number
   id_category: number | null
@@ -9,6 +17,7 @@ export interface PackageForm {
   price: number
   duration: string
   whats_included: string
+  extras: ExtraForm[]
 }
 
 const props = defineProps<{
@@ -32,6 +41,7 @@ const form = ref<PackageForm>({
   price: 0,
   duration: '',
   whats_included: '',
+  extras: [],
 })
 
 watch(() => props.visible, (val) => {
@@ -45,6 +55,7 @@ watch(() => props.visible, (val) => {
         price: 0,
         duration: '',
         whats_included: '',
+        extras: [],
       }
     } else if (props.pkg) {
       form.value = {
@@ -55,6 +66,13 @@ watch(() => props.visible, (val) => {
         price: props.pkg.price,
         duration: props.pkg.duration || '',
         whats_included: props.pkg.whats_included || '',
+        extras: (props.pkg.extras || []).map((e: any) => ({
+          id_extra: e.id_extra,
+          name: e.name,
+          price: e.price,
+          icon: e.icon || '',
+          description: e.description || '',
+        })),
       }
     }
   }
@@ -73,6 +91,14 @@ const displayPrice = computed({
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value)
+}
+
+function addExtra() {
+  form.value.extras.push({ name: '', price: 0, icon: '', description: '' })
+}
+
+function removeExtra(index: number) {
+  form.value.extras.splice(index, 1)
 }
 
 function save() {
@@ -140,6 +166,32 @@ function save() {
                   </div>
                 </div>
               </div>
+
+              <!-- Detail: Extras list -->
+              <div v-if="pkg.extras && pkg.extras.length > 0" class="row" style="margin-top: 20px;">
+                <div class="col-md-12">
+                  <hr />
+                  <h4 style="font-weight: bold;">Package Extras</h4>
+                  <table class="table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th style="width: 50px;">Icon</th>
+                        <th>Name</th>
+                        <th style="width: 150px;">Price</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="extra in pkg.extras" :key="extra.id_extra">
+                        <td style="text-align: center; font-size: 1.4em;">{{ extra.icon || '-' }}</td>
+                        <td>{{ extra.name }}</td>
+                        <td>{{ formatCurrency(extra.price) }}</td>
+                        <td>{{ extra.description || '-' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </template>
 
@@ -171,17 +223,13 @@ function save() {
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Price *</label>
-                    <input 
-                      v-model="displayPrice" 
-                      class="form-control" 
-                      placeholder="Price" 
-                      required 
+                    <input
+                      v-model="displayPrice"
+                      class="form-control"
+                      placeholder="Price"
+                      required
                       @keypress="(e) => { if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault() }"
-                      @input="(e) => {
-                        const target = e.target as HTMLInputElement;
-                        const clean = target.value.replace(/\D/g, '');
-                        target.value = clean ? parseInt(clean, 10).toLocaleString('id-ID') : '';
-                      }"
+                      @input="(e) => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }"
                     />
                   </div>
                   <div class="form-group" style="text-align: left;">
@@ -197,6 +245,56 @@ function save() {
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Description</label>
                     <textarea v-model="form.description" class="form-control" placeholder="General description of the package" rows="5"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Extras Section -->
+              <div class="row" style="margin-top: 20px;">
+                <div class="col-md-12">
+                  <hr />
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="font-weight: bold; margin: 0;">Additional Extras</h4>
+                    <button type="button" class="btn btn-success btn-sm" @click="addExtra">
+                      <i class="fa fa-plus"></i> Add Extra
+                    </button>
+                  </div>
+                  <p style="color: #888; font-size: 0.9em; margin-bottom: 12px;">
+                    Tambahkan layanan tambahan yang bisa dipilih customer saat booking (contoh: Drone, Hairdo, Hijab Styling, dll).
+                  </p>
+
+                  <div v-if="form.extras.length === 0" style="text-align: center; padding: 20px; background: #f9f9f9; border-radius: 6px; color: #aaa;">
+                    Belum ada extras. Klik "Add Extra" untuk menambahkan.
+                  </div>
+
+                  <div
+                    v-for="(extra, idx) in form.extras"
+                    :key="idx"
+                    style="background: #f5f7fa; border: 1px solid #e8eaed; border-radius: 6px; padding: 12px; margin-bottom: 10px;"
+                  >
+                    <div class="row" style="display: flex; align-items: flex-start;">
+                      <div class="col-md-2">
+                        <label class="control-label" style="font-weight: bold; display: block; text-align: left; font-size: 0.85em;">Icon</label>
+                        <input v-model="extra.icon" class="form-control" placeholder="e.g. 📷" style="text-align: center; font-size: 1.3em;" />
+                      </div>
+                      <div class="col-md-3">
+                        <label class="control-label" style="font-weight: bold; display: block; text-align: left; font-size: 0.85em;">Name *</label>
+                        <input v-model="extra.name" class="form-control" placeholder="Extra name" />
+                      </div>
+                      <div class="col-md-3">
+                        <label class="control-label" style="font-weight: bold; display: block; text-align: left; font-size: 0.85em;">Price *</label>
+                        <input v-model="extra.price" class="form-control" placeholder="0" type="number" min="0" />
+                      </div>
+                      <div class="col-md-3">
+                        <label class="control-label" style="font-weight: bold; display: block; text-align: left; font-size: 0.85em;">Description</label>
+                        <input v-model="extra.description" class="form-control" placeholder="Optional description" />
+                      </div>
+                      <div class="col-md-1" style="display: flex; align-items: flex-end; padding-top: 22px;">
+                        <button type="button" class="btn btn-danger btn-xs" @click="removeExtra(idx)" title="Remove extra">
+                          <i class="fa fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

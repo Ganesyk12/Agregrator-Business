@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as packageService from './packages.service'
+import prisma from '../../db'
 import { createError } from '../../middleware/error-handler'
 
 export async function getAll(_req: Request, res: Response, next: NextFunction) {
@@ -44,7 +45,7 @@ export async function getByCategory(req: Request, res: Response, next: NextFunct
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_vendor, id_category, name, price, description, duration, whats_included } = req.body
+    const { id_vendor, id_category, name, price, description, duration, whats_included, extras } = req.body
     if (!id_vendor || !name || price === undefined) {
       throw createError(400, 'id_vendor, name, and price are required')
     }
@@ -55,7 +56,8 @@ export async function create(req: Request, res: Response, next: NextFunction) {
       price: Number(price),
       description,
       duration,
-      whats_included
+      whats_included,
+      extras: extras || undefined,
     })
     res.status(201).json({ data: pkg })
   } catch (err) {
@@ -65,7 +67,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 
 export async function update(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_category, name, price, description, duration, whats_included, status } = req.body
+    const { id_category, name, price, description, duration, whats_included, status, extras } = req.body
     const updateData: any = {}
     if (id_category !== undefined) updateData.id_category = id_category ? Number(id_category) : null
     if (name !== undefined) updateData.name = name
@@ -74,6 +76,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     if (duration !== undefined) updateData.duration = duration
     if (whats_included !== undefined) updateData.whats_included = whats_included
     if (status !== undefined) updateData.status = status
+    if (extras !== undefined) updateData.extras = extras
 
     const pkg = await packageService.update(Number(req.params.id), updateData)
     if (!pkg) {
@@ -93,6 +96,78 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
       res.status(404).json({ error: { message: 'Package not found' } })
       return
     }
+    res.status(204).send()
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function addExtra(req: Request, res: Response, next: NextFunction) {
+  try {
+    const packageId = Number(req.params.id)
+    const pkg = await prisma.package.findFirst({ where: { id_package: packageId, status: { not: 'deleted' } } })
+    if (!pkg) {
+      res.status(404).json({ error: { message: 'Package not found' } })
+      return
+    }
+    const { name, price, description, icon } = req.body
+    if (!name || price === undefined) {
+      throw createError(400, 'name and price are required')
+    }
+    const extra = await prisma.packageExtra.create({
+      data: {
+        id_package: packageId,
+        name,
+        price: Number(price),
+        description: description || null,
+        icon: icon || null,
+        user_created: 'SYSTEM',
+        user_modified: 'SYSTEM',
+      },
+    })
+    res.status(201).json({ data: extra })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updateExtra(req: Request, res: Response, next: NextFunction) {
+  try {
+    const extraId = Number(req.params.extraId)
+    const existing = await prisma.packageExtra.findFirst({ where: { id_extra: extraId, status: { not: 'deleted' } } })
+    if (!existing) {
+      res.status(404).json({ error: { message: 'Extra not found' } })
+      return
+    }
+    const { name, price, description, icon } = req.body
+    const updateData: any = { user_modified: 'SYSTEM' }
+    if (name !== undefined) updateData.name = name
+    if (price !== undefined) updateData.price = Number(price)
+    if (description !== undefined) updateData.description = description
+    if (icon !== undefined) updateData.icon = icon
+
+    const extra = await prisma.packageExtra.update({
+      where: { id_extra: extraId },
+      data: updateData,
+    })
+    res.json({ data: extra })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function removeExtra(req: Request, res: Response, next: NextFunction) {
+  try {
+    const extraId = Number(req.params.extraId)
+    const existing = await prisma.packageExtra.findFirst({ where: { id_extra: extraId, status: { not: 'deleted' } } })
+    if (!existing) {
+      res.status(404).json({ error: { message: 'Extra not found' } })
+      return
+    }
+    await prisma.packageExtra.update({
+      where: { id_extra: extraId },
+      data: { status: 'deleted', user_modified: 'SYSTEM' },
+    })
     res.status(204).send()
   } catch (err) {
     next(err)

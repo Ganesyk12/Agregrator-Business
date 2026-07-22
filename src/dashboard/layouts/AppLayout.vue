@@ -26,7 +26,7 @@ onMounted(() => {
 
 <template>
   <div class="container body">
-    <div class="main_container main_container--flex">
+    <div class="main_container">
       <AppSidebar />
       <AppTopNav />
       <div class="right_col" role="main">
@@ -43,15 +43,6 @@ onMounted(() => {
 </template>
 
 <style>
-.main_container--flex {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-.main_container--flex > .right_col {
-  flex: 1;
-}
-
 small,
 .count_top,
 .count_bottom,

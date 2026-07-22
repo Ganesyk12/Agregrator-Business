@@ -3,9 +3,9 @@
     <div class="container-fluid">
       <div class="row justify-content-between align-items-center w-100">
         <div class="col-auto">
-          <a class="navbar-brand text-white" href="/">
+          <router-link class="navbar-brand text-white" to="/">
             <img :src="mainLogo" alt="Sigyn" style="height: 60px; width: auto;">
-          </a>
+          </router-link>
         </div>
 
         <div class="col-auto">
@@ -21,33 +21,13 @@
 
             <div class="offcanvas-body">
               <ul class="navbar-nav justify-content-end flex-grow-1 gap-1 gap-md-5 pe-3">
-                <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
-
-                <li class="nav-item"><a class="nav-link" href="/photography">Photography</a></li>
-                <li class="nav-item"><a class="nav-link" href="/mua">MUA</a></li>
-                <li class="nav-item"><a class="nav-link" href="/bouquet">Bouquet Flowers</a></li>
-                <li class="nav-item"><a class="nav-link" href="/services">More Service</a></li>
-                <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
-                <li v-if="!auth.isLoggedIn" class="nav-item d-lg-none">
-                  <a class="nav-link" href="/login">Sign In</a>
-                </li>
-                <li v-if="auth.isLoggedIn" class="nav-item d-lg-none">
-                  <span class="nav-link fw-bold">{{ auth.user?.full_name }}</span>
-                </li>
-                <li v-if="auth.isLoggedIn && !auth.isCustomer" class="nav-item d-lg-none">
-                  <a class="nav-link" href="/dashboard">Dashboard</a>
-                </li>
-                <li v-if="auth.isLoggedIn" class="nav-item d-lg-none">
-                  <a class="nav-link" href="/booking-history">Booking History</a>
-                </li>
-                <li v-if="auth.isLoggedIn" class="nav-item d-lg-none">
-                  <a class="nav-link" href="#" @click.prevent="handleLogout">Logout</a>
-                </li>
-                <li class="nav-item d-lg-none"><a class="nav-link" href="/wishlist">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                  <span class="icon-label ms-1">Wishlist</span>
-                  <span v-if="auth.wishlistCount > 0" class="badge bg-danger ms-1">{{ auth.wishlistCount }}</span>
-                </a></li>
+                <li class="nav-item"><router-link class="nav-link" to="/">Home</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/photography">Photography</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/mua">MUA</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/bouquet">Bouquet Flowers</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/more-service">More Service</router-link></li>
+                <li class="nav-item"><router-link class="nav-link" to="/contact">Contact</router-link></li>
+                <li class="nav-item d-lg-none"><router-link class="nav-link" to="/wishlist">Wishlist <span class="wishlist-count">(0)</span></router-link></li>
                 <li class="nav-item d-lg-none">
                   <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart" :class="{ shake: shaking }">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
@@ -61,48 +41,16 @@
         </div>
 
         <div class="col-3 col-lg-auto">
-          <ul class="list-unstyled d-flex m-0 align-items-center">
-            <li class="d-none d-lg-block position-relative mx-2">
-              <a href="/wishlist" class="text-uppercase" title="Wishlist">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-                <span v-if="auth.wishlistCount > 0" class="badge-icon bg-danger">{{ auth.wishlistCount }}</span>
-              </a>
+          <ul class="list-unstyled d-flex m-0">
+            <li class="d-none d-lg-block">
+              <router-link to="/wishlist" class="text-uppercase mx-3">
+                Wishlist <span class="wishlist-count">(0)</span>
+              </router-link>
             </li>
-            <li class="d-none d-lg-block position-relative mx-2">
-              <a href="#" class="text-uppercase" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart" title="Cart" :class="{ shake: shaking }">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>
-                </svg>
-                <span class="badge-icon bg-danger">{{ cart.count }}</span>
+            <li class="d-none d-lg-block">
+              <a href="#" class="text-uppercase mx-3" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+                Cart <span class="cart-count">(0)</span>
               </a>
-            </li>
-            <li class="d-none d-lg-block ms-3 dropdown">
-              <a href="#" class="text-uppercase" data-bs-toggle="dropdown" title="Account">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end text-uppercase">
-                <li v-if="!auth.isLoggedIn">
-                  <a class="dropdown-item fw-bold" href="/login">Sign In</a>
-                </li>
-                <li v-else>
-                  <span class="dropdown-item-text fw-bold">{{ auth.user?.full_name }}</span>
-                </li>
-                <li v-if="auth.isLoggedIn"><hr class="dropdown-divider"></li>
-                <li v-if="auth.isLoggedIn && !auth.isCustomer">
-                  <a class="dropdown-item" href="/dashboard">Dashboard</a>
-                </li>
-                <li v-if="auth.isLoggedIn">
-                  <a class="dropdown-item" href="/booking-history">Booking History</a>
-                </li>
-                <li v-if="auth.isLoggedIn">
-                  <a class="dropdown-item" href="#" @click.prevent="handleLogout">Logout</a>
-                </li>
-              </ul>
             </li>
 
           </ul>
@@ -118,53 +66,5 @@ import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
 
-const auth = useAuthStore()
 const cart = useCartStore()
-const shaking = ref(false)
-
-watch(() => cart.count, (newVal, oldVal) => {
-  if (newVal > oldVal) {
-    shaking.value = true
-    setTimeout(() => shaking.value = false, 600)
-  }
-})
-
-function handleLogout() {
-  auth.logout()
-  window.location.href = '/'
-}
-
-onMounted(() => {
-  const token = localStorage.getItem('sigyn_token')
-  const user = localStorage.getItem('sigyn_user')
-  if (token && user) {
-    auth.setAuth({ token, user: JSON.parse(user) })
-    cart.fetchCart()
-  }
-})
 </script>
-
-<style scoped>
-.badge-icon {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  font-size: 10px;
-  padding: 2px 5px;
-  border-radius: 50%;
-  min-width: 16px;
-  text-align: center;
-  line-height: 1;
-  color: #fff;
-}
-
-.shake {
-  animation: shake 0.5s ease-in-out;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
-  20%, 40%, 60%, 80% { transform: translateX(3px); }
-}
-</style>

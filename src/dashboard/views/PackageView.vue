@@ -35,6 +35,14 @@ interface Package {
   category?: {
     category_name: string
   }
+  extras?: Array<{
+    id_extra: number
+    name: string
+    description: string | null
+    price: number
+    icon: string | null
+    status: string
+  }>
 }
 
 const packages = ref<Package[]>([])
@@ -110,66 +118,56 @@ function openDetail(pkg: Package) {
 }
 
 async function handleSave(data: PackageForm) {
+  const body: any = {
+    id_category: data.id_category ? Number(data.id_category) : null,
+    name: data.name,
+    price: Number(data.price),
+    description: data.description,
+    duration: data.duration,
+    whats_included: data.whats_included,
+    extras: data.extras.map((e) => ({
+      id_extra: e.id_extra || undefined,
+      name: e.name,
+      price: Number(e.price),
+      icon: e.icon || null,
+      description: e.description || null,
+    })),
+  }
+
   if (modalMode.value === 'add') {
+    body.id_vendor = Number(data.id_vendor)
     try {
       const res = await fetch(`${apiUrl}/api/packages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_vendor: Number(data.id_vendor),
-          id_category: data.id_category ? Number(data.id_category) : null,
-          name: data.name,
-          price: Number(data.price),
-          description: data.description,
-          duration: data.duration,
-          whats_included: data.whats_included,
-        })
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
         throw new Error(errBody?.error?.message || 'Failed to create package')
       }
       await fetchPackages()
-      Toast.fire({
-        icon: 'success',
-        title: 'Package created successfully'
-      })
+      Toast.fire({ icon: 'success', title: 'Package created successfully' })
     } catch (err: any) {
       console.error('Error creating package:', err)
-      Toast.fire({
-        icon: 'error',
-        title: err.message || 'Failed to create package'
-      })
+      Toast.fire({ icon: 'error', title: err.message || 'Failed to create package' })
     }
   } else if (modalMode.value === 'edit' && selectedPackage.value) {
     try {
       const res = await fetch(`${apiUrl}/api/packages/${selectedPackage.value.id_package}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_category: data.id_category ? Number(data.id_category) : null,
-          name: data.name,
-          price: Number(data.price),
-          description: data.description,
-          duration: data.duration,
-          whats_included: data.whats_included,
-        })
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
         throw new Error(errBody?.error?.message || 'Failed to update package')
       }
       await fetchPackages()
-      Toast.fire({
-        icon: 'success',
-        title: 'Package updated successfully'
-      })
+      Toast.fire({ icon: 'success', title: 'Package updated successfully' })
     } catch (err: any) {
       console.error('Error updating package:', err)
-      Toast.fire({
-        icon: 'error',
-        title: err.message || 'Failed to update package'
-      })
+      Toast.fire({ icon: 'error', title: err.message || 'Failed to update package' })
     }
   }
   modalVisible.value = false
@@ -188,24 +186,16 @@ async function handleDelete(id: number) {
 
   if (result.isConfirmed) {
     try {
-      const res = await fetch(`${apiUrl}/api/packages/${id}`, {
-        method: 'DELETE',
-      })
+      const res = await fetch(`${apiUrl}/api/packages/${id}`, { method: 'DELETE' })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}))
         throw new Error(errBody?.error?.message || 'Failed to delete package')
       }
       await fetchPackages()
-      Toast.fire({
-        icon: 'success',
-        title: 'Package has been deleted.'
-      })
+      Toast.fire({ icon: 'success', title: 'Package has been deleted.' })
     } catch (err: any) {
       console.error('Error deleting package:', err)
-      Toast.fire({
-        icon: 'error',
-        title: err.message || 'Failed to delete package'
-      })
+      Toast.fire({ icon: 'error', title: err.message || 'Failed to delete package' })
     }
   }
 }

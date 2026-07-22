@@ -86,6 +86,7 @@ model Vendor {
   portfolios   Portfolio[]
   packages     Package[]
   availability VendorAvailability[]
+
   reviews      Review[]
   commissions  Commission[]
   payouts      Payout[]
@@ -171,12 +172,52 @@ model Package {
   category         Category?        @relation(fields: [id_category], references: [id_category])
   booking_packages BookingPackage[]
   portfolios       Portfolio[]
+  extras           PackageExtra[]
   favorites        UserFavorite[]
   cart_items       CartItem[]
 
   @@index([id_vendor])
   @@index([id_category])
   @@index([status])
+  @@schema("sigyn")
+}
+
+model PackageExtra {
+  id_extra      Int      @id @default(autoincrement())
+  id_package    Int
+  name          String
+  description   String?
+  price         Float
+  icon          String?
+  status        String   @default("active")
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
+
+  package        Package              @relation(fields: [id_package], references: [id_package])
+  booking_extras BookingPackageExtra[]
+
+  @@index([id_package])
+  @@index([status])
+  @@schema("sigyn")
+}
+
+model BookingPackageExtra {
+  id_booking_extra   Int      @id @default(autoincrement())
+  id_booking_package Int
+  id_extra           Int
+  name               String
+  price              Float
+  quantity           Int      @default(1)
+  date_created       DateTime @default(now())
+  user_created       String?
+
+  booking_package BookingPackage @relation(fields: [id_booking_package], references: [id_booking_package], onDelete: Cascade)
+  extra           PackageExtra   @relation(fields: [id_extra], references: [id_extra])
+
+  @@index([id_booking_package])
+  @@index([id_extra])
   @@schema("sigyn")
 }
 
@@ -233,6 +274,7 @@ model BookingPackage {
 
   booking Booking @relation(fields: [id_booking], references: [id_booking], onDelete: Cascade)
   package Package @relation(fields: [id_package], references: [id_package])
+  extras  BookingPackageExtra[]
 
   @@unique([id_booking, id_package])
   @@schema("sigyn")
