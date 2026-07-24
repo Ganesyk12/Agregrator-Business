@@ -34,10 +34,10 @@ const form = ref<PortfolioForm>({
   id_vendor: 0,
   id_package: null,
   id_category: null,
-  media_url: '',
+  cover_url: '',
   description: '',
   location: '',
-  label: '',
+  title: '',
   sort_order: 0,
 })
 

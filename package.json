@@ -1,20 +1,14 @@
 {
   "name": "agregrator-business",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "dev:server": "prisma generate && tsx watch server/index.ts",
-    "dev:all": "run-p dev dev:server",
-    "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio",
-    "db:push": "prisma db push",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "test:unit": "vitest",
-    "test:e2e": "playwright test",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "run-s \"lint:*\"",
@@ -46,7 +40,6 @@
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.0",
     "@prisma/config": "^7.8.0",
     "@tsconfig/node24": "^24.0.4",
     "@types/aos": "^3.0.8",
@@ -68,7 +61,6 @@
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-oxlint": "~1.69.0",
-    "eslint-plugin-playwright": "^2.10.4",
     "eslint-plugin-vue": "~10.9.2",
     "jiti": "^2.7.0",
     "jsdom": "^29.1.1",

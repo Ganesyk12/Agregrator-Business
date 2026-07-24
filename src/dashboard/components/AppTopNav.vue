@@ -76,12 +76,31 @@ const handleLogout = () => {
       <a href="/dashboard/" class="b-brand">
         <span class="logo-text" style="font-size: 18px; font-weight: bold; color: #fff;">{{ appName }}</span>
       </a>
-      <a href="#!" class="mob-toggler" @click.prevent="toggleMobileHeader">
-        <i class="feather icon-more-vertical"></i>
-      </a>
+      <!-- Mobile Profile Dropdown (Replaces mob-toggler 3-dots) -->
+      <div class="dropdown drp-user d-lg-none" :class="{ show: isDropdownOpen }" style="position: absolute; right: 20px; top: 20px; z-index: 1050;">
+        <a href="#" @click.prevent="toggleDropdown" style="color: #fff; font-size: 20px;">
+          <i class="feather icon-user"></i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right profile-notification" :class="{ show: isDropdownOpen }" style="position: absolute; right: -10px !important; left: auto !important; top: 40px; min-width: 280px;">
+          <div class="pro-head" style="display:flex; flex-direction:column; align-items:flex-start; padding: 15px 20px;">
+            <span style="font-weight:bold; font-size:15px; color:#fff;">{{ userName }}</span>
+            <span style="font-size:12px; color:#e0e0e0; margin-top:2px;">{{ userRoleText }}</span>
+            <a href="#!" class="d-logout" title="Logout" @click.prevent="handleLogout" style="position:absolute; right:15px; top:20px;">
+              <i class="feather icon-log-out"></i>
+            </a>
+          </div>
+          <ul class="pro-body">
+            <li>
+              <a href="javascript:;" class="dropdown-item" @click.prevent="handleLogout">
+                <i class="feather icon-log-out"></i> Logout
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
     
-    <div class="collapse navbar-collapse" :class="{ show: mobileHeaderOpen }">
+    <div class="collapse navbar-collapse d-none d-lg-block">
       <ul class="navbar-nav mr-auto">
         <!-- Left aligned items (empty) -->
       </ul>

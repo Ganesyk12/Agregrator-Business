@@ -87,4 +87,10 @@ onUnmounted(() => {
   padding: 15px 30px !important;
   z-index: 1;
 }
+
+/* Make all modals scrollable if content exceeds screen height */
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
 </style>

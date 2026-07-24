@@ -274,7 +274,7 @@ function getVendorName(vendorId: number) {
                       <td>
                         <span v-if="term.payments?.length">
                           <span v-for="(p, pi) in term.payments" :key="p.id_payment">
-                            <span v-if="pi > 0">, </span>
+                            <span v-if="Number(pi) > 0">, </span>
                             #{{ p.id_payment }} ({{ p.status }})
                           </span>
                         </span>

@@ -253,7 +253,7 @@ model BookingPayment {
 
   id_term       Int?
   booking Booking @relation(fields: [id_booking], references: [id_booking])
-  term    PaymentTerm? @relation(fields: [id_term], references: [id_term])
+  payment_term    PaymentTerm? @relation(fields: [id_term], references: [id_term])
 
   @@schema("sigyn")
 }
