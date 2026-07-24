@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as paymentRequestService from './payment-requests.service'
+import * as paymentRequestPaymentService from '../payment-request-payments/payment-request-payments.service'
 import { createError } from '../../middleware/error-handler'
 
 export async function getAll(_req: Request, res: Response, next: NextFunction) {
@@ -27,20 +28,25 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { title, description, requested_by, notes, payment_method, bank_account_number, payment_to, status, items } = req.body
+    const { title, description, requested_by, notes, payment_method, bank_account_number, payment_to, reference_number, status, items } = req.body
     if (!title || !requested_by || !items || !items.length) {
       throw createError(400, 'title, requested_by, and items are required')
     }
 
+    const totalAmount = items.reduce((sum: number, item: any) => sum + Number(item.amount), 0)
+
     const request = await paymentRequestService.create({
       title,
       description: description || null,
-      requested_by: Number(requested_by),
+      requested_by: requested_by,
       notes: notes || null,
       payment_method: payment_method || null,
       bank_account_number: bank_account_number || null,
       payment_to: payment_to || null,
+      reference_number: reference_number || null,
       status: status || 'draft',
+      total_amount: totalAmount,
+      outstanding: totalAmount,
       items: items.map((item: any) => ({
         description: item.description,
         quantity: item.quantity ? Number(item.quantity) : 1,
@@ -68,7 +74,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 export async function update(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)
-    const { title, description, notes, payment_method, bank_account_number, payment_to, status, reviewed_by, approval_notes, items } = req.body
+    const { title, description, notes, payment_method, bank_account_number, payment_to, reference_number, status, reviewed_by, approval_notes, items } = req.body
 
     const updateData: any = {}
     if (title !== undefined) updateData.title = title
@@ -77,8 +83,9 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     if (payment_method !== undefined) updateData.payment_method = payment_method
     if (bank_account_number !== undefined) updateData.bank_account_number = bank_account_number
     if (payment_to !== undefined) updateData.payment_to = payment_to
+    if (reference_number !== undefined) updateData.reference_number = reference_number
     if (status !== undefined) updateData.status = status
-    if (reviewed_by !== undefined) updateData.reviewed_by = Number(reviewed_by)
+    if (reviewed_by !== undefined) updateData.reviewed_by = reviewed_by
     if (approval_notes !== undefined) updateData.approval_notes = approval_notes
     updateData.user_modified = req.body.user_modified || 'SYSTEM'
 
@@ -90,6 +97,10 @@ export async function update(req: Request, res: Response, next: NextFunction) {
         amount: Number(item.amount),
         notes: item.notes || null,
       }))
+
+      const totalAmount = items.reduce((sum: number, item: any) => sum + Number(item.amount), 0)
+      updateData.total_amount = totalAmount
+      updateData.outstanding = totalAmount
     }
 
     if (['approved', 'rejected', 'revision'].includes(status)) {
@@ -116,6 +127,13 @@ export async function update(req: Request, res: Response, next: NextFunction) {
         payment_proof_url: req.body.attachment_url || null,
         created_by: req.body.user_modified || 'SYSTEM',
       })
+
+      if (status === 'approved') {
+        const currentRequest = await paymentRequestService.findById(id)
+        if (currentRequest) {
+          await paymentRequestPaymentService.autoGenerateTerms(id, currentRequest.total_amount, req.body.user_modified)
+        }
+      }
     }
 
     res.json({ data: request })
@@ -141,7 +159,7 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
 export async function addTransaction(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)
-    const { transaction_type, description, payment_proof_url, payment_method, bank_name, bank_account_number, bank_account_name, reference_number, paid_at, created_by } = req.body
+    const { transaction_type, description, payment_proof_url, created_by } = req.body
 
     if (!transaction_type) {
       throw createError(400, 'transaction_type is required')
@@ -157,12 +175,6 @@ export async function addTransaction(req: Request, res: Response, next: NextFunc
       transaction_type,
       description: description || null,
       payment_proof_url: payment_proof_url || null,
-      payment_method: payment_method || null,
-      bank_name: bank_name || null,
-      bank_account_number: bank_account_number || null,
-      bank_account_name: bank_account_name || null,
-      reference_number: reference_number || null,
-      paid_at: paid_at ? new Date(paid_at) : null,
       created_by: created_by || 'SYSTEM',
     })
 
@@ -177,6 +189,43 @@ export async function getTransactions(req: Request, res: Response, next: NextFun
     const id = Number(req.params.id)
     const transactions = await paymentRequestService.getTransactions(id)
     res.json({ data: transactions })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function release(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const { released_by, user_modified } = req.body
+
+    if (!released_by) {
+      throw createError(400, 'released_by is required')
+    }
+
+    const request = await paymentRequestService.releaseReceipt(id, released_by, user_modified || 'SYSTEM')
+    if (!request) {
+      res.status(400).json({ error: { message: 'Payment request must be in approved status to release receipt' } })
+      return
+    }
+
+    res.json({ data: request })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function getReceipt(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const receipt = await paymentRequestService.getReceiptData(id)
+
+    if (!receipt) {
+      res.status(404).json({ error: { message: 'Receipt not found or payment request not yet released' } })
+      return
+    }
+
+    res.json({ data: receipt })
   } catch (err) {
     next(err)
   }

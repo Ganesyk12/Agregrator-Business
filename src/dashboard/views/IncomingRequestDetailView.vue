@@ -2,25 +2,13 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
-import PaymentRequestModal, { type PaymentRequestForm } from '../components/PaymentRequestModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const request = ref<any>(null)
-const terms = ref<any[]>([])
-const rfpPayments = ref<any[]>([])
 const loading = ref(true)
-
-const showPaymentProgress = ref(true)
-
-const modalVisible = ref(false)
-const modalMode = ref<'add' | 'edit' | 'detail' | 'approve' | 'release'>('edit')
-const detailFile = ref<File | null>(null)
-const detailNotes = ref('')
-
-const releaseNotes = ref('')
 
 const approvalNotes = ref('')
 const approvalFile = ref<File | null>(null)
@@ -39,18 +27,10 @@ function getUser() {
 async function fetchRequest() {
   try {
     const id = route.params.id
-    const [reqRes, termsRes, paymentsRes] = await Promise.all([
-      fetch(`${apiUrl}/api/payment-requests/${id}`),
-      fetch(`${apiUrl}/api/payment-requests/${id}/terms`),
-      fetch(`${apiUrl}/api/payment-requests/${id}/payments`),
-    ])
-    if (!reqRes.ok) throw new Error('Request not found')
-    const reqJson = await reqRes.json()
-    const termsJson = await termsRes.json()
-    const paymentsJson = await paymentsRes.json()
-    request.value = reqJson.data
-    terms.value = termsJson.data || []
-    rfpPayments.value = paymentsJson.data || []
+    const res = await fetch(`${apiUrl}/api/payment-requests/${id}`)
+    if (!res.ok) throw new Error('Request not found')
+    const json = await res.json()
+    request.value = json.data
   } catch (err) {
     console.error(err)
   } finally {
@@ -65,49 +45,6 @@ async function uploadFile(requestNumber: string, file: File): Promise<string | n
   if (!res.ok) return null
   const json = await res.json()
   return json.url
-}
-
-async function handleRelease() {
-  if (!request.value) return
-  const user = getUser()
-  if (!user?.email) {
-    Toast.fire({ icon: 'error', title: 'User not found' })
-    return
-  }
-
-  const result = await Swal.fire({
-    title: 'Release Receipt?',
-    text: `This will generate receipt for ${request.value.request_number} and change status to Released.`,
-    icon: 'question',
-    input: 'textarea',
-    inputPlaceholder: 'Optional notes...',
-    showCancelButton: true,
-    confirmButtonColor: '#5cb85c',
-    confirmButtonText: 'Yes, Release Receipt',
-    cancelButtonText: 'Cancel',
-    preConfirm: (notes) => { releaseNotes.value = notes || '' },
-  })
-  if (!result.isConfirmed) return
-
-  try {
-    const res = await fetch(`${apiUrl}/api/payment-requests/${request.value.id_request}/release`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        released_by: user.email,
-        user_modified: user.email || 'SYSTEM',
-      }),
-    })
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}))
-      throw new Error(errBody?.error?.message || 'Failed to release receipt')
-    }
-
-    await fetchRequest()
-    Toast.fire({ icon: 'success', title: `Receipt released for ${request.value.request_number}` })
-  } catch (err: any) {
-    Toast.fire({ icon: 'error', title: err.message })
-  }
 }
 
 async function handleApprove(status: 'approved' | 'rejected' | 'revision') {
@@ -163,9 +100,44 @@ async function handleApprove(status: 'approved' | 'rejected' | 'revision') {
   }
 }
 
-function onApprovalFileSelected(e: Event) {
-  const input = e.target as HTMLInputElement
-  approvalFile.value = input.files?.[0] || null
+async function handleRelease() {
+  if (!request.value) return
+  const user = getUser()
+  if (!user?.email) {
+    Toast.fire({ icon: 'error', title: 'User not found' })
+    return
+  }
+
+  const result = await Swal.fire({
+    title: 'Release Receipt?',
+    text: `This will generate receipt for ${request.value.request_number} and change status to Released.`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#5cb85c',
+    confirmButtonText: 'Yes, Release Receipt',
+    cancelButtonText: 'Cancel',
+  })
+  if (!result.isConfirmed) return
+
+  try {
+    const res = await fetch(`${apiUrl}/api/payment-requests/${request.value.id_request}/release`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        released_by: user.email,
+        user_modified: user.email || 'SYSTEM',
+      }),
+    })
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}))
+      throw new Error(errBody?.error?.message || 'Failed to release receipt')
+    }
+
+    await fetchRequest()
+    Toast.fire({ icon: 'success', title: `Receipt released for ${request.value.request_number}` })
+  } catch (err: any) {
+    Toast.fire({ icon: 'error', title: err.message })
+  }
 }
 
 async function handlePrintReceipt() {
@@ -174,93 +146,12 @@ async function handlePrintReceipt() {
 }
 
 function goBack() {
-  router.push('/payment-requests')
+  router.push('/incoming-requests')
 }
 
-function openEdit() {
-  if (!request.value) return
-  modalMode.value = 'edit'
-  modalVisible.value = true
-}
-
-async function handleSave(data: PaymentRequestForm) {
-  const user = getUser()
-  const body: Record<string, any> = {
-    title: data.title,
-    description: data.description,
-    payment_method: data.payment_method,
-    bank_account_number: data.bank_account_number,
-    payment_to: data.payment_to,
-    reference_number: data.reference_number,
-    requested_by: user?.email,
-    user_modified: user?.email || 'SYSTEM',
-    status: data.status,
-    items: data.items,
-  }
-
-  try {
-    const res = await fetch(`${apiUrl}/api/payment-requests/${request.value.id_request}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}))
-      throw new Error(errBody?.error?.message || 'Failed to update')
-    }
-
-    const json = await res.json()
-    const requestNumber = json.data?.request_number
-
-    if (data.attachment_file && requestNumber) {
-      const proofUrl = await uploadFile(requestNumber, data.attachment_file)
-      if (proofUrl && data.status === 'pending') {
-        await fetch(`${apiUrl}/api/payment-requests/${json.data.id_request}/transactions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transaction_type: 'submitted', description: 'Payment request submitted', payment_proof_url: proofUrl, created_by: user?.email || 'SYSTEM' }),
-        })
-      }
-    }
-
-    await fetchRequest()
-    Toast.fire({ icon: 'success', title: 'Payment request updated' })
-  } catch (err: any) {
-    Toast.fire({ icon: 'error', title: err.message })
-  }
-  modalVisible.value = false
-}
-
-async function handleSubmit() {
-  if (!request.value) return
-  const user = getUser()
-
-  let proofUrl: string | null = null
-  if (detailFile.value && request.value.request_number) {
-    proofUrl = await uploadFile(request.value.request_number, detailFile.value)
-  }
-
-  try {
-    const res = await fetch(`${apiUrl}/api/payment-requests/${request.value.id_request}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        status: 'pending',
-        user_modified: user?.email || 'SYSTEM',
-        attachment_url: proofUrl,
-        approval_notes: detailNotes.value || null,
-      }),
-    })
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}))
-      throw new Error(errBody?.error?.message || 'Failed to submit')
-    }
-
-    await fetchRequest()
-    Toast.fire({ icon: 'success', title: 'Request submitted for approval' })
-  } catch (err: any) {
-    Toast.fire({ icon: 'error', title: err.message })
-  }
+function onApprovalFileSelected(e: Event) {
+  const input = e.target as HTMLInputElement
+  approvalFile.value = input.files?.[0] || null
 }
 
 function statusLabel(s: string) {
@@ -298,11 +189,6 @@ function dotColor(s: string) {
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value)
-}
-
-function onFileSelected(e: Event) {
-  const input = e.target as HTMLInputElement
-  detailFile.value = input.files?.[0] || null
 }
 
 onMounted(fetchRequest)
@@ -371,6 +257,14 @@ onMounted(fetchRequest)
                 <div class="col-xs-5" style="color:#73879C;">Notes</div>
                 <div class="col-xs-7" style="font-weight:600;">{{ request.notes }}</div>
               </div>
+              <div class="row" style="margin-bottom:6px;" v-if="request.reviewed_by">
+                <div class="col-xs-5" style="color:#73879C;">Reviewed By</div>
+                <div class="col-xs-7" style="font-weight:600;">{{ request.reviewed_by }}</div>
+              </div>
+              <div class="row" style="margin-bottom:6px;" v-if="request.approval_notes">
+                <div class="col-xs-5" style="color:#73879C;">Approval Notes</div>
+                <div class="col-xs-7" style="font-weight:600;">{{ request.approval_notes }}</div>
+              </div>
               <div class="row" style="margin-bottom:6px;" v-if="request.receipt_number">
                 <div class="col-xs-5" style="color:#73879C;">Receipt Number</div>
                 <div class="col-xs-7" style="font-weight:600;">{{ request.receipt_number }}</div>
@@ -378,10 +272,6 @@ onMounted(fetchRequest)
               <div class="row" style="margin-bottom:6px;" v-if="request.reference_number">
                 <div class="col-xs-5" style="color:#73879C;">Reference Number</div>
                 <div class="col-xs-7" style="font-weight:600;">{{ request.reference_number }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.released_at">
-                <div class="col-xs-5" style="color:#73879C;">Released At</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ new Date(request.released_at).toLocaleString('id-ID') }}</div>
               </div>
               <div class="row" style="margin-bottom:6px;" v-if="request.released_by">
                 <div class="col-xs-5" style="color:#73879C;">Released By</div>
@@ -424,122 +314,6 @@ onMounted(fetchRequest)
           </table>
           <p v-else class="text-muted">No items.</p>
 
-          <!-- Payment Progress -->
-          <template v-if="request.status !== 'draft' && terms.length > 0">
-            <div class="ln_solid" style="margin:15px 0;"></div>
-
-            <div class="x_panel">
-              <div class="x_title" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:8px 15px;" @click="showPaymentProgress = !showPaymentProgress">
-                <h5 style="margin:0; font-weight:700; color:#73879C;"><i class="fa fa-credit-card"></i> Payment Progress</h5>
-                <a style="cursor:pointer;"><i :class="showPaymentProgress ? 'fa fa-chevron-up' : 'fa fa-chevron-down'" style="color:#73879C;"></i></a>
-              </div>
-              <div class="x_content" v-show="showPaymentProgress" style="padding:10px 15px;">
-                <div class="row" style="margin-bottom:12px;">
-                  <div class="col-md-4">
-                    <div style="padding:12px; background:#f9f9f9; border-radius:4px; text-align:center;">
-                      <div style="color:#73879C; font-size:12px; margin-bottom:4px;">Total Amount</div>
-                      <div style="font-size:18px; font-weight:700;">{{ formatCurrency(request.total_amount) }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div style="padding:12px; background:#f0faf0; border-radius:4px; text-align:center;">
-                      <div style="color:#73879C; font-size:12px; margin-bottom:4px;">Paid</div>
-                      <div style="font-size:18px; font-weight:700; color:#5cb85c;">{{ formatCurrency(request.total_amount - request.outstanding) }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div style="padding:12px; background:#fdf0f0; border-radius:4px; text-align:center;">
-                      <div style="color:#73879C; font-size:12px; margin-bottom:4px;">Outstanding</div>
-                      <div style="font-size:18px; font-weight:700; color:#d9534f;">{{ formatCurrency(request.outstanding) }}</div>
-                    </div>
-                  </div>
-                </div>
-                <div style="margin-bottom:12px;">
-                  <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                    <span style="font-size:12px; color:#73879C;">Progress</span>
-                    <span style="font-size:12px; font-weight:600;">{{ request.total_amount > 0 ? Math.round(((request.total_amount - request.outstanding) / request.total_amount) * 100) : 0 }}%</span>
-                  </div>
-                  <div class="progress" style="height:8px; margin:0;">
-                    <div class="progress-bar progress-bar-success" role="progressbar"
-                      :style="{ width: (request.total_amount > 0 ? ((request.total_amount - request.outstanding) / request.total_amount) * 100 : 0) + '%' }">
-                    </div>
-                  </div>
-                </div>
-
-                <div class="ln_solid" style="margin:10px 0;"></div>
-
-                <!-- Terms -->
-                <div v-if="terms.length" style="margin-bottom:12px;">
-                  <h6 style="font-weight:600; color:#73879C; margin-bottom:8px;">Terms</h6>
-                  <table class="table table-bordered table-striped" style="margin-bottom:0;">
-                    <thead>
-                      <tr>
-                        <th>Term</th>
-                        <th style="width:150px;">Amount</th>
-                        <th style="width:150px;">Paid</th>
-                        <th style="width:150px;">Remaining</th>
-                        <th style="width:80px;">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="term in terms" :key="term.id_rfp_term">
-                        <td>{{ term.term_name }}</td>
-                        <td>{{ formatCurrency(term.amount) }}</td>
-                        <td style="color:#5cb85c;">{{ formatCurrency(term.paid_amount) }}</td>
-                        <td style="color:#d9534f;">{{ formatCurrency(term.amount - term.paid_amount) }}</td>
-                        <td><span :class="'label ' + (term.status === 'paid' ? 'label-success' : term.status === 'partial' ? 'label-warning' : 'label-default')">{{ term.status }}</span></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- Payment History -->
-                <div v-if="rfpPayments.length">
-                  <h6 style="font-weight:600; color:#73879C; margin-bottom:8px;">Payment History</h6>
-                  <table class="table table-bordered table-striped" style="margin-bottom:0;">
-                    <thead>
-                      <tr>
-                        <th style="width:40px;">No.</th>
-                        <th>Date</th>
-                        <th>Amount</th>
-                        <th>Source Bank</th>
-                        <th>Account</th>
-                        <th>Status</th>
-                        <th>Proof</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(p, i) in rfpPayments" :key="p.id_rfp_payment || i">
-                        <td>{{ i + 1 }}</td>
-                        <td>{{ new Date(p.payment_date).toLocaleDateString('id-ID') }}</td>
-                        <td><strong>{{ formatCurrency(p.amount) }}</strong></td>
-                        <td>{{ p.source_bank || '-' }}</td>
-                        <td>{{ p.source_account_number || '-' }} {{ p.source_account_name ? `(${p.source_account_name})` : '' }}</td>
-                        <td><span :class="'label ' + statusClass(p.status)">{{ p.status }}</span></td>
-                        <td><a v-if="p.proof_url" :href="p.proof_url" target="_blank"><i class="fa fa-paperclip"></i> View</a><span v-else>-</span></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <p v-else class="text-muted" style="margin:0;">No payments recorded yet.</p>
-              </div>
-            </div>
-          </template>
-
-          <!-- Submit Section (for draft / revision) -->
-          <template v-if="request.status === 'draft' || request.status === 'revision'">
-            <div class="ln_solid" style="margin:15px 0;"></div>
-            <h5 style="font-weight:700; margin-bottom:10px; color:#73879C;"><i class="fa fa-send"></i> Submit Request</h5>
-            <div class="form-group" style="text-align:left;">
-              <label class="control-label" style="font-weight:bold;">Notes</label>
-              <textarea v-model="detailNotes" class="form-control" rows="2" placeholder="Notes for submission (optional)"></textarea>
-            </div>
-            <div class="form-group" style="text-align:left;">
-              <label class="control-label" style="font-weight:bold;">Attachment (optional)</label>
-              <input type="file" class="form-control" accept="image/*,application/pdf" @change="onFileSelected" />
-            </div>
-          </template>
-
           <!-- Approval Section (for pending status) -->
           <template v-if="request.status === 'pending'">
             <div class="ln_solid" style="margin:15px 0;"></div>
@@ -574,17 +348,16 @@ onMounted(fetchRequest)
           </div>
           <p v-else class="text-muted">No transactions yet.</p>
 
+          <!-- Action Buttons -->
           <div class="ln_solid" style="margin:20px 0 10px;"></div>
           <div class="row">
             <div class="col-xs-12">
-              <button v-if="request.status === 'draft' || request.status === 'revision'" class="btn btn-success" @click="handleSubmit"><i class="fa fa-send"></i> {{ request.status === 'revision' ? 'Resubmit' : 'Submit' }}</button>
-              <button v-if="request.status === 'draft' || request.status === 'revision'" class="btn btn-info" @click="openEdit" style="margin-left:6px;"><i class="fa fa-pencil"></i> Edit</button>
               <template v-if="request.status === 'pending'">
                 <button class="btn btn-warning" @click="handleApprove('revision')"><i class="fa fa-pencil"></i> Revision</button>
                 <button class="btn btn-danger" @click="handleApprove('rejected')" style="margin-left:6px;"><i class="fa fa-times"></i> Reject</button>
                 <button class="btn btn-success" @click="handleApprove('approved')" style="margin-left:6px;"><i class="fa fa-check"></i> Approve</button>
               </template>
-              <button v-if="request.status === 'approved' && request.outstanding <= 0" class="btn btn-primary" @click="handleRelease"><i class="fa fa-file-text"></i> Release Receipt</button>
+              <button v-if="request.status === 'approved'" class="btn btn-primary" @click="handleRelease"><i class="fa fa-file-text"></i> Release Receipt</button>
               <button v-if="request.status === 'released'" class="btn btn-info" @click="handlePrintReceipt" style="margin-left:6px;"><i class="fa fa-print"></i> Print Receipt</button>
             </div>
           </div>
@@ -595,20 +368,4 @@ onMounted(fetchRequest)
       </div>
     </div>
   </div>
-
-  <PaymentRequestModal
-    :visible="modalVisible"
-    :mode="modalMode"
-    :request="request"
-    @close="modalVisible = false; fetchRequest()"
-    @save="handleSave"
-  />
 </template>
-
-<style scoped>
-@media (max-width: 767px) {
-  .btn { margin-bottom: 4px; }
-  .table td, .table th { font-size: 12px; padding: 6px 4px; }
-  .table-responsive { font-size: 12px; }
-}
-</style>

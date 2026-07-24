@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject, type Ref } from 'vue'
+import { ref, computed, inject, watch, type Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
@@ -44,9 +44,10 @@ const allSections: MenuSection[] = [
     items: [
       { label: 'Revenue Summary', icon: 'fa-line-chart', to: '/revenue-summary' },
       { label: 'Request for Payment', icon: 'fa-credit-card', to: '/payment-requests' },
+      { label: 'RFP Payment', icon: 'fa-money', to: '/rfp-payments' },
       { label: 'Commissions', icon: 'fa-percent', to: '/commissions' },
-      { label: 'Payouts', icon: 'fa-money', to: '/payouts' },
       { label: 'Invoices', icon: 'fa-file-text-o', to: '/invoices' },
+      { label: 'Receipts', icon: 'fa-file-pdf-o', to: '/receipts' },
     ],
   },
   {
@@ -86,6 +87,24 @@ const menuSections = computed(() => {
 })
 
 const activeMenu = ref<string | null>(null)
+const openSections = ref<Record<string, boolean>>({
+  'General': true,
+  'Vendor Management': true,
+  'Finance & Accounting': true,
+  'System': true,
+})
+
+watch(sidebarCollapsed, (val) => {
+  if (val) {
+    Object.keys(openSections.value).forEach(k => openSections.value[k] = false)
+  } else {
+    Object.keys(openSections.value).forEach(k => openSections.value[k] = true)
+  }
+})
+
+function toggleSection(title: string) {
+  openSections.value[title] = !openSections.value[title]
+}
 
 function hasChildren(menu: MenuItem): menu is MenuItem & { children: MenuItem[] } {
   return !!menu.children && menu.children.length > 0
@@ -108,6 +127,9 @@ function toggleMenu(menu: MenuItem) {
   if (!hasChildren(menu)) {
     if (menu.to) {
       router.push(menu.to)
+      if (window.innerWidth < 768) {
+        sidebarCollapsed.value = true
+      }
     }
     return
   }
@@ -118,7 +140,7 @@ function toggleMenu(menu: MenuItem) {
 <template>
   <div class="col-md-3 left_col sidebar-wrap">
     <div class="navbar nav_title" style="border: 0;">
-      <a href="/" class="site_title">
+      <a href="/dashboard/" class="site_title">
         <i class="fa fa-paw"></i> <span>Agregrator Business</span>
       </a>
     </div>
@@ -128,8 +150,11 @@ function toggleMenu(menu: MenuItem) {
     <div class="sidebar-body">
       <div class="main_menu_side hidden-print main_menu">
         <div v-for="section in menuSections" :key="section.title" class="menu_section">
-          <h3>{{ section.title }}</h3>
-          <ul class="nav side-menu">
+          <h3 @click="toggleSection(section.title)" style="cursor:pointer;user-select:none;">
+            {{ section.title }}
+            <span class="fa" :class="openSections[section.title] ? 'fa-chevron-up' : 'fa-chevron-down'" style="font-size:11px;float:right;margin-top:4px;"></span>
+          </h3>
+          <ul class="nav side-menu" v-show="openSections[section.title]">
             <li v-for="item in section.items" :key="item.label"
               :class="{
                 active: isMenuOpen(item) || isActive(item),
@@ -179,13 +204,31 @@ function toggleMenu(menu: MenuItem) {
 .sidebar-wrap {
   display: flex !important;
   flex-direction: column !important;
-  height: 100vh;
-  overflow: hidden;
+  max-height: 100vh;
 }
 
 .sidebar-body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  max-height: calc(100vh - 60px);
+}
+
+.nav-sm .sidebar-wrap .sidebar-body .nav.side-menu > li > a span {
+  display: none;
+}
+.nav-sm .sidebar-wrap .sidebar-body .nav.side-menu > li > a {
+  text-align: center !important;
+  padding: 10px 5px;
+}
+.nav-sm .sidebar-wrap .sidebar-body .menu_section h3 {
+  display: none;
+}
+.nav-sm .sidebar-wrap .sidebar-body .menu_section .side-menu {
+  display: block !important;
+}
+.nav-sm .sidebar-wrap .sidebar-body .menu_section .side-menu li a span.fa-chevron-down,
+.nav-sm .sidebar-wrap .sidebar-body .menu_section .side-menu li a span.fa-chevron-up {
+  display: none;
 }
 </style>

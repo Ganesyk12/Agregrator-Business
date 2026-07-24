@@ -84,7 +84,7 @@ router.post('/', ctrl.create)
  *               payment_method: { type: string }
  *               bank_account_number: { type: string }
  *               payment_to: { type: string }
- *               status: { type: string, enum: [draft, pending, approved, rejected, revision] }
+ *               status: { type: string, enum: [draft, pending, approved, rejected, revision, released] }
  *               reviewed_by: { type: integer }
  *               approval_notes: { type: string }
  *               items:
@@ -161,5 +161,53 @@ router.delete('/:id', ctrl.remove)
  */
 router.get('/:id/transactions', ctrl.getTransactions)
 router.post('/:id/transactions', ctrl.addTransaction)
+
+/**
+ * @openapi
+ * /api/payment-requests/{id}/release:
+ *   put:
+ *     tags: [Payment Requests]
+ *     summary: Release receipt for approved payment request
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [released_by]
+ *             properties:
+ *               released_by: { type: integer }
+ *               user_modified: { type: string }
+ *     responses:
+ *       200:
+ *         description: Receipt released successfully
+ *       400:
+ *         description: Payment request must be in approved status
+ */
+router.put('/:id/release', ctrl.release)
+
+/**
+ * @openapi
+ * /api/payment-requests/{id}/receipt:
+ *   get:
+ *     tags: [Payment Requests]
+ *     summary: Get receipt data for released payment request
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Receipt data
+ *       404:
+ *         description: Receipt not found
+ */
+router.get('/:id/receipt', ctrl.getReceipt)
 
 export default router

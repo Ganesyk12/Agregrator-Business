@@ -13,10 +13,10 @@ export interface PaymentRequestItemForm {
 export interface PaymentRequestForm {
   title: string
   description: string
-  notes: string
   payment_method: string
   bank_account_number: string
   payment_to: string
+  reference_number: string
   items: PaymentRequestItemForm[]
   status: string
   attachment_file?: File | null
@@ -24,7 +24,7 @@ export interface PaymentRequestForm {
 
 const props = defineProps<{
   visible: boolean
-  mode: 'add' | 'edit' | 'detail' | 'approve'
+  mode: 'add' | 'edit' | 'detail' | 'approve' | 'release'
   request?: any
 }>()
 
@@ -33,6 +33,7 @@ const emit = defineEmits<{
   save: [data: PaymentRequestForm]
   approve: [data: { status: string; approval_notes: string; attachment_file?: File | null }]
   submitDetail: [data: { attachment_file?: File | null }]
+  release: []
 }>()
 
 const currentUserEmail = ref('')
@@ -48,10 +49,10 @@ try {
 const form = ref<PaymentRequestForm>({
   title: '',
   description: '',
-  notes: '',
   payment_method: '',
   bank_account_number: '',
   payment_to: '',
+  reference_number: '',
   items: [],
   status: 'draft',
 })
@@ -70,18 +71,18 @@ watch(() => props.visible, async (val) => {
 
     if (props.mode === 'add') {
       form.value = {
-        title: '', description: '', notes: '',
-        payment_method: '', bank_account_number: '', payment_to: '',
+        title: '', description: '',
+        payment_method: '', bank_account_number: '', payment_to: '', reference_number: '',
         items: [newItem()], status: 'draft',
       }
     } else if (props.request) {
       form.value = {
         title: props.request.title || '',
         description: props.request.description || '',
-        notes: props.request.notes || '',
         payment_method: props.request.payment_method || '',
         bank_account_number: props.request.bank_account_number || '',
         payment_to: props.request.payment_to || '',
+        reference_number: props.request.reference_number || '',
         status: props.request.status || 'draft',
         items: (props.request.items || []).length
           ? props.request.items.map((i: any) => ({
@@ -175,6 +176,7 @@ const statusLabel = (s: string) => {
     rejected: 'Rejected', revision: 'Revision',
     submitted: 'Submitted', processing: 'Processing',
     paid: 'Paid', confirmed: 'Confirmed',
+    released: 'Released',
   }
   return map[s] || s
 }
@@ -185,6 +187,7 @@ const statusClass = (s: string) => {
     rejected: 'label-danger', revision: 'label-info',
     submitted: 'label-primary', processing: 'label-info',
     paid: 'label-success', confirmed: 'label-primary',
+    released: 'label-primary',
   }
   return map[s] || 'label-default'
 }
@@ -195,6 +198,7 @@ const dotColor = (s: string) => {
     rejected: '#d9534f', revision: '#5bc0de',
     submitted: '#337ab7', processing: '#5bc0de',
     paid: '#5cb85c', confirmed: '#337ab7',
+    released: '#337ab7',
   }
   return map[s] || '#bbb'
 }
@@ -230,6 +234,7 @@ function submitFromDetail() {
             <template v-if="mode === 'add'">New Payment Request</template>
             <template v-else-if="mode === 'edit'">Edit Payment Request</template>
             <template v-else-if="mode === 'approve'">Approve Payment Request</template>
+            <template v-else-if="mode === 'release'">Release Receipt</template>
             <template v-else>Payment Request Detail</template>
           </h4>
         </div>
@@ -274,7 +279,7 @@ function submitFromDetail() {
                   </div>
                   <div class="row" style="margin-bottom: 6px;">
                     <div class="col-xs-5" style="color: #73879C;">Requested By</div>
-                    <div class="col-xs-7" style="font-weight: 600;">{{ request.requester?.full_name || '-' }}</div>
+                    <div class="col-xs-7" style="font-weight: 600;">{{ request.requested_by || '-' }}</div>
                   </div>
                   <div class="row" style="margin-bottom: 6px;">
                     <div class="col-xs-5" style="color: #73879C;">Request Date</div>
@@ -284,9 +289,9 @@ function submitFromDetail() {
                     <div class="col-xs-5" style="color: #73879C;">Notes</div>
                     <div class="col-xs-7" style="font-weight: 600;">{{ request.notes }}</div>
                   </div>
-                  <div class="row" style="margin-bottom: 6px;" v-if="request.reviewer">
+                  <div class="row" style="margin-bottom: 6px;" v-if="request.reviewed_by">
                     <div class="col-xs-5" style="color: #73879C;">Reviewed By</div>
-                    <div class="col-xs-7" style="font-weight: 600;">{{ request.reviewer?.full_name || '-' }}</div>
+                    <div class="col-xs-7" style="font-weight: 600;">{{ request.reviewed_by }}</div>
                   </div>
                   <div class="row" style="margin-bottom: 6px;" v-if="request.approval_notes">
                     <div class="col-xs-5" style="color: #73879C;">Approval Notes</div>
@@ -378,6 +383,47 @@ function submitFromDetail() {
             </div>
           </template>
 
+          <!-- RELEASE RECEIPT VIEW -->
+          <template v-else-if="mode === 'release' && request">
+            <div class="alert alert-info">
+              <i class="fa fa-file-text"></i>
+              <strong>Release Receipt Confirmation</strong>
+              <p style="margin-top:8px;">This will generate an official receipt (KWT) for <strong>{{ request.request_number }}</strong> and change its status to <strong>Released</strong>.</p>
+            </div>
+            <div class="form">
+              <div class="row" style="margin-bottom: 4px;">
+                <div class="col-md-6">
+                  <div class="row" style="margin-bottom: 6px;">
+                    <div class="col-xs-5" style="color: #73879C;">Request Number</div>
+                    <div class="col-xs-7" style="font-weight: 600;">{{ request.request_number }}</div>
+                  </div>
+                  <div class="row" style="margin-bottom: 6px;">
+                    <div class="col-xs-5" style="color: #73879C;">Title</div>
+                    <div class="col-xs-7" style="font-weight: 600;">{{ request.title }}</div>
+                  </div>
+                  <div class="row" style="margin-bottom: 6px;" v-if="request.payment_to">
+                    <div class="col-xs-5" style="color: #73879C;">Payment To</div>
+                    <div class="col-xs-7" style="font-weight: 600;">{{ request.payment_to }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="row" style="margin-bottom: 6px;">
+                    <div class="col-xs-5" style="color: #73879C;">Request Date</div>
+                    <div class="col-xs-7" style="font-weight: 600;">{{ new Date(request.request_date).toLocaleDateString('id-ID') }}</div>
+                  </div>
+                  <div class="row" style="margin-bottom: 6px;">
+                    <div class="col-xs-5" style="color: #73879C;">Requested By</div>
+                    <div class="col-xs-7" style="font-weight: 600;">{{ request.requested_by || '-' }}</div>
+                  </div>
+                  <div class="row" style="margin-bottom: 6px;">
+                    <div class="col-xs-5" style="color: #73879C;">Total Amount</div>
+                    <div class="col-xs-7" style="font-weight: 600;">{{ formatCurrency(request.items?.reduce((sum: number, i: any) => sum + i.amount, 0) || 0) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
           <!-- ADD/EDIT FORM VIEW -->
           <template v-else>
             <form @submit.prevent class="form">
@@ -406,8 +452,8 @@ function submitFromDetail() {
                     <input type="text" v-model="form.payment_to" class="form-control" placeholder="e.g. Vendor X" />
                   </div>
                   <div class="form-group" style="text-align: left;">
-                    <label class="control-label" style="font-weight: bold;">Notes</label>
-                    <textarea v-model="form.notes" class="form-control" rows="2" placeholder="Additional notes"></textarea>
+                    <label class="control-label" style="font-weight: bold;">Reference Number</label>
+                    <input type="text" v-model="form.reference_number" class="form-control" placeholder="e.g. Booking registration number" />
                   </div>
                 </div>
               </div>
@@ -444,8 +490,8 @@ function submitFromDetail() {
                   </div>
                   <div class="col-md-6">
                     <div class="form-group" style="text-align: left; margin-bottom: 6px;">
-                      <label class="control-label" style="font-weight: bold; font-size: 12px;">Notes (Ref ID)</label>
-                      <input type="text" v-model="item.notes" class="form-control input-sm" placeholder="e.g. Booking #123 / Vendor ABC" />
+                      <label class="control-label" style="font-weight: bold; font-size: 12px;">Notes <small class="text-muted">(Optional)</small></label>
+                      <input type="text" v-model="item.notes" class="form-control input-sm" placeholder="Keterangan tambahan untuk item ini..." />
                     </div>
                   </div>
                 </div>
@@ -504,6 +550,12 @@ function submitFromDetail() {
             </button>
             <button type="button" class="btn btn-success" @click="doApprove">
               <i class="fa fa-check"></i> Approve
+            </button>
+          </template>
+
+          <template v-if="mode === 'release' && request?.status === 'approved'">
+            <button type="button" class="btn btn-primary" @click="emit('release')">
+              <i class="fa fa-file-text"></i> Release Receipt
             </button>
           </template>
         </div>

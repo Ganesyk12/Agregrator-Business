@@ -159,6 +159,16 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value)
 }
 
+function termStatusLabel(s: string) {
+  const map: Record<string, string> = { unpaid: 'Unpaid', partial: 'Partial', paid: 'Paid', overdue: 'Overdue' }
+  return map[s] || s
+}
+
+function termStatusClass(s: string) {
+  const map: Record<string, string> = { unpaid: 'label-default', partial: 'label-warning', paid: 'label-success', overdue: 'label-danger' }
+  return map[s] || 'label-default'
+}
+
 function save() {
   if (!form.value.id_user || !form.value.package_ids.length || !form.value.event_date) return
   emit('save', { ...form.value })
@@ -172,8 +182,8 @@ function getVendorName(vendorId: number) {
 
 <template>
   <div v-if="visible" class="modal" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5); z-index: 1050;">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
+    <div class="modal-dialog modal-lg" style="max-height: 90vh; margin: 30px auto;">
+      <div class="modal-content" style="max-height: 90vh; overflow: hidden;">
         <div class="modal-header">
           <button type="button" class="close" @click="emit('close')">&times;</button>
           <h4 class="modal-title" style="color: #fff;">
@@ -183,7 +193,7 @@ function getVendorName(vendorId: number) {
           </h4>
         </div>
 
-        <div class="modal-body">
+        <div class="modal-body" style="max-height: calc(90vh - 120px); overflow-y: auto;">
           <template v-if="mode === 'detail' && booking">
             <div class="form">
               <div class="row">
@@ -232,6 +242,56 @@ function getVendorName(vendorId: number) {
                   </div>
                 </div>
               </div>
+
+              <!-- Payment Schedule -->
+              <div class="ln_solid" style="margin: 15px 0;"></div>
+              <h5 style="font-weight: 700; margin-bottom: 10px; color: #73879C;"><i class="fa fa-calendar"></i> Payment Schedule / Milestone</h5>
+              <div v-if="booking.payment_terms?.length">
+                <table class="table table-bordered table-striped" style="margin-bottom:0;">
+                  <thead>
+                    <tr>
+                      <th style="width:40px;">#</th>
+                      <th>Term</th>
+                      <th style="width:120px;">Amount</th>
+                      <th style="width:100px;">Paid</th>
+                      <th style="width:100px;">Remaining</th>
+                      <th style="width:100px;">Status</th>
+                      <th>Payment Ref</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(term, idx) in booking.payment_terms" :key="term.id_term">
+                      <td>{{ term.term_order }}</td>
+                      <td><strong>{{ term.term_name }}</strong></td>
+                      <td>{{ formatCurrency(term.amount) }}</td>
+                      <td>{{ formatCurrency(term.paid_amount || 0) }}</td>
+                      <td>{{ formatCurrency(Math.max(0, term.amount - (term.paid_amount || 0))) }}</td>
+                      <td>
+                        <span :class="'label ' + termStatusClass(term.status)" style="font-size:11px;">
+                          {{ termStatusLabel(term.status) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span v-if="term.payments?.length">
+                          <span v-for="(p, pi) in term.payments" :key="p.id_payment">
+                            <span v-if="pi > 0">, </span>
+                            #{{ p.id_payment }} ({{ p.status }})
+                          </span>
+                        </span>
+                        <span v-else class="text-muted">-</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="row" style="margin-top:8px;">
+                  <div class="col-xs-12 text-right">
+                    <strong>Total Terms:</strong> {{ formatCurrency(booking.payment_terms.reduce((s: number, t: any) => s + Number(t.amount), 0)) }} |
+                    <strong>Paid:</strong> {{ formatCurrency(booking.payment_terms.reduce((s: number, t: any) => s + Number(t.paid_amount || 0), 0)) }} |
+                    <strong>Remaining:</strong> {{ formatCurrency(booking.payment_terms.reduce((s: number, t: any) => s + Math.max(0, Number(t.amount) - Number(t.paid_amount || 0)), 0)) }}
+                  </div>
+                </div>
+              </div>
+              <p v-else class="text-muted" style="margin:5px 0;">No payment schedule defined.</p>
             </div>
           </template>
 

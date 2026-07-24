@@ -184,6 +184,7 @@ const filtered = computed(() => {
       (p.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ')?.toLowerCase() || '').includes(q) ||
       (p.booking?.booking_packages?.map(bp => bp.package.name).join(', ')?.toLowerCase() || '').includes(q) ||
       (p.payment_type?.toLowerCase() || '').includes(q) ||
+      (p.payment_term?.term_name?.toLowerCase() || '').includes(q) ||
       (p.status?.toLowerCase() || '').includes(q)
     )
   }
@@ -289,6 +290,7 @@ function formatCurrency(value: number) {
                   { key: 'vendor_name', label: 'Vendor' },
                   { key: 'package_name', label: 'Package' },
                   { key: 'amount', label: 'Amount' },
+                  { key: 'payment_term', label: 'Term' },
                   { key: 'payment_type', label: 'Type' },
                   { key: 'status', label: 'Status' },
                   { key: 'paid_at', label: 'Paid At' },
@@ -314,6 +316,7 @@ function formatCurrency(value: number) {
               <td>{{ p.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ') || '-' }}</td>
               <td>{{ p.booking?.booking_packages?.map(bp => bp.package.name).join(', ') || '-' }}</td>
               <td>{{ formatCurrency(p.amount) }}</td>
+              <td>{{ p.payment_term?.term_name || '-' }}</td>
               <td>
                 <span
                   :class="{
@@ -343,7 +346,7 @@ function formatCurrency(value: number) {
               </td>
             </tr>
             <tr v-if="paginated.length === 0">
-              <td colspan="9" style="text-align: center;">No payments found.</td>
+              <td colspan="10" style="text-align: center;">No payments found.</td>
             </tr>
           </tbody>
         </table>

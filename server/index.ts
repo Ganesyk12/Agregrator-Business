@@ -19,12 +19,14 @@ import portfolioRoutes from './modules/portfolios/portfolios.routes'
 import uploadRoutes from './modules/upload/upload.routes'
 import paymentRoutes from './modules/payments/payments.routes'
 import paymentRequestRoutes from './modules/payment-requests/payment-requests.routes'
+import paymentRequestPaymentRoutes from './modules/payment-request-payments/payment-request-payments.routes'
 import commissionRoutes from './modules/commissions/commissions.routes'
-import payoutRoutes from './modules/payouts/payouts.routes'
+
 import companyInfoRoutes from './modules/company-info/company-info.routes'
 import contactMessageRoutes from './modules/contact-messages/contact-messages.routes'
 import favoriteRoutes from './modules/favorites/favorites.routes'
 import cartRoutes from './modules/cart/cart.routes'
+import paymentTermRoutes from './modules/payment-terms/payment-terms.routes'
 
 const app = express()
 
@@ -56,12 +58,14 @@ app.use('/api/portfolios', portfolioRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/payments', paymentRoutes)
 app.use('/api/payment-requests', paymentRequestRoutes)
+app.use('/api/payment-requests', paymentRequestPaymentRoutes)
 app.use('/api/commissions', commissionRoutes)
-app.use('/api/payouts', payoutRoutes)
+
 app.use('/api/company-info', companyInfoRoutes)
 app.use('/api/contact-messages', contactMessageRoutes)
 app.use('/api/favorites', favoriteRoutes)
 app.use('/api/cart', cartRoutes)
+app.use('/api/payment-terms', paymentTermRoutes)
 
 app.use(errorHandler)
 

@@ -43,8 +43,6 @@ model User {
   user_roles User_Role[]
   favorites  UserFavorite[]
   cart       Cart?
-  requests_created PaymentRequest[] @relation("Requester")
-  requests_reviewed PaymentRequest[] @relation("Reviewer")
 
   @@index([status])
   @@schema("sigyn")
@@ -90,7 +88,6 @@ model Vendor {
   availability VendorAvailability[]
   reviews      Review[]
   commissions  Commission[]
-  payouts      Payout[]
 
   @@index([status])
   @@schema("sigyn")
@@ -217,10 +214,10 @@ model Booking {
 
   customer         User             @relation("CustomerBookings", fields: [id_user], references: [id_user])
   booking_packages BookingPackage[]
-  payments         Payment[]
+  payments         BookingPayment[]
+  payment_terms    PaymentTerm[]
   review           Review?
   commissions      Commission[]
-  payouts          Payout[]
 
   @@index([id_user])
   @@schema("sigyn")
@@ -240,8 +237,8 @@ model BookingPackage {
   @@schema("sigyn")
 }
 
-model Payment {
-  id_payment        Int       @id @default(autoincrement())
+model BookingPayment {
+  id_booking_payment Int       @id @default(autoincrement())
   id_booking        Int
   amount            Float
   payment_type      String
@@ -254,8 +251,33 @@ model Payment {
   user_created      String?
   user_modified     String?
 
+  id_term       Int?
   booking Booking @relation(fields: [id_booking], references: [id_booking])
+  term    PaymentTerm? @relation(fields: [id_term], references: [id_term])
 
+  @@schema("sigyn")
+}
+
+model PaymentTerm {
+  id_term        Int      @id @default(autoincrement())
+  id_booking     Int
+  term_order     Int
+  term_name      String
+  amount         Float
+  due_date       DateTime?
+  status         String   @default("unpaid")
+  paid_amount    Float    @default(0)
+  notes          String?
+  date_created   DateTime @default(now())
+  date_modified  DateTime @updatedAt
+  user_created   String?
+  user_modified  String?
+
+  booking  Booking  @relation(fields: [id_booking], references: [id_booking], onDelete: Cascade)
+  payments BookingPayment[]
+
+  @@unique([id_booking, term_order])
+  @@index([id_booking])
   @@schema("sigyn")
 }
 
@@ -295,26 +317,6 @@ model Commission {
 
   booking Booking @relation(fields: [id_booking], references: [id_booking])
   vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
-
-  @@unique([id_booking, id_vendor])
-  @@index([id_vendor])
-  @@schema("sigyn")
-}
-
-model Payout {
-  id_payout     Int       @id @default(autoincrement())
-  id_vendor     Int
-  id_booking    Int
-  amount        Float
-  status        String    @default("pending")
-  paid_at       DateTime?
-  date_created  DateTime  @default(now())
-  date_modified DateTime  @updatedAt
-  user_created  String?
-  user_modified String?
-
-  vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
-  booking Booking @relation(fields: [id_booking], references: [id_booking])
 
   @@unique([id_booking, id_vendor])
   @@index([id_vendor])
@@ -363,28 +365,37 @@ model PaymentRequest {
   id_request          Int       @id @default(autoincrement())
   request_number      String    @unique
   title               String
+  description         String?
   request_date        DateTime  @default(now())
-  requested_by        Int
+  requested_by        String
   notes               String?
   payment_method      String?
   bank_account_number String?
   payment_to          String?
   status              String    @default("draft")
-  reviewed_by         Int?
+  reviewed_by         String?
   reviewed_at         DateTime?
   approval_notes      String?
+  receipt_number      String?   @unique
+  reference_number    String?
+  paid_at             DateTime?
+  total_amount        Float     @default(0)
+  outstanding         Float     @default(0)
+  released_by         String?
+  released_at         DateTime?
   date_created        DateTime  @default(now())
   date_modified       DateTime  @updatedAt
   user_created        String?
   user_modified       String?
 
-  requester    User                  @relation("Requester", fields: [requested_by], references: [id_user])
-  reviewer     User?                 @relation("Reviewer", fields: [reviewed_by], references: [id_user])
   items        PaymentRequestItem[]
   transactions PaymentTransaction[]
+  terms        PaymentRequestTerm[]
+  payments     RfpPayment[]
 
   @@index([status])
   @@index([requested_by])
+  @@index([receipt_number])
   @@schema("sigyn")
 }
 
@@ -418,6 +429,50 @@ model PaymentTransaction {
   request PaymentRequest @relation(fields: [id_request], references: [id_request], onDelete: Cascade)
 
   @@index([id_request])
+  @@schema("sigyn")
+}
+
+model PaymentRequestTerm {
+  id_rfp_term      Int      @id @default(autoincrement())
+  id_request   Int
+  term_order   Int
+  term_name    String
+  amount       Float
+  paid_amount  Float    @default(0)
+  status       String   @default("unpaid")
+  due_date     DateTime?
+  date_created DateTime @default(now())
+  date_modified DateTime @updatedAt
+
+  request  PaymentRequest       @relation(fields: [id_request], references: [id_request], onDelete: Cascade)
+  payments RfpPayment[]
+
+  @@unique([id_request, term_order])
+  @@index([id_request])
+  @@schema("sigyn")
+}
+
+model RfpPayment {
+  id_rfp_payment        Int       @id @default(autoincrement())
+  id_request          Int
+  id_rfp_term             Int
+  amount              Float
+  source_bank         String?
+  source_account_number String?
+  source_account_name String?
+  payment_date        DateTime  @default(now())
+  proof_url           String?
+  notes               String?
+  status              String    @default("pending")
+  created_by          String?
+  date_created        DateTime  @default(now())
+  date_modified       DateTime  @updatedAt
+
+  request PaymentRequest       @relation(fields: [id_request], references: [id_request], onDelete: Cascade)
+  term    PaymentRequestTerm   @relation(fields: [id_rfp_term], references: [id_rfp_term], onDelete: Cascade)
+
+  @@index([id_request])
+  @@index([id_rfp_term])
   @@schema("sigyn")
 }
 

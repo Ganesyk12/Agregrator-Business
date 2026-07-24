@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue'
 
 export interface PaymentForm {
   id_booking: number
+  id_term: number | null
   amount: number
   payment_type: string
   status: string
@@ -25,9 +26,11 @@ const emit = defineEmits<{
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const bookings = ref<any[]>([])
+const terms = ref<any[]>([])
 
 const form = ref<PaymentForm>({
   id_booking: 0,
+  id_term: null,
   amount: 0,
   payment_type: 'dp',
   status: 'pending',
@@ -48,12 +51,37 @@ async function fetchBookings() {
   }
 }
 
+async function fetchTerms(bookingId: number) {
+  if (!bookingId) { terms.value = []; return }
+  try {
+    const res = await fetch(`${apiUrl}/api/payment-terms/bookings/${bookingId}`)
+    if (res.ok) {
+      const json = await res.json()
+      terms.value = json.data || []
+    } else {
+      terms.value = []
+    }
+  } catch { terms.value = [] }
+}
+
+watch(() => form.value.id_booking, async (val) => {
+  if (val && props.mode !== 'edit') {
+    await fetchTerms(val)
+    const unpaid = terms.value.filter((t: any) => t.status !== 'paid')
+    if (unpaid.length > 0) {
+      form.value.id_term = unpaid[0].id_term
+      form.value.amount = unpaid[0].amount
+    }
+  }
+})
+
 watch(() => props.visible, async (val) => {
   if (val) {
     await fetchBookings()
     if (props.mode === 'add') {
       form.value = {
         id_booking: bookings.value[0]?.id_booking ?? 0,
+        id_term: null,
         amount: 0,
         payment_type: 'dp',
         status: 'pending',
@@ -61,6 +89,7 @@ watch(() => props.visible, async (val) => {
         paid_at: '',
         released_at: '',
       }
+      if (form.value.id_booking) await fetchTerms(form.value.id_booking)
     } else if (props.payment) {
       let paidAt = ''
       let releasedAt = ''
@@ -75,6 +104,7 @@ watch(() => props.visible, async (val) => {
 
       form.value = {
         id_booking: props.payment.id_booking,
+        id_term: props.payment.id_term || null,
         amount: props.payment.amount,
         payment_type: props.payment.payment_type,
         status: props.payment.status,
@@ -82,6 +112,7 @@ watch(() => props.visible, async (val) => {
         paid_at: paidAt,
         released_at: releasedAt,
       }
+      if (form.value.id_booking) await fetchTerms(form.value.id_booking)
     }
   }
 })
@@ -94,9 +125,20 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value)
 }
 
+function onTermChange() {
+  const selected = terms.value.find((t: any) => t.id_term === form.value.id_term)
+  if (selected) {
+    form.value.amount = selected.amount
+    const remaining = selected.amount - (selected.paid_amount || 0)
+    if (remaining > 0 && remaining < selected.amount) {
+      form.value.amount = remaining
+    }
+  }
+}
+
 function save() {
   if (!form.value.id_booking || !form.value.amount || !form.value.payment_type) return
-  emit('save', { ...form.value })
+  emit('save', { ...form.value, id_term: form.value.id_term || null })
 }
 </script>
 
@@ -187,6 +229,20 @@ function save() {
                       Package: {{ selectedBooking.booking_packages?.map((bp: any) => bp.package.name).join(', ') || '-' }} |
                       Total: {{ formatCurrency(selectedBooking.total_price) }} |
                       DP: {{ formatCurrency(selectedBooking.dp_amount) }}
+                    </small>
+                  </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold;">Payment Term / Milestone</label>
+                    <select v-model="form.id_term" class="form-control" @change="onTermChange">
+                      <option :value="null">— No specific term —</option>
+                      <option v-for="t in terms" :key="t.id_term" :value="t.id_term" :disabled="t.status === 'paid'">
+                        {{ t.term_name }} - {{ formatCurrency(t.amount) }}
+                        <template v-if="t.status === 'paid'">(Paid)</template>
+                        <template v-else-if="t.status === 'partial'">(Partial: {{ formatCurrency(t.paid_amount) }})</template>
+                      </option>
+                    </select>
+                    <small v-if="form.id_term" class="form-text text-muted">
+                      Selected: {{ terms.find((t:any) => t.id_term === form.id_term)?.term_name || '-' }}
                     </small>
                   </div>
                   <div class="form-group" style="text-align: left;">

@@ -1,42 +1,44 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import sigynLogo from '@/assets/kaira/images/logosigyn.png'
 
 const route = useRoute()
 const router = useRouter()
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
-const payment = ref<any>(null)
+const receipt = ref<any>(null)
 const companyInfo = ref<any>(null)
 const loading = ref(true)
 const showPrintPreview = ref(false)
 
-async function fetchPayment() {
+async function fetchData() {
   try {
-    const id = route.params.paymentId
-    const res = await fetch(`${apiUrl}/api/payments/${id}`)
-    if (!res.ok) throw new Error('Payment not found')
-    const json = await res.json()
-    payment.value = json.data
+    const id = route.params.id
+    const [receiptRes, companyRes] = await Promise.all([
+      fetch(`${apiUrl}/api/payment-requests/${id}/receipt`),
+      fetch(`${apiUrl}/api/company-info`),
+    ])
+    if (!receiptRes.ok) throw new Error('Receipt not found')
+    const receiptJson = await receiptRes.json()
+    receipt.value = receiptJson.data
+    if (companyRes.ok) {
+      const companyJson = await companyRes.json()
+      companyInfo.value = companyJson.data
+    }
   } catch (err) {
     console.error(err)
+    receipt.value = null
   } finally {
     loading.value = false
   }
 }
 
-async function fetchCompanyInfo() {
-  try {
-    const res = await fetch(`${apiUrl}/api/company-info`)
-    const json = await res.json()
-    companyInfo.value = json.data
-  } catch { /* ignore */ }
-}
+onMounted(fetchData)
 
-onMounted(() => {
-  fetchPayment()
-  fetchCompanyInfo()
-})
+function totalAmount(items: any[]) {
+  return items?.reduce((s: number, i: any) => s + Number(i.amount), 0) || 0
+}
 
 function formatCurrency(v: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
@@ -46,34 +48,8 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-function invoiceNumber(p: any) {
-  const d = p.paid_at || p.date_created
-  const year = new Date(d).getFullYear()
-  return `INV-${year}-${String(p.id_payment).padStart(4, '0')}`
-}
-
-interface ServiceItem {
-  name: string
-  price: number
-  description: string | null
-  duration: string | null
-  vendorName: string
-}
-
-const services = computed<ServiceItem[]>(() => {
-  const p = payment.value
-  if (!p) return []
-  return p.booking?.booking_packages?.map((bp: any) => ({
-    name: bp.package.name,
-    price: bp.package.price,
-    description: bp.package.description,
-    duration: bp.package.duration,
-    vendorName: bp.package.vendor?.business_name || '-',
-  })) || []
-})
-
 function goBack() {
-  router.push('/payments')
+  router.push('/receipts')
 }
 
 function openPrintPreview() {
@@ -84,7 +60,7 @@ function closePrintPreview() {
   showPrintPreview.value = false
 }
 
-function printInvoice() {
+function printReceipt() {
   window.print()
 }
 </script>
@@ -92,14 +68,14 @@ function printInvoice() {
 <template>
   <div class="row">
     <div class="col-md-12" v-if="loading">
-      <div class="x_panel"><div class="x_content"><p style="text-align:center;padding:40px;">Loading invoice...</p></div></div>
+      <div class="x_panel"><div class="x_content"><p style="text-align:center;padding:40px;">Loading receipt...</p></div></div>
     </div>
 
-    <div class="col-md-12" v-else-if="!payment">
+    <div class="col-md-12" v-else-if="!receipt">
       <div class="x_panel">
         <div class="x_content">
-          <p style="text-align:center;padding:40px;">Invoice not found.</p>
-          <div style="text-align:center;"><button class="btn btn-primary" @click="goBack">Back to Payments</button></div>
+          <p style="text-align:center;padding:40px;">Receipt not found.</p>
+          <div style="text-align:center;"><button class="btn btn-primary" @click="goBack">Back to Receipts</button></div>
         </div>
       </div>
     </div>
@@ -107,52 +83,46 @@ function printInvoice() {
     <div class="col-md-12" v-else>
       <div class="x_panel">
         <div class="x_title">
-          <h2>Invoice <small>Kwitansi Pembayaran</small></h2>
+          <h2>Receipt <small>Kwitansi Pembayaran</small></h2>
           <div class="clearfix"></div>
         </div>
         <div class="x_content">
-          <!-- Invoice Content -->
+          <!-- Receipt Content -->
           <section class="content invoice">
-            <!-- title row -->
             <div class="row">
               <div class="col-xs-12 invoice-header">
                 <h1>
-                  <i class="fa fa-file-text-o"></i> {{ invoiceNumber(payment) }}
+                  <i class="fa fa-file-text-o"></i> {{ receipt.receipt_number }}
                 </h1>
-                <p class="invoice-date">{{ formatDate(payment.paid_at || payment.date_created) }}</p>
+                <p class="invoice-date">{{ receipt.released_at ? formatDate(receipt.released_at) : '-' }}</p>
               </div>
             </div>
 
-            <!-- info row -->
             <div class="row invoice-info">
               <div class="col-sm-4 invoice-col">
-                <strong>{{ companyInfo?.company_name || 'Agregrator Business' }}</strong>
+                <img :src="sigynLogo" alt="SIGYN" style="height:50px;width:auto;margin-bottom:8px;">
                 <address>
                   {{ companyInfo?.address || 'Platform Vendor Management' }}<br>
                   <template v-if="companyInfo?.email">Email: {{ companyInfo.email }}<br></template>
                   <template v-if="companyInfo?.phone">Phone: {{ companyInfo.phone }}<br></template>
-                  <template v-if="!companyInfo?.email && !companyInfo?.phone">Platform Vendor Management</template>
+                  <template v-if="!companyInfo?.email && !companyInfo?.phone"></template>
                 </address>
               </div>
               <div class="col-sm-4 invoice-col">
-                <strong>Customer</strong>
+                <strong>Penerima</strong>
                 <address>
-                  <strong>{{ payment.booking?.customer?.full_name || '-' }}</strong><br>
-                  Email: {{ payment.booking?.customer?.email || '-' }}<br>
-                  <template v-if="payment.booking?.customer?.phone">Phone: {{ payment.booking?.customer?.phone }}</template>
+                  <strong>{{ receipt.payment_to || receipt.requested_by || '-' }}</strong><br>
                 </address>
               </div>
               <div class="col-sm-4 invoice-col">
-                <b>Invoice Number: {{ invoiceNumber(payment) }}</b><br>
-                <b>Payment Type:</b> {{ payment.payment_type?.toUpperCase() || '-' }}<br>
-                <b>Status:</b> <span :class="'label ' + (payment.status==='paid'||payment.status==='released'?'label-success':'label-warning')" style="text-transform:uppercase;">{{ payment.status }}</span><br>
-                <b>Booking ID:</b> #{{ payment.id_booking }}<br>
-                <b>Event:</b> {{ payment.booking?.event_date ? formatDate(payment.booking.event_date) : '-' }}<br>
-                <b v-if="payment.payment_term">Payment Term:</b> <span v-if="payment.payment_term">{{ payment.payment_term.term_name }}</span>
+                <b>Receipt Number: {{ receipt.receipt_number }}</b><br>
+                <b>RFP Number:</b> {{ receipt.request_number }}<br>
+                <b>Status:</b> <span class="label label-primary" style="text-transform:uppercase;">RELEASED</span><br>
+                <b>Payment To:</b> {{ receipt.payment_to || '-' }}<br>
+                <b>Payment Method:</b> {{ receipt.payment_method || '-' }}
               </div>
             </div>
 
-            <!-- Table row -->
             <div class="row">
               <div class="col-xs-12">
                 <div class="table-responsive">
@@ -160,21 +130,19 @@ function printInvoice() {
                   <thead>
                     <tr>
                       <th style="width:5%">No</th>
-                      <th style="width:18%">Service</th>
-                      <th style="width:18%">Vendor</th>
-                      <th style="width:30%">Description</th>
-                      <th style="width:12%">Duration</th>
-                      <th style="width:17%">Price</th>
+                      <th style="width:45%">Description</th>
+                      <th style="width:10%">Qty</th>
+                      <th style="width:20%">Unit Price</th>
+                      <th style="width:20%">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(svc, i) in services" :key="i">
-                      <td>{{ i + 1 }}</td>
-                      <td><strong>{{ svc.name }}</strong></td>
-                      <td>{{ svc.vendorName }}</td>
-                      <td>{{ svc.description || '-' }}</td>
-                      <td>{{ svc.duration || '-' }}</td>
-                      <td>{{ formatCurrency(svc.price) }}</td>
+                    <tr v-for="(item, idx) in receipt.items" :key="item.id_item || idx">
+                      <td>{{ idx + 1 }}</td>
+                      <td><strong>{{ item.description }}</strong></td>
+                      <td>{{ item.quantity || 1 }}</td>
+                      <td>{{ formatCurrency(item.unit_price || item.amount) }}</td>
+                      <td>{{ formatCurrency(item.amount) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -182,26 +150,20 @@ function printInvoice() {
               </div>
             </div>
 
-            <!-- Event info summary -->
-            <p v-if="payment.booking?.event_location" style="margin: 0 0 4px;">
-              <strong>Location:</strong> {{ payment.booking.event_location }}
-            </p>
-            <p v-if="payment.booking?.notes" style="margin: 0 0 4px;">
-              <strong>Catatan Booking:</strong> {{ payment.booking.notes }}
+            <p v-if="receipt.notes" style="margin: 0 0 4px;">
+              <strong>Notes:</strong> {{ receipt.notes }}
             </p>
 
-            <!-- Payment summary -->
             <div class="row">
               <div class="col-sm-6 col-xs-12">
-                <p class="lead">Info Pembayaran</p>
+                <p class="lead">Info Rekening</p>
                 <p class="text-muted well well-sm no-shadow" style="margin-top:10px;">
-                  <template v-if="companyInfo?.bank_name">
-                    <strong>Transfer Bank:</strong><br>
-                    {{ companyInfo.bank_name }} — {{ companyInfo.bank_account }}<br>
-                    a.n. {{ companyInfo.bank_holder }}<br><br>
-                  </template>
-                  Invoice ini merupakan bukti pembayaran <strong>{{ payment.payment_type === 'dp' ? 'Uang Muka (DP)' : payment.payment_type === 'full' ? 'Pelunasan' : 'Cicilan' }}</strong> untuk layanan yang dipesan.<br><br>
-                  Untuk informasi lebih lanjut mengenai layanan, silakan hubungi tim Customer Service kami melalui nomor telepon atau email yang tercantum di atas.
+                  <strong>Metode Pembayaran:</strong> {{ receipt.payment_method || '-' }}<br>
+                  <strong>No. Rekening:</strong> {{ receipt.bank_account_number || '-' }}<br>
+                  <strong>a.n.</strong> {{ receipt.payment_to || '-' }}
+                </p>
+                <p style="margin-top:10px; font-size:12px; color:#73879C;">
+                  Kwitansi ini merupakan bukti pembayaran resmi yang telah direlease untuk <strong>{{ receipt.title }}</strong>.
                 </p>
               </div>
               <div class="col-sm-6 col-xs-12">
@@ -210,24 +172,20 @@ function printInvoice() {
                   <table class="table">
                     <tbody>
                       <tr>
-                        <th style="width:50%">Total Harga Paket:</th>
-                        <td>{{ formatCurrency(payment.booking?.total_price || 0) }}</td>
-                      </tr>
-                      <tr v-if="payment.payment_type === 'dp'">
-                        <th>DP Dibayar:</th>
-                        <td>{{ formatCurrency(payment.amount) }}</td>
-                      </tr>
-                      <tr v-if="payment.payment_type === 'dp'">
-                        <th>Sisa Pembayaran:</th>
-                        <td>{{ formatCurrency((payment.booking?.total_price || 0) - payment.amount) }}</td>
-                      </tr>
-                      <tr v-else>
-                        <th>Jumlah Dibayar:</th>
-                        <td>{{ formatCurrency(payment.amount) }}</td>
+                        <th style="width:50%">Total Amount:</th>
+                        <td>{{ formatCurrency(totalAmount(receipt.items)) }}</td>
                       </tr>
                       <tr>
-                        <th>Status Pembayaran:</th>
-                        <td><span :class="'label ' + (payment.status==='paid'||payment.status==='released'?'label-success':'label-warning')" style="text-transform:uppercase;">{{ payment.status === 'paid' || payment.status === 'released' ? 'DIBAYARKAN' : payment.status }}</span></td>
+                        <th>Receipt Status:</th>
+                        <td><span class="label label-primary" style="text-transform:uppercase;">RELEASED</span></td>
+                      </tr>
+                      <tr>
+                        <th>Released By:</th>
+                        <td>{{ receipt.released_by || '-' }}</td>
+                      </tr>
+                      <tr>
+                        <th>Released At:</th>
+                        <td>{{ receipt.released_at ? formatDate(receipt.released_at) : '-' }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -236,8 +194,8 @@ function printInvoice() {
             </div>
           </section>
         </div>
-        <div class="x_footer">
-          <button class="btn btn-default" @click="goBack"><i class="fa fa-arrow-left"></i> Back to Invoices</button>
+        <div class="x_footer no-print">
+          <button class="btn btn-default" @click="goBack"><i class="fa fa-arrow-left"></i> Back to Receipts</button>
           <button class="btn btn-primary pull-right" @click="openPrintPreview"><i class="fa fa-print"></i> Print Preview</button>
         </div>
       </div>
@@ -248,75 +206,68 @@ function printInvoice() {
   <div v-if="showPrintPreview" class="print-preview-overlay" @click.self="closePrintPreview">
     <div class="print-preview-container">
       <div class="print-preview-toolbar no-print">
-        <button class="btn btn-success" @click="printInvoice"><i class="fa fa-print"></i> Print</button>
+        <button class="btn btn-success" @click="printReceipt"><i class="fa fa-print"></i> Print</button>
         <button class="btn btn-default" @click="closePrintPreview"><i class="fa fa-times"></i> Close</button>
       </div>
       <div class="print-preview-page" id="print-area">
         <!-- Company letterhead -->
         <div class="print-header">
           <div class="print-header-left">
-            <h2>Agregrator Business</h2>
-            <p>Platform Vendor Management</p>
+            <img :src="sigynLogo" alt="SIGYN" style="height:55px;width:auto;margin-bottom:4px;">
+            <p>Official Receipt - Kwitansi Resmi</p>
           </div>
           <div class="print-header-right">
-            <h1>{{ invoiceNumber(payment) }}</h1>
-            <p>Date: {{ formatDate(payment.paid_at || payment.date_created) }}</p>
+            <h1>{{ receipt.receipt_number }}</h1>
+            <p>Date: {{ receipt.released_at ? formatDate(receipt.released_at) : '-' }}</p>
           </div>
         </div>
 
         <hr class="print-divider">
 
-        <!-- Bill to / Invoice info -->
+        <!-- Info rows -->
         <div class="print-info-row">
           <div class="print-info-block">
-            <strong>Bill To:</strong>
-            <p>{{ payment.booking?.customer?.full_name || '-' }}<br>
-            {{ payment.booking?.customer?.email || '-' }}<br>
-            <span v-if="payment.booking?.customer?.phone">{{ payment.booking?.customer?.phone }}</span></p>
-          </div>
-          <div class="print-info-block">
-            <strong>From:</strong>
+            <strong>Telah Terima Dari:</strong>
             <p>{{ companyInfo?.company_name || 'Agregrator Business' }}<br>
             {{ companyInfo?.email || '' }}<br>
             <span v-if="companyInfo?.phone">{{ companyInfo.phone }}</span></p>
           </div>
+          <div class="print-info-block">
+            <strong>Penerima:</strong>
+            <p>{{ receipt.payment_to || receipt.requested_by || '-' }}</p>
+          </div>
           <div class="print-info-block print-info-right">
-            <p><strong>Payment Type:</strong> {{ payment.payment_type?.toUpperCase() || '-' }}</p>
-            <p><strong>Status:</strong> {{ payment.status === 'paid' || payment.status === 'released' ? 'DIBAYARKAN' : payment.status?.toUpperCase() }}</p>
-            <p><strong>Event:</strong> {{ payment.booking?.event_date ? formatDate(payment.booking.event_date) : '-' }}</p>
+            <p><strong>RFP Number:</strong> {{ receipt.request_number }}</p>
+            <p><strong>Status:</strong> RELEASED</p>
+            <p><strong>Payment To:</strong> {{ receipt.payment_to || '-' }}</p>
+            <p v-if="receipt.payment_method"><strong>Method:</strong> {{ receipt.payment_method }}</p>
           </div>
         </div>
 
-        <!-- Services table -->
+        <!-- Items table -->
         <table class="print-table">
           <thead>
             <tr>
               <th style="width:5%">No</th>
-              <th style="width:20%">Service</th>
-              <th style="width:25%">Description</th>
-              <th style="width:12%">Duration</th>
-              <th style="width:18%">Vendor</th>
-              <th style="width:20%">Price</th>
+              <th style="width:45%">Deskripsi</th>
+              <th style="width:10%">Qty</th>
+              <th style="width:20%">Harga Satuan</th>
+              <th style="width:20%">Jumlah</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(svc, i) in services" :key="i">
-              <td>{{ i + 1 }}</td>
-              <td><strong>{{ svc.name }}</strong></td>
-              <td>{{ svc.description || '-' }}</td>
-              <td>{{ svc.duration || '-' }}</td>
-              <td>{{ svc.vendorName }}</td>
-              <td style="text-align:right;">{{ formatCurrency(svc.price) }}</td>
+            <tr v-for="(item, idx) in receipt.items" :key="item.id_item || idx">
+              <td>{{ idx + 1 }}</td>
+              <td><strong>{{ item.description }}</strong></td>
+              <td>{{ item.quantity || 1 }}</td>
+              <td style="text-align:right;">{{ formatCurrency(item.unit_price || item.amount) }}</td>
+              <td style="text-align:right;">{{ formatCurrency(item.amount) }}</td>
             </tr>
           </tbody>
         </table>
 
-        <p v-if="payment.booking?.event_location" class="print-location">
-          <strong>Location:</strong> {{ payment.booking.event_location }}
-        </p>
-
-        <p v-if="payment.booking?.notes" class="print-location">
-          <strong>Catatan Booking:</strong> {{ payment.booking.notes }}
+        <p v-if="receipt.notes" class="print-location">
+          <strong>Notes:</strong> {{ receipt.notes }}
         </p>
 
         <!-- Totals + Stamp -->
@@ -325,29 +276,29 @@ function printInvoice() {
             <div class="print-stamp">
               <svg viewBox="0 0 200 200" class="stamp-svg">
                 <defs>
-                  <path id="stamp-arc" d="M 29 100 A 71 71 0 1 1 171 100" fill="none" />
-                <path id="stamp-arc-bottom" d="M 29 100 A 71 71 0 0 0 171 100" fill="none" />
+                  <path id="stamp-arc-receipt" d="M 29 100 A 71 71 0 1 1 171 100" fill="none" />
+                  <path id="stamp-arc-bottom-receipt" d="M 29 100 A 71 71 0 0 0 171 100" fill="none" />
                 </defs>
-                <circle cx="100" cy="100" r="88" fill="rgba(255,255,255,0.9)" stroke="#c0392b" stroke-width="2.5" />
-                <circle cx="100" cy="100" r="81" fill="none" stroke="#c0392b" stroke-width="1" />
-                <circle cx="100" cy="100" r="58" fill="none" stroke="#c0392b" stroke-width="1" stroke-dasharray="3,3" />
-                <text font-size="14" font-weight="900" fill="#c0392b" letter-spacing="2" text-anchor="middle">
-                  <textPath href="#stamp-arc" startOffset="50%">
+                <circle cx="100" cy="100" r="88" fill="rgba(255,255,255,0.9)" stroke="#2c3e50" stroke-width="2.5" />
+                <circle cx="100" cy="100" r="81" fill="none" stroke="#2c3e50" stroke-width="1" />
+                <circle cx="100" cy="100" r="58" fill="none" stroke="#2c3e50" stroke-width="1" stroke-dasharray="3,3" />
+                <text font-size="14" font-weight="900" fill="#2c3e50" letter-spacing="2" text-anchor="middle">
+                  <textPath href="#stamp-arc-receipt" startOffset="50%">
                     {{ (companyInfo?.company_name || 'Agregrator Business') }}
                   </textPath>
                 </text>
-                <text x="100" y="90" font-size="22" font-weight="bold" fill="#c0392b" text-anchor="middle" letter-spacing="3">
-                  {{ payment.payment_type === 'dp' ? 'DP' : payment.payment_type === 'full' ? 'DIBAYARKAN' : 'CICILAN' }}
+                <text x="100" y="95" font-size="20" font-weight="bold" fill="#2c3e50" text-anchor="middle" letter-spacing="3">
+                  RELEASED
                 </text>
-                <text x="100" y="112" font-size="10" font-weight="bold" fill="#c0392b" text-anchor="middle" letter-spacing="1.5">
-                  {{ payment.status === 'released' ? 'RELEASED' : payment.status === 'paid' ? 'PAID' : '' }}
+                <text x="100" y="115" font-size="9" font-weight="bold" fill="#2c3e50" text-anchor="middle" letter-spacing="1">
+                  KWITANSI
                 </text>
-                <text font-size="14" font-weight="900" fill="#c0392b" letter-spacing="2" text-anchor="middle">
-                  <textPath href="#stamp-arc-bottom" startOffset="50%">
-                    {{ payment.paid_at ? formatDate(payment.paid_at) : payment.date_created ? formatDate(payment.date_created) : '' }}
+                <text font-size="14" font-weight="900" fill="#2c3e50" letter-spacing="2" text-anchor="middle">
+                  <textPath href="#stamp-arc-bottom-receipt" startOffset="50%">
+                    {{ receipt.released_at ? formatDate(receipt.released_at) : '' }}
                   </textPath>
                 </text>
-                <line x1="31" y1="100" x2="169" y2="100" stroke="#c0392b" stroke-width="1" />
+                <line x1="31" y1="100" x2="169" y2="100" stroke="#2c3e50" stroke-width="1" />
               </svg>
             </div>
           </div>
@@ -355,20 +306,16 @@ function printInvoice() {
             <table>
               <tbody>
                 <tr>
-                  <th>Total Harga Paket:</th>
-                  <td>{{ formatCurrency(payment.booking?.total_price || 0) }}</td>
+                  <th>Total Amount:</th>
+                  <td>{{ formatCurrency(totalAmount(receipt.items)) }}</td>
                 </tr>
-                <tr v-if="payment.payment_type === 'dp'">
-                  <th>DP Dibayar:</th>
-                  <td>{{ formatCurrency(payment.amount) }}</td>
+                <tr>
+                  <th>Released By:</th>
+                  <td>{{ receipt.released_by || '-' }}</td>
                 </tr>
-                <tr v-if="payment.payment_type === 'dp'">
-                  <th>Sisa Pembayaran:</th>
-                  <td>{{ formatCurrency((payment.booking?.total_price || 0) - payment.amount) }}</td>
-                </tr>
-                <tr v-else>
-                  <th>Jumlah Dibayar:</th>
-                  <td>{{ formatCurrency(payment.amount) }}</td>
+                <tr v-if="receipt.payment_method">
+                  <th>Payment Method:</th>
+                  <td>{{ receipt.payment_method }}</td>
                 </tr>
               </tbody>
             </table>
@@ -380,10 +327,14 @@ function printInvoice() {
         <div class="print-footer-text">
           <div class="print-footer-row">
             <div class="print-footer-left">
-              <p v-if="companyInfo?.bank_name">
-                <strong>Informasi Rekening Bank:</strong><br>
-                {{ companyInfo.bank_name }} — {{ companyInfo.bank_account }}<br>
-                a.n. {{ companyInfo.bank_holder }}
+              <p>
+                <strong>Rekening Tujuan:</strong><br>
+                <template v-if="receipt.bank_account_number || receipt.payment_to">
+                  Metode: {{ receipt.payment_method || '-' }}<br>
+                  No. Rekening: {{ receipt.bank_account_number || '-' }}<br>
+                  a.n. {{ receipt.payment_to || '-' }}
+                </template>
+                <template v-else>-</template>
               </p>
             </div>
             <div class="print-footer-right">
@@ -397,13 +348,30 @@ function printInvoice() {
           </div>
           <hr class="print-divider-light">
           <p>
-            Invoice ini merupakan bukti pembayaran <strong>{{ payment.payment_type === 'dp' ? 'Uang Muka (DP)' : payment.payment_type === 'full' ? 'Pelunasan' : 'Cicilan' }}</strong>
-            untuk layanan yang dipesan.
+            Kwitansi ini merupakan bukti pembayaran resmi untuk <strong>{{ receipt.title }}</strong>
+            (RFP Number {{ receipt.request_number }}) yang telah direlease.
           </p>
           <p style="font-size:11px;margin-top:6px;">
-            Untuk informasi lebih lanjut mengenai layanan, silakan hubungi tim Customer Service kami melalui nomor telepon atau email yang tercantum di atas.
+            Untuk informasi lebih lanjut, silakan hubungi tim Finance kami melalui nomor telepon atau email yang tercantum di atas.
           </p>
-          <p class="print-thanks">{{ companyInfo?.footer_text || 'Terima kasih telah menggunakan layanan kami.' }}</p>
+
+          <div style="margin-top:20px; display:flex; justify-content:space-between; padding:0 20px;">
+            <div style="text-align:center; width:180px;">
+              <div style="font-weight:bold; margin-bottom:60px; font-size:13px;">Pemberi,</div>
+              <div style="text-decoration:underline; font-weight:bold;">{{ companyInfo?.company_name || 'Agregrator Business' }}</div>
+              <div style="font-size:11px; margin-top:2px;">{{ companyInfo?.address || '' }}</div>
+            </div>
+            <div style="text-align:center; width:180px;">
+              <div style="font-weight:bold; margin-bottom:60px; font-size:13px;">Penerima,</div>
+              <div style="text-decoration:underline; font-weight:bold;">{{ receipt.payment_to || receipt.requested_by || '-' }}</div>
+            </div>
+            <div style="text-align:center; width:180px;">
+              <div style="font-weight:bold; margin-bottom:60px; font-size:13px;">Mengetahui,</div>
+              <div style="text-decoration:underline; font-weight:bold;">{{ receipt.reviewed_by || receipt.released_by || '-' }}</div>
+            </div>
+          </div>
+
+          <p class="print-thanks">{{ companyInfo?.footer_text || 'Terima kasih. Dokumen ini sah dan diproses secara elektronik.' }}</p>
         </div>
       </div>
     </div>
@@ -411,7 +379,7 @@ function printInvoice() {
 </template>
 
 <style scoped>
-/* ─── Invoice view styles ─── */
+/* ─── Receipt view styles ─── */
 .invoice-header h1 {
   font-size: 26px;
   margin: 0 0 2px;
@@ -669,7 +637,6 @@ function printInvoice() {
   .print-totals table { width: 100%; }
   .print-footer-row { flex-direction: column; gap: 12px; }
 }
-
 </style>
 
 <style>

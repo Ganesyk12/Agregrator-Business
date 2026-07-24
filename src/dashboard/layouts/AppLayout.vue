@@ -44,12 +44,12 @@ onMounted(() => {
 
 <style>
 .main_container--flex {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
 }
-.main_container--flex > .right_col {
-  flex: 1;
+
+.top_nav {
+  position: relative;
+  z-index: 10;
 }
 
 small,
@@ -63,5 +63,23 @@ footer small,
 .btn-xs,
 .btn-sm {
   font-size: inherit !important;
+}
+
+.x_content {
+  overflow: hidden;
+}
+
+.input-group {
+  max-width: 100%;
+}
+.input-group .form-control {
+  min-width: 0;
+}
+
+@media (max-width: 991px) {
+  .right_col {
+    margin-left: 0 !important;
+    padding: 10px 15px !important;
+  }
 }
 </style>

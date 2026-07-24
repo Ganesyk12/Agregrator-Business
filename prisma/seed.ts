@@ -39,10 +39,14 @@ async function main() {
       "sigyn"."VendorAvailability",
       "sigyn"."Booking",
       "sigyn"."BookingPackage",
-      "sigyn"."Payment",
+      "sigyn"."BookingPayment",
+      "sigyn"."PaymentRequest",
+      "sigyn"."PaymentRequestItem",
+      "sigyn"."PaymentTransaction",
+      "sigyn"."PaymentRequestTerm",
+      "sigyn"."RfpPayment",
       "sigyn"."Review",
       "sigyn"."Commission",
-      "sigyn"."Payout",
       "sigyn"."UserFavorite",
       "sigyn"."Cart",
       "sigyn"."CartItem",
@@ -307,7 +311,7 @@ async function main() {
   // ──────────────────────────────────────────────
   console.log('Seeding payment...')
   const dpAmount = totalPrice * 0.3
-  await prisma.payment.create({
+  await prisma.bookingPayment.create({
     data: {
       id_booking: booking.id_booking,
       amount: dpAmount,
@@ -318,6 +322,83 @@ async function main() {
     },
   })
   console.log(`Payment created for booking #${booking.id_booking} (DP: Rp${dpAmount.toLocaleString()})`)
+
+  // ──────────────────────────────────────────────
+  // PAYMENT TERMS (Milestone)
+  // ──────────────────────────────────────────────
+  console.log('Seeding payment terms...')
+  const remainingAmount = totalPrice - dpAmount
+  await prisma.paymentTerm.createMany({
+    data: [
+      {
+        id_booking: booking.id_booking,
+        term_order: 1,
+        term_name: 'DP (Down Payment)',
+        amount: dpAmount,
+        status: 'paid',
+        paid_amount: dpAmount,
+        notes: 'Pembayaran awal 30%',
+        user_created: 'SYSTEM',
+      },
+      {
+        id_booking: booking.id_booking,
+        term_order: 2,
+        term_name: 'Termin 1 (30%)',
+        amount: Math.round(totalPrice * 0.3),
+        due_date: new Date('2026-07-01'),
+        status: 'unpaid',
+        paid_amount: 0,
+        notes: 'Pembayaran termin pertama sebelum acara',
+        user_created: 'SYSTEM',
+      },
+      {
+        id_booking: booking.id_booking,
+        term_order: 3,
+        term_name: 'Pelunasan (40%)',
+        amount: remainingAmount - Math.round(totalPrice * 0.3),
+        due_date: new Date('2026-08-01'),
+        status: 'unpaid',
+        paid_amount: 0,
+        notes: 'Sisa pelunasan sebelum acara',
+        user_created: 'SYSTEM',
+      },
+    ],
+  })
+  console.log(`3 payment terms created for booking #${booking.id_booking}`)
+
+  // Link payment to first term
+  const firstTerm = await prisma.paymentTerm.findFirst({
+    where: { id_booking: booking.id_booking, term_order: 1 },
+  })
+  if (firstTerm) {
+    await prisma.bookingPayment.update({
+      where: { id_payment: 1 },
+      data: { id_term: firstTerm.id_term },
+    })
+  }
+
+  // Partial payment demo: pay Rp2.000.000 of Term 2 (status -> partial)
+  const term2 = await prisma.paymentTerm.findFirst({
+    where: { id_booking: booking.id_booking, term_order: 2 },
+  })
+  if (term2) {
+    await prisma.bookingPayment.create({
+      data: {
+        id_booking: booking.id_booking,
+        id_term: term2.id_term,
+        amount: 2000000,
+        payment_type: 'installment',
+        status: 'paid',
+        paid_at: new Date('2026-07-01'),
+        user_created: 'SYSTEM',
+      },
+    })
+    await prisma.paymentTerm.update({
+      where: { id_term: term2.id_term },
+      data: { status: 'partial', paid_amount: 2000000 },
+    })
+    console.log(`  Partial payment Rp2.000.000 created for term #${term2.id_term} (Termin 1 → partial)`)
+  }
 
   // ──────────────────────────────────────────────
   // COMMISSIONS
@@ -350,28 +431,132 @@ async function main() {
   console.log(`Commissions created for both vendors (${commissionPct}% each)`)
 
   // ──────────────────────────────────────────────
-  // PAYOUTS
+  // PAYMENT REQUESTS
   // ──────────────────────────────────────────────
-  console.log('Seeding payouts...')
-  await prisma.payout.create({
+  console.log('Seeding payment requests...')
+
+  // Request 1: Draft
+  const draftReq = await prisma.paymentRequest.create({
     data: {
-      id_booking: booking.id_booking,
-      id_vendor: 1,
-      amount: vendor1PackagesTotal - (vendor1PackagesTotal * (commissionPct / 100)),
-      status: 'pending',
-      user_created: 'SYSTEM',
+      request_number: 'PR-2026-0001',
+      title: 'Pembayaran Dokumentasi Tambahan',
+      request_date: new Date('2026-06-01'),
+      requested_by: 2,
+      notes: 'Dokumentasi tambahan untuk resepsi',
+      payment_method: 'Transfer Bank',
+      bank_account_number: '987-654-3210',
+      payment_to: 'Sari Wedding Photography',
+      status: 'draft',
+      user_created: 'vendor1@demo.com',
     },
   })
-  await prisma.payout.create({
+  await prisma.paymentRequestItem.createMany({
+    data: [
+      { id_request: draftReq.id_request, description: 'Pre-wedding foto tambahan (10 lembar)', quantity: 1, unit_price: 500000, amount: 500000, sort_order: 1 },
+      { id_request: draftReq.id_request, description: 'Cetak album ukuran 8x12', quantity: 2, unit_price: 350000, amount: 700000, sort_order: 2 },
+    ],
+  })
+  console.log(`  PR #${draftReq.request_number} (Draft) created`)
+
+  // Request 2: Pending (submitted, waiting approval)
+  const pendingReq = await prisma.paymentRequest.create({
     data: {
-      id_booking: booking.id_booking,
-      id_vendor: 2,
-      amount: vendor2PackagesTotal - (vendor2PackagesTotal * (commissionPct / 100)),
+      request_number: 'PR-2026-0002',
+      title: 'Pelunasan Dekorasi Pelaminan',
+      request_date: new Date('2026-06-10'),
+      requested_by: 3,
+      payment_method: 'Transfer Bank',
+      bank_account_number: '111-222-3333',
+      payment_to: 'Indah Catering',
       status: 'pending',
-      user_created: 'SYSTEM',
+      user_created: 'vendor2@demo.com',
     },
   })
-  console.log('Payouts created for both vendors')
+  await prisma.paymentRequestItem.createMany({
+    data: [
+      { id_request: pendingReq.id_request, description: 'Dekorasi pelaminan adat', quantity: 1, unit_price: 3000000, amount: 3000000, sort_order: 1 },
+      { id_request: pendingReq.id_request, description: 'Tambahan ornamen bunga', quantity: 5, unit_price: 150000, amount: 750000, sort_order: 2 },
+    ],
+  })
+  await prisma.paymentTransaction.create({
+    data: {
+      id_request: pendingReq.id_request,
+      transaction_type: 'submitted',
+      description: 'Payment request submitted by vendor',
+      created_by: 'vendor2@demo.com',
+    },
+  })
+  console.log(`  PR #${pendingReq.request_number} (Pending) created`)
+
+  // Request 3: Approved (ready for release)
+  const approvedReq = await prisma.paymentRequest.create({
+    data: {
+      request_number: 'PR-2026-0003',
+      title: 'Pembayaran Katering untuk Acara',
+      request_date: new Date('2026-06-15'),
+      requested_by: 3,
+      reviewed_by: 6,
+      reviewed_at: new Date('2026-06-16'),
+      approval_notes: 'Disetujui, segera diproses',
+      notes: 'Katering untuk 200 pax',
+      payment_method: 'Transfer Bank',
+      bank_account_number: '111-222-3333',
+      payment_to: 'Indah Catering',
+      status: 'approved',
+      user_created: 'vendor2@demo.com',
+      user_modified: 'finance@demo.com',
+    },
+  })
+  await prisma.paymentRequestItem.createMany({
+    data: [
+      { id_request: approvedReq.id_request, description: 'Paket katering pernikahan (200 pax)', quantity: 200, unit_price: 75000, amount: 15000000, sort_order: 1 },
+      { id_request: approvedReq.id_request, description: 'Minuman ringan & sirup', quantity: 200, unit_price: 15000, amount: 3000000, sort_order: 2 },
+    ],
+  })
+  await prisma.paymentTransaction.createMany({
+    data: [
+      { id_request: approvedReq.id_request, transaction_type: 'submitted', description: 'Payment request submitted', created_by: 'vendor2@demo.com' },
+      { id_request: approvedReq.id_request, transaction_type: 'approved', description: 'Approved by Finance', created_by: 'finance@demo.com' },
+    ],
+  })
+  console.log(`  PR #${approvedReq.request_number} (Approved) created`)
+
+  // Request 4: Released (with receipt)
+  const releasedReq = await prisma.paymentRequest.create({
+    data: {
+      request_number: 'PR-2026-0004',
+      title: 'Pembayaran Fotografi Pre-wedding',
+      request_date: new Date('2026-05-20'),
+      requested_by: 2,
+      reviewed_by: 6,
+      reviewed_at: new Date('2026-05-22'),
+      approval_notes: 'Setuju',
+      receipt_number: 'RCP-2026-0001',
+      released_by: 6,
+      released_at: new Date('2026-05-23'),
+      notes: 'Sesi pre-wedding outdoor',
+      payment_method: 'Transfer Bank',
+      bank_account_number: '987-654-3210',
+      payment_to: 'Sari Wedding Photography',
+      status: 'released',
+      user_created: 'vendor1@demo.com',
+      user_modified: 'finance@demo.com',
+    },
+  })
+  await prisma.paymentRequestItem.createMany({
+    data: [
+      { id_request: releasedReq.id_request, description: 'Paket pre-wedding outdoor', quantity: 1, unit_price: 2500000, amount: 2500000, sort_order: 1 },
+      { id_request: releasedReq.id_request, description: 'Cetak foto ukuran 12R (5 lembar)', quantity: 5, unit_price: 50000, amount: 250000, sort_order: 2 },
+    ],
+  })
+  await prisma.paymentTransaction.createMany({
+    data: [
+      { id_request: releasedReq.id_request, transaction_type: 'submitted', description: 'Payment request submitted', created_by: 'vendor1@demo.com' },
+      { id_request: releasedReq.id_request, transaction_type: 'approved', description: 'Approved by Finance', created_by: 'finance@demo.com' },
+      { id_request: releasedReq.id_request, transaction_type: 'released', description: 'Receipt released', created_by: 'finance@demo.com' },
+    ],
+  })
+  console.log(`  PR #${releasedReq.request_number} (Released) created`)
 
   // ──────────────────────────────────────────────
   // COMPANY INFO

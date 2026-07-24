@@ -13,6 +13,7 @@ interface Invoice {
   status: string
   paid_at: string | null
   date_created: string
+  payment_term?: { id_term: number; term_name: string; term_order: number }
   booking?: {
     total_price: number
     customer?: { full_name: string }
@@ -60,6 +61,7 @@ const filtered = computed(() => {
     invoiceNumber(p).toLowerCase().includes(q) ||
     (p.booking?.customer?.full_name || '').toLowerCase().includes(q) ||
     (p.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ') || '').toLowerCase().includes(q) ||
+    (p.payment_term?.term_name || '').toLowerCase().includes(q) ||
     p.status.toLowerCase().includes(q)
   )
 })
@@ -76,12 +78,13 @@ const filtered = computed(() => {
         <table class="table table-striped table-bordered">
           <thead>
             <tr>
-              <th>Invoice #</th>
+              <th>Invoice Number</th>
               <th>Date</th>
               <th>Customer</th>
               <th>Vendor</th>
               <th>Package</th>
               <th>Type</th>
+              <th>Term</th>
               <th>Amount</th>
               <th>Status</th>
               <th style="width:80px;">Action</th>
@@ -95,11 +98,12 @@ const filtered = computed(() => {
               <td>{{ p.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ') || '-' }}</td>
               <td>{{ p.booking?.booking_packages?.map(bp => bp.package.name).join(', ') || '-' }}</td>
               <td><span :class="'label '+(p.payment_type==='dp'?'label-primary':p.payment_type==='full'?'label-success':'label-info')" style="text-transform:uppercase;">{{ p.payment_type }}</span></td>
+              <td>{{ p.payment_term?.term_name || '-' }}</td>
               <td>{{ formatCurrency(p.amount) }}</td>
               <td><span :class="'label '+(p.status==='paid'||p.status==='released'?'label-success':'label-warning')" style="text-transform:uppercase;">{{ p.status }}</span></td>
               <td><button class="btn btn-success btn-sm" @click="router.push('/invoices/'+p.id_payment)"><i class="fa fa-file-text-o"></i> View</button></td>
             </tr>
-            <tr v-if="filtered.length===0"><td colspan="9" style="text-align:center;">No invoices found.</td></tr>
+            <tr v-if="filtered.length===0"><td colspan="10" style="text-align:center;">No invoices found.</td></tr>
           </tbody>
         </table>
       </div>

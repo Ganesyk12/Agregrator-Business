@@ -4,22 +4,27 @@ export interface PaymentRequest {
   title: string
   description: string | null
   request_date: Date
-  requested_by: number
+  requested_by: string
   notes: string | null
   payment_method: string | null
   bank_account_number: string | null
   payment_to: string | null
   status: string
-  reviewed_by: number | null
+  total_amount: number
+  outstanding: number
+  reviewed_by: string | null
   reviewed_at: Date | null
   approval_notes: string | null
+  receipt_number: string | null
+  reference_number: string | null
+  paid_at: Date | null
+  released_by: string | null
+  released_at: Date | null
   date_created: Date
   date_modified: Date
   user_created: string | null
   user_modified: string | null
 
-  requester?: { id_user: number; full_name: string; email: string }
-  reviewer?: { id_user: number; full_name: string; email: string }
   items?: PaymentRequestItem[]
   transactions?: PaymentTransaction[]
 }
@@ -43,12 +48,6 @@ export interface PaymentTransaction {
   transaction_type: string
   description: string | null
   payment_proof_url: string | null
-  payment_method: string | null
-  bank_name: string | null
-  bank_account_number: string | null
-  bank_account_name: string | null
-  reference_number: string | null
-  paid_at: Date | null
   created_by: string | null
   date_created: Date
 }

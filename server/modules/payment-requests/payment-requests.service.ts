@@ -2,8 +2,6 @@ import prisma from '../../db'
 import type { PaymentRequest, PaymentRequestItem, PaymentTransaction } from './payment-requests.types'
 
 const requestInclude = {
-  requester: { select: { id_user: true, full_name: true, email: true } },
-  reviewer: { select: { id_user: true, full_name: true, email: true } },
   items: { orderBy: { sort_order: 'asc' as const } },
   transactions: { orderBy: { date_created: 'asc' as const } },
 } as const
@@ -14,6 +12,14 @@ function generateRequestNumber(): string {
   const m = String(now.getMonth() + 1).padStart(2, '0')
   const rand = String(Math.floor(Math.random() * 9000) + 1000)
   return `RFP-${y}${m}-${rand}`
+}
+
+function generateReceiptNumber(): string {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const rand = String(Math.floor(Math.random() * 9000) + 1000)
+  return `KWT-${y}${m}-${rand}`
 }
 
 export async function findAll(): Promise<PaymentRequest[]> {
@@ -33,7 +39,7 @@ export async function findById(id: number): Promise<PaymentRequest | null> {
 
 export async function create(
   data: Pick<PaymentRequest, 'title' | 'requested_by'> &
-    Partial<Pick<PaymentRequest, 'description' | 'notes' | 'payment_method' | 'bank_account_number' | 'payment_to' | 'status' | 'user_created'>> & {
+    Partial<Pick<PaymentRequest, 'description' | 'notes' | 'payment_method' | 'bank_account_number' | 'payment_to' | 'reference_number' | 'status' | 'user_created' | 'total_amount' | 'outstanding'>> & {
       items: Array<Pick<PaymentRequestItem, 'description' | 'amount'> &
         Partial<Pick<PaymentRequestItem, 'quantity' | 'unit_price' | 'notes'>>
       >
@@ -51,7 +57,10 @@ export async function create(
       payment_method: data.payment_method ?? null,
       bank_account_number: data.bank_account_number ?? null,
       payment_to: data.payment_to ?? null,
+      reference_number: data.reference_number ?? null,
       status: data.status ?? 'draft',
+      total_amount: data.total_amount ?? 0,
+      outstanding: data.outstanding ?? 0,
       user_created: data.user_created ?? 'SYSTEM',
       user_modified: data.user_created ?? 'SYSTEM',
       items: {
@@ -73,7 +82,7 @@ export async function create(
 
 export async function update(
   id: number,
-  data: Partial<Pick<PaymentRequest, 'title' | 'description' | 'notes' | 'payment_method' | 'bank_account_number' | 'payment_to' | 'status' | 'reviewed_by' | 'reviewed_at' | 'approval_notes' | 'user_modified'>> & {
+  data: Partial<Pick<PaymentRequest, 'title' | 'description' | 'notes' | 'payment_method' | 'bank_account_number' | 'payment_to' | 'reference_number' | 'status' | 'reviewed_by' | 'reviewed_at' | 'approval_notes' | 'user_modified' | 'total_amount' | 'outstanding'>> & {
     items?: Array<{
       id_item?: number
       description: string
@@ -96,10 +105,13 @@ export async function update(
   if (data.payment_method !== undefined) payload.payment_method = data.payment_method
   if (data.bank_account_number !== undefined) payload.bank_account_number = data.bank_account_number
   if (data.payment_to !== undefined) payload.payment_to = data.payment_to
+  if (data.reference_number !== undefined) payload.reference_number = data.reference_number
   if (data.status !== undefined) payload.status = data.status
   if (data.reviewed_by !== undefined) payload.reviewed_by = data.reviewed_by
   if (data.reviewed_at !== undefined) payload.reviewed_at = data.reviewed_at
   if (data.approval_notes !== undefined) payload.approval_notes = data.approval_notes
+  if (data.total_amount !== undefined) payload.total_amount = data.total_amount
+  if (data.outstanding !== undefined) payload.outstanding = data.outstanding
   payload.user_modified = data.user_modified ?? 'SYSTEM'
 
   if (data.items) {
@@ -144,19 +156,13 @@ export async function remove(id: number): Promise<boolean> {
 export async function addTransaction(
   id_request: number,
   data: Pick<PaymentTransaction, 'transaction_type'> &
-    Partial<Pick<PaymentTransaction, 'description' | 'payment_proof_url' | 'payment_method' | 'bank_name' | 'bank_account_number' | 'bank_account_name' | 'reference_number' | 'paid_at' | 'created_by'>>
+    Partial<Pick<PaymentTransaction, 'description' | 'payment_proof_url' | 'created_by'>>
 ): Promise<PaymentTransaction> {
   const payload: any = {
     id_request,
     transaction_type: data.transaction_type,
     description: data.description ?? null,
     payment_proof_url: data.payment_proof_url ?? null,
-    payment_method: data.payment_method ?? null,
-    bank_name: data.bank_name ?? null,
-    bank_account_number: data.bank_account_number ?? null,
-    bank_account_name: data.bank_account_name ?? null,
-    reference_number: data.reference_number ?? null,
-    paid_at: data.paid_at ?? null,
     created_by: data.created_by ?? 'SYSTEM',
   }
 
@@ -170,4 +176,50 @@ export async function getTransactions(id_request: number): Promise<PaymentTransa
     where: { id_request },
     orderBy: { date_created: 'asc' },
   }) as unknown as PaymentTransaction[]
+}
+
+export async function releaseReceipt(
+  id: number,
+  released_by: string,
+  user_modified?: string
+): Promise<PaymentRequest | null> {
+  const existing = await prisma.paymentRequest.findFirst({
+    where: { id_request: id, status: 'approved' },
+  })
+  if (!existing) return null
+
+  const receiptNumber = generateReceiptNumber()
+
+  const request = await prisma.paymentRequest.update({
+    where: { id_request: id },
+    data: {
+      status: 'released',
+      receipt_number: receiptNumber,
+      released_by: released_by,
+      released_at: new Date(),
+      user_modified: user_modified ?? 'SYSTEM',
+    },
+    include: requestInclude,
+  }) as unknown as PaymentRequest
+
+  await prisma.paymentTransaction.create({
+    data: {
+      id_request: id,
+      transaction_type: 'released',
+      description: `Receipt ${receiptNumber} released`,
+      created_by: user_modified ?? 'SYSTEM',
+    },
+  })
+
+  return request
+}
+
+export async function getReceiptData(id: number): Promise<PaymentRequest | null> {
+  return prisma.paymentRequest.findFirst({
+    where: { id_request: id, status: 'released', receipt_number: { not: null } },
+    include: {
+      ...requestInclude,
+      items: { orderBy: { sort_order: 'asc' } },
+    },
+  }) as unknown as PaymentRequest | null
 }
