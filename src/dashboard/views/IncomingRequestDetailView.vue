@@ -197,12 +197,12 @@ onMounted(fetchRequest)
 <template>
   <div class="row">
     <div class="col-md-12" v-if="loading">
-      <div class="x_panel"><div class="x_content"><p style="text-align:center;padding:40px;">Loading...</p></div></div>
+      <div class="card"><div class="card-body"><p style="text-align:center;padding:40px;">Loading...</p></div></div>
     </div>
 
     <div class="col-md-12" v-else-if="!request">
-      <div class="x_panel">
-        <div class="x_content">
+      <div class="card">
+        <div class="card-body">
           <p style="text-align:center;padding:40px;">Request not found.</p>
           <div style="text-align:center;"><button class="btn btn-primary" @click="goBack">Back to List</button></div>
         </div>
@@ -210,12 +210,12 @@ onMounted(fetchRequest)
     </div>
 
     <div class="col-md-12" v-else>
-      <div class="x_panel">
-        <div class="x_title" style="display:flex; align-items:center; justify-content:space-between;">
+      <div class="card">
+        <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
           <h2 style="margin:0;">{{ request.request_number }} <small>{{ request.title }}</small></h2>
           <span :class="'label ' + statusClass(request.status)" style="font-size:14px; padding:6px 12px; color:#fff; margin-left:auto;">{{ statusLabel(request.status) }}</span>
         </div>
-        <div class="x_content">
+        <div class="card-body">
           <!-- Request Info -->
           <div class="row">
             <div class="col-md-6">

@@ -1,0 +1,361 @@
+/* Custom compatibility overrides for Gentellela styles under Flat Able (Bootstrap 5) */
+
+/* Gentellela x_panel styles mapped to look like Flat Able cards */
+.x_panel {
+  position: relative;
+  width: 100%;
+  margin-bottom: 30px;
+  padding: 20px 25px;
+  display: inline-block;
+  background: #fff;
+  border: none;
+  box-shadow: 0 1px 20px 0 rgba(69,90,100,0.08);
+  border-radius: 4px;
+}
+
+.x_title {
+  border-bottom: 2px solid #E6F0F3;
+  padding: 1px 0 6px;
+  margin-bottom: 17px;
+}
+
+.x_title h2 {
+  margin: 5px 0 6px;
+  float: left;
+  font-size: 18px;
+  font-weight: 500;
+  color: #3f4d67;
+}
+
+.x_title .clearfix {
+  clear: both;
+}
+
+.x_content {
+  padding: 0 5px 6px;
+  position: relative;
+  width: 100%;
+  float: left;
+  clear: both;
+  margin-top: 5px;
+}
+
+/* Bootstrap 3 Label compatibilities in Flat Able */
+.label {
+  display: inline-block;
+  padding: .25em .4em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .25rem;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.label-success {
+  color: #fff;
+  background-color: #2ed8b6;
+}
+
+.label-info {
+  color: #fff;
+  background-color: #00bcd4;
+}
+
+.label-warning {
+  color: #fff;
+  background-color: #ffb64d;
+}
+
+.label-danger {
+  color: #fff;
+  background-color: #ff5370;
+}
+
+.label-primary {
+  color: #fff;
+  background-color: #4099ff;
+}
+
+.label-default {
+  color: #3f4d67;
+  background-color: #f4f7f6;
+}
+
+/* Input group addon styles for search pre-pends in Bootstrap 5 */
+.input-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  width: 100%;
+}
+
+.input-group .form-control {
+  position: relative;
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+}
+
+.input-group-addon {
+  display: flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  background-color: #f4f7f6;
+  border: 1px solid #ced4da;
+  border-right: none;
+  border-radius: 2px 0 0 2px;
+  color: #495057;
+}
+
+.input-group .form-control:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* Modal header close button adjustment */
+.modal-header .close {
+  padding: 1rem;
+  margin: -1rem -1rem -1rem auto;
+  background-color: transparent;
+  border: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #000;
+  opacity: .5;
+  cursor: pointer;
+}
+
+.modal-header .close:hover {
+  opacity: .75;
+}
+
+/* Text alignment helpers for tables originally in App.vue styles */
+.table > thead > tr > th,
+.table > tbody > tr > td {
+  vertical-align: middle;
+}
+
+/* Hide built-in sub-menu arrow indicators from Flat Able */
+.pcoded-navbar .pcoded-inner-navbar li.pcoded-hasmenu .pcoded-submenu li a::before {
+  display: none !important;
+  content: "" !important;
+}
+
+/* Styling legacy Bootstrap 3 pagination elements as Bootstrap 5 page-item / page-link */
+.pagination {
+  display: flex;
+  padding-left: 0;
+  list-style: none;
+}
+
+.pagination > li {
+  margin: 0;
+}
+
+.pagination > li > a {
+  position: relative;
+  display: block;
+  padding: .375rem .75rem;
+  margin-left: -1px;
+  line-height: 1.25;
+  color: #4099ff;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pagination > li > a:hover {
+  z-index: 2;
+  color: #0056b3;
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.pagination > li > a:focus {
+  z-index: 3;
+  outline: 0;
+  box-shadow: 0 0 0 .2rem rgba(0, 123, 255, .25);
+}
+
+.pagination > li.active > a {
+  z-index: 3;
+  color: #fff;
+  background-color: #4099ff;
+  border-color: #4099ff;
+}
+
+.pagination > li.disabled > a {
+  color: #6c757d;
+  pointer-events: none;
+  cursor: not-allowed;
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+
+.pagination > li:first-child > a {
+  border-top-left-radius: .25rem;
+  border-bottom-left-radius: .25rem;
+}
+
+.pagination > li:last-child > a {
+  border-top-right-radius: .25rem;
+  border-bottom-right-radius: .25rem;
+}
+
+/* Force all dashboard buttons and standard btn-xs/btn-sm to render as small buttons */
+.pcoded-content .btn,
+.btn-xs,
+.btn-sm {
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  border-radius: 0.2rem !important;
+}
+
+/* Add margins between action buttons inside table cells */
+.table td .btn {
+  margin-right: 4px !important;
+  margin-bottom: 4px !important;
+}
+.table td .btn:last-child {
+  margin-right: 0 !important;
+}
+
+/* Gentellela x_footer styles mapped to look like Flat Able card-footers */
+.x_footer {
+  padding: .75rem 1.25rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  display: block;
+  width: 100%;
+  clear: both;
+}
+.x_footer::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Bootstrap 3 Well compatibility styling */
+.well {
+  min-height: 20px;
+  padding: 19px;
+  margin-bottom: 20px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
+}
+.well-sm {
+  padding: 9px;
+  border-radius: 3px;
+}
+
+/* Floating helper class maps from Bootstrap 3 pull-left/pull-right */
+.pull-right {
+  float: right !important;
+}
+.pull-left {
+  float: left !important;
+}
+
+/* Modal styling overrides to bridge Bootstrap 3 markup to Bootstrap 5 (Flat Able) */
+.modal-content {
+  border: none !important;
+  border-radius: 4px !important;
+  box-shadow: 0 5px 15px rgba(0,0,0,.15) !important;
+}
+
+.modal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-bottom: 1px solid #e9ecef !important;
+  padding: 1rem 1.25rem !important;
+}
+
+.modal-header .modal-title {
+  order: 1 !important;
+  margin: 0 !important;
+  font-size: 1.25rem !important;
+  font-weight: 500 !important;
+  color: #3f4d67 !important;
+}
+
+/* Reorder legacy button (which sits first in markup) to sit on the right */
+.modal-header .close {
+  order: 2 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  font-size: 1.5rem !important;
+  color: #000 !important;
+  opacity: 0.5 !important;
+  line-height: 1 !important;
+  cursor: pointer;
+}
+.modal-header .close:hover {
+  opacity: 0.8 !important;
+}
+
+.modal-body {
+  padding: 1.25rem !important;
+}
+
+.modal-body .form-group {
+  margin-bottom: 1.25rem !important;
+}
+
+.modal-body label {
+  font-weight: 600 !important;
+  color: #3f4d67 !important;
+  margin-bottom: 0.5rem !important;
+  display: inline-block !important;
+}
+
+.modal-body .form-control {
+  border: 1px solid #ced4da !important;
+  border-radius: 2px !important;
+  padding: 0.375rem 0.75rem !important;
+  font-size: 0.875rem !important;
+}
+
+.modal-body .form-control[readonly] {
+  background-color: #f4f7f6 !important;
+  opacity: 1 !important;
+}
+
+.modal-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  padding: 1rem 1.25rem !important;
+  border-top: 1px solid #e9ecef !important;
+}
+
+.modal-footer .btn {
+  margin-left: 0.5rem !important;
+}
+
+/* Helper utility classes for text formatting */
+.font-weight-bold {
+  font-weight: bold !important;
+}
+.text-c-blue {
+  color: #4099ff !important;
+}
+.text-c-green {
+  color: #2ed8b6 !important;
+}
+.text-c-yellow {
+  color: #ffb64d !important;
+}
+.text-c-red {
+  color: #ff5370 !important;
+}

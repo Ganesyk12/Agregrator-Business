@@ -311,12 +311,12 @@ onMounted(fetchRequest)
 <template>
   <div class="row">
     <div class="col-md-12" v-if="loading">
-      <div class="x_panel"><div class="x_content"><p style="text-align:center;padding:40px;">Loading...</p></div></div>
+      <div class="card"><div class="card-body"><p style="text-align:center;padding:40px;">Loading...</p></div></div>
     </div>
 
     <div class="col-md-12" v-else-if="!request">
-      <div class="x_panel">
-        <div class="x_content">
+      <div class="card">
+        <div class="card-body">
           <p style="text-align:center;padding:40px;">Request not found.</p>
           <div style="text-align:center;"><button class="btn btn-primary" @click="goBack">Back to List</button></div>
         </div>
@@ -324,68 +324,92 @@ onMounted(fetchRequest)
     </div>
 
     <div class="col-md-12" v-else>
-      <div class="x_panel">
-        <div class="x_title" style="display:flex; align-items:center; justify-content:space-between;">
+      <div class="card">
+        <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
           <h2 style="margin:0;">{{ request.request_number }} <small>{{ request.title }}</small></h2>
           <span :class="'label ' + statusClass(request.status)" style="font-size:14px; padding:6px 12px; color:#fff; margin-left:auto;">{{ statusLabel(request.status) }}</span>
         </div>
-        <div class="x_content">
+        <div class="card-body">
           <!-- Request Info -->
           <div class="row">
-            <div class="col-md-6">
-              <div class="row" style="margin-bottom:6px;">
-                <div class="col-xs-5" style="color:#73879C;">Request Number</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.request_number }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;">
-                <div class="col-xs-5" style="color:#73879C;">Title</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.title }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.description">
-                <div class="col-xs-5" style="color:#73879C;">Description</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.description }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.payment_method">
-                <div class="col-xs-5" style="color:#73879C;">Payment Method</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.payment_method }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.bank_account_number">
-                <div class="col-xs-5" style="color:#73879C;">Account Number</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.bank_account_number }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.payment_to">
-                <div class="col-xs-5" style="color:#73879C;">Payment To</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.payment_to }}</div>
+            <!-- Left Info Panel -->
+            <div class="col-md-6 m-b-20">
+              <div class="card h-100 mb-0 shadow-sm border">
+                <div class="card-header bg-light py-2 px-3">
+                  <h6 class="m-0 font-weight-bold text-muted"><i class="fa fa-info-circle text-c-blue"></i> Detail Pengajuan</h6>
+                </div>
+                <div class="card-body p-3">
+                  <dl class="row m-b-0" style="font-size: 13px;">
+                    <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Request Number</dt>
+                    <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.request_number }}</dd>
+
+                    <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Title</dt>
+                    <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.title }}</dd>
+
+                    <template v-if="request.description">
+                      <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Description</dt>
+                      <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.description }}</dd>
+                    </template>
+
+                    <template v-if="request.payment_method">
+                      <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Payment Method</dt>
+                      <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.payment_method }}</dd>
+                    </template>
+
+                    <template v-if="request.bank_account_number">
+                      <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Account Number</dt>
+                      <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.bank_account_number }}</dd>
+                    </template>
+
+                    <template v-if="request.payment_to">
+                      <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Payment To</dt>
+                      <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.payment_to }}</dd>
+                    </template>
+                  </dl>
+                </div>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="row" style="margin-bottom:6px;">
-                <div class="col-xs-5" style="color:#73879C;">Requested By</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.requested_by || '-' }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;">
-                <div class="col-xs-5" style="color:#73879C;">Request Date</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ new Date(request.request_date).toLocaleDateString('id-ID') }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.notes">
-                <div class="col-xs-5" style="color:#73879C;">Notes</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.notes }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.receipt_number">
-                <div class="col-xs-5" style="color:#73879C;">Receipt Number</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.receipt_number }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.reference_number">
-                <div class="col-xs-5" style="color:#73879C;">Reference Number</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.reference_number }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.released_at">
-                <div class="col-xs-5" style="color:#73879C;">Released At</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ new Date(request.released_at).toLocaleString('id-ID') }}</div>
-              </div>
-              <div class="row" style="margin-bottom:6px;" v-if="request.released_by">
-                <div class="col-xs-5" style="color:#73879C;">Released By</div>
-                <div class="col-xs-7" style="font-weight:600;">{{ request.released_by }}</div>
+
+            <!-- Right Info Panel -->
+            <div class="col-md-6 m-b-20">
+              <div class="card h-100 mb-0 shadow-sm border">
+                <div class="card-header bg-light py-2 px-3">
+                  <h6 class="m-0 font-weight-bold text-muted"><i class="fa fa-clock-o text-c-green"></i> Status & Pembuat</h6>
+                </div>
+                <div class="card-body p-3">
+                  <dl class="row m-b-0" style="font-size: 13px;">
+                    <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Requested By</dt>
+                    <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.requested_by || '-' }}</dd>
+
+                    <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Request Date</dt>
+                    <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ new Date(request.request_date).toLocaleDateString('id-ID') }}</dd>
+
+                    <template v-if="request.notes">
+                      <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Notes</dt>
+                      <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.notes }}</dd>
+                    </template>
+
+                    <template v-if="request.receipt_number">
+                      <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Receipt Number</dt>
+                      <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.receipt_number }}</dd>
+                    </template>
+
+                    <template v-if="request.reference_number">
+                      <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Reference Number</dt>
+                      <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.reference_number }}</dd>
+                    </template>
+
+                    <template v-if="request.released_at">
+                      <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Released At</dt>
+                      <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ new Date(request.released_at).toLocaleString('id-ID') }}</dd>
+                    </template>
+
+                    <template v-if="request.released_by">
+                      <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 6px;">Released By</dt>
+                      <dd class="col-sm-7 text-start" style="margin-bottom: 6px; font-weight: 600;">{{ request.released_by }}</dd>
+                    </template>
+                  </dl>
+                </div>
               </div>
             </div>
           </div>
@@ -393,47 +417,49 @@ onMounted(fetchRequest)
           <!-- Items -->
           <div class="ln_solid" style="margin:15px 0;"></div>
           <h5 style="font-weight:700; margin-bottom:10px; color:#73879C;"><i class="fa fa-list"></i> Items</h5>
-          <table class="table table-bordered table-striped" v-if="request.items?.length">
-            <thead>
-              <tr>
-                <th style="width:40px;">No.</th>
-                <th>Description</th>
-                <th style="width:60px;">Qty</th>
-                <th style="width:150px;">Unit Price</th>
-                <th style="width:150px;">Amount</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, i) in request.items" :key="item.id_item || i">
-                <td>{{ Number(i) + 1 }}</td>
-                <td>{{ item.description }}</td>
-                <td>{{ item.quantity || 1 }}</td>
-                <td>{{ formatCurrency(item.unit_price || item.amount) }}</td>
-                <td>{{ formatCurrency(item.amount) }}</td>
-                <td>{{ item.notes || '-' }}</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr style="font-weight:bold; background:#f9f9f9;">
-                <td colspan="4" style="text-align:right;">Total</td>
-                <td>{{ formatCurrency(request.items.reduce((sum: number, i: any) => sum + Number(i.amount), 0)) }}</td>
-                <td></td>
-              </tr>
-            </tfoot>
-          </table>
+          <div class="table-responsive" v-if="request.items?.length">
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th style="width:40px;">No.</th>
+                  <th>Description</th>
+                  <th style="width:60px;">Qty</th>
+                  <th style="width:150px;">Unit Price</th>
+                  <th style="width:150px;">Amount</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, i) in request.items" :key="item.id_item || i">
+                  <td>{{ Number(i) + 1 }}</td>
+                  <td>{{ item.description }}</td>
+                  <td>{{ item.quantity || 1 }}</td>
+                  <td>{{ formatCurrency(item.unit_price || item.amount) }}</td>
+                  <td>{{ formatCurrency(item.amount) }}</td>
+                  <td>{{ item.notes || '-' }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr style="font-weight:bold; background:#f9f9f9;">
+                  <td colspan="4" style="text-align:right;">Total</td>
+                  <td>{{ formatCurrency(request.items.reduce((sum: number, i: any) => sum + Number(i.amount), 0)) }}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
           <p v-else class="text-muted">No items.</p>
 
           <!-- Payment Progress -->
           <template v-if="request.status !== 'draft' && terms.length > 0">
             <div class="ln_solid" style="margin:15px 0;"></div>
 
-            <div class="x_panel">
-              <div class="x_title" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:8px 15px;" @click="showPaymentProgress = !showPaymentProgress">
+            <div class="card">
+              <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:8px 15px;" @click="showPaymentProgress = !showPaymentProgress">
                 <h5 style="margin:0; font-weight:700; color:#73879C;"><i class="fa fa-credit-card"></i> Payment Progress</h5>
                 <a style="cursor:pointer;"><i :class="showPaymentProgress ? 'fa fa-chevron-up' : 'fa fa-chevron-down'" style="color:#73879C;"></i></a>
               </div>
-              <div class="x_content" v-show="showPaymentProgress" style="padding:10px 15px;">
+              <div class="card-body" v-show="showPaymentProgress" style="padding:10px 15px;">
                 <div class="row" style="margin-bottom:12px;">
                   <div class="col-md-4">
                     <div style="padding:12px; background:#f9f9f9; border-radius:4px; text-align:center;">
@@ -471,55 +497,59 @@ onMounted(fetchRequest)
                 <!-- Terms -->
                 <div v-if="terms.length" style="margin-bottom:12px;">
                   <h6 style="font-weight:600; color:#73879C; margin-bottom:8px;">Terms</h6>
-                  <table class="table table-bordered table-striped" style="margin-bottom:0;">
-                    <thead>
-                      <tr>
-                        <th>Term</th>
-                        <th style="width:150px;">Amount</th>
-                        <th style="width:150px;">Paid</th>
-                        <th style="width:150px;">Remaining</th>
-                        <th style="width:80px;">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="term in terms" :key="term.id_rfp_term">
-                        <td>{{ term.term_name }}</td>
-                        <td>{{ formatCurrency(term.amount) }}</td>
-                        <td style="color:#5cb85c;">{{ formatCurrency(term.paid_amount) }}</td>
-                        <td style="color:#d9534f;">{{ formatCurrency(term.amount - term.paid_amount) }}</td>
-                        <td><span :class="'label ' + (term.status === 'paid' ? 'label-success' : term.status === 'partial' ? 'label-warning' : 'label-default')">{{ term.status }}</span></td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <div class="table-responsive">
+                    <table class="table table-bordered table-striped" style="margin-bottom:0;">
+                      <thead>
+                        <tr>
+                          <th>Term</th>
+                          <th style="width:150px;">Amount</th>
+                          <th style="width:150px;">Paid</th>
+                          <th style="width:150px;">Remaining</th>
+                          <th style="width:80px;">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="term in terms" :key="term.id_rfp_term">
+                          <td>{{ term.term_name }}</td>
+                          <td>{{ formatCurrency(term.amount) }}</td>
+                          <td style="color:#5cb85c;">{{ formatCurrency(term.paid_amount) }}</td>
+                          <td style="color:#d9534f;">{{ formatCurrency(term.amount - term.paid_amount) }}</td>
+                          <td><span :class="'label ' + (term.status === 'paid' ? 'label-success' : term.status === 'partial' ? 'label-warning' : 'label-default')">{{ term.status }}</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 <!-- Payment History -->
                 <div v-if="rfpPayments.length">
                   <h6 style="font-weight:600; color:#73879C; margin-bottom:8px;">Payment History</h6>
-                  <table class="table table-bordered table-striped" style="margin-bottom:0;">
-                    <thead>
-                      <tr>
-                        <th style="width:40px;">No.</th>
-                        <th>Date</th>
-                        <th>Amount</th>
-                        <th>Source Bank</th>
-                        <th>Account</th>
-                        <th>Status</th>
-                        <th>Proof</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(p, i) in rfpPayments" :key="p.id_rfp_payment || i">
-                        <td>{{ i + 1 }}</td>
-                        <td>{{ new Date(p.payment_date).toLocaleDateString('id-ID') }}</td>
-                        <td><strong>{{ formatCurrency(p.amount) }}</strong></td>
-                        <td>{{ p.source_bank || '-' }}</td>
-                        <td>{{ p.source_account_number || '-' }} {{ p.source_account_name ? `(${p.source_account_name})` : '' }}</td>
-                        <td><span :class="'label ' + statusClass(p.status)">{{ p.status }}</span></td>
-                        <td><a v-if="p.proof_url" :href="p.proof_url" target="_blank"><i class="fa fa-paperclip"></i> View</a><span v-else>-</span></td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <div class="table-responsive">
+                    <table class="table table-bordered table-striped" style="margin-bottom:0;">
+                      <thead>
+                        <tr>
+                          <th style="width:40px;">No.</th>
+                          <th>Date</th>
+                          <th>Amount</th>
+                          <th>Source Bank</th>
+                          <th>Account</th>
+                          <th>Status</th>
+                          <th>Proof</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(p, i) in rfpPayments" :key="p.id_rfp_payment || i">
+                          <td>{{ i + 1 }}</td>
+                          <td>{{ new Date(p.payment_date).toLocaleDateString('id-ID') }}</td>
+                          <td><strong>{{ formatCurrency(p.amount) }}</strong></td>
+                          <td>{{ p.source_bank || '-' }}</td>
+                          <td>{{ p.source_account_number || '-' }} {{ p.source_account_name ? `(${p.source_account_name})` : '' }}</td>
+                          <td><span :class="'label ' + statusClass(p.status)">{{ p.status }}</span></td>
+                          <td><a v-if="p.proof_url" :href="p.proof_url" target="_blank"><i class="fa fa-paperclip"></i> View</a><span v-else>-</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
                 <p v-else class="text-muted" style="margin:0;">No payments recorded yet.</p>
               </div>

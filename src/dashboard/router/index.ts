@@ -40,7 +40,7 @@ const router = createRouter({
         {
           path: 'payment-requests/:id/payment',
           name: 'payment-request-payment',
-          component: () => import('@/dashboard/views/PaymentRequestPaymentView.vue'),
+          component: () => import('@/dashboard/views/RFPaymentDetailView.vue'),
         },
         {
           path: 'rfp-payments',
@@ -50,7 +50,7 @@ const router = createRouter({
         {
           path: 'rfp-payments/:id',
           name: 'rfp-payment-detail',
-          component: () => import('@/dashboard/views/PaymentRequestPaymentView.vue'),
+          component: () => import('@/dashboard/views/RFPaymentDetailView.vue'),
         },
         {
           path: 'commissions',

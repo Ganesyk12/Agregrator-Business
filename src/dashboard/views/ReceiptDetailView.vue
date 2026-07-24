@@ -68,12 +68,12 @@ function printReceipt() {
 <template>
   <div class="row">
     <div class="col-md-12" v-if="loading">
-      <div class="x_panel"><div class="x_content"><p style="text-align:center;padding:40px;">Loading receipt...</p></div></div>
+      <div class="card"><div class="card-body"><p style="text-align:center;padding:40px;">Loading receipt...</p></div></div>
     </div>
 
     <div class="col-md-12" v-else-if="!receipt">
-      <div class="x_panel">
-        <div class="x_content">
+      <div class="card">
+        <div class="card-body">
           <p style="text-align:center;padding:40px;">Receipt not found.</p>
           <div style="text-align:center;"><button class="btn btn-primary" @click="goBack">Back to Receipts</button></div>
         </div>
@@ -81,20 +81,20 @@ function printReceipt() {
     </div>
 
     <div class="col-md-12" v-else>
-      <div class="x_panel">
-        <div class="x_title">
-          <h2>Receipt <small>Kwitansi Pembayaran</small></h2>
-          <div class="clearfix"></div>
+      <div class="card">
+        <div class="card-header">
+          <h4>Receipt Kwitansi Pembayaran</h4>
+          
         </div>
-        <div class="x_content">
+        <div class="card-body">
           <!-- Receipt Content -->
           <section class="content invoice">
-            <div class="row">
-              <div class="col-xs-12 invoice-header">
-                <h1>
-                  <i class="fa fa-file-text-o"></i> {{ receipt.receipt_number }}
-                </h1>
-                <p class="invoice-date">{{ receipt.released_at ? formatDate(receipt.released_at) : '-' }}</p>
+            <div class="row align-items-center m-b-20">
+              <div class="col-sm-6 text-start text-sm-left">
+              </div>
+              <div class="col-sm-6 text-end text-sm-right text-right">
+                <h3 class="m-0 text-c-blue" style="font-weight: bold;">{{ receipt.receipt_number }}</h3>
+                <p class="invoice-date m-0 m-t-5">{{ receipt.released_at ? formatDate(receipt.released_at) : '-' }}</p>
               </div>
             </div>
 
@@ -115,34 +115,47 @@ function printReceipt() {
                 </address>
               </div>
               <div class="col-sm-4 invoice-col">
-                <b>Receipt Number: {{ receipt.receipt_number }}</b><br>
-                <b>RFP Number:</b> {{ receipt.request_number }}<br>
-                <b>Status:</b> <span class="label label-primary" style="text-transform:uppercase;">RELEASED</span><br>
-                <b>Payment To:</b> {{ receipt.payment_to || '-' }}<br>
-                <b>Payment Method:</b> {{ receipt.payment_method || '-' }}
+                <dl class="row m-b-0" style="font-size: 13px; line-height: 1.6;">
+                  <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 4px;">Receipt No</dt>
+                  <dd class="col-sm-7 text-start" style="margin-bottom: 4px;">{{ receipt.receipt_number }}</dd>
+
+                  <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 4px;">RFP No</dt>
+                  <dd class="col-sm-7 text-start" style="margin-bottom: 4px;">{{ receipt.request_number }}</dd>
+
+                  <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 4px;">Status</dt>
+                  <dd class="col-sm-7 text-start" style="margin-bottom: 4px;">
+                    <span class="label label-primary" style="text-transform:uppercase; font-size: 10px; padding: 2px 6px;">RELEASED</span>
+                  </dd>
+
+                  <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 4px;">Payment To</dt>
+                  <dd class="col-sm-7 text-start" style="margin-bottom: 4px;">{{ receipt.payment_to || '-' }}</dd>
+
+                  <dt class="col-sm-5 text-start font-weight-bold text-muted" style="margin-bottom: 4px;">Method</dt>
+                  <dd class="col-sm-7 text-start" style="margin-bottom: 4px;">{{ receipt.payment_method || '-' }}</dd>
+                </dl>
               </div>
             </div>
 
             <div class="row">
-              <div class="col-xs-12">
+              <div class="col-12">
                 <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped table-bordered w-100" style="width: 100% !important;">
                   <thead>
                     <tr>
-                      <th style="width:5%">No</th>
+                      <th class="text-center" style="width:5%">No</th>
                       <th style="width:45%">Description</th>
-                      <th style="width:10%">Qty</th>
-                      <th style="width:20%">Unit Price</th>
-                      <th style="width:20%">Amount</th>
+                      <th class="text-center" style="width:10%">Qty</th>
+                      <th class="text-end" style="width:20%">Unit Price</th>
+                      <th class="text-end" style="width:20%">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="(item, idx) in receipt.items" :key="item.id_item || idx">
-                      <td>{{ Number(idx) + 1 }}</td>
+                      <td class="text-center">{{ Number(idx) + 1 }}</td>
                       <td><strong>{{ item.description }}</strong></td>
-                      <td>{{ item.quantity || 1 }}</td>
-                      <td>{{ formatCurrency(item.unit_price || item.amount) }}</td>
-                      <td>{{ formatCurrency(item.amount) }}</td>
+                      <td class="text-center">{{ item.quantity || 1 }}</td>
+                      <td class="text-end">{{ formatCurrency(item.unit_price || item.amount) }}</td>
+                      <td class="text-end font-weight-bold text-c-blue">{{ formatCurrency(item.amount) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -172,20 +185,20 @@ function printReceipt() {
                   <table class="table">
                     <tbody>
                       <tr>
-                        <th style="width:50%">Total Amount:</th>
-                        <td>{{ formatCurrency(totalAmount(receipt.items)) }}</td>
+                        <th style="width:50%" class="text-start">Total Amount:</th>
+                        <td class="text-end font-weight-bold text-c-blue">{{ formatCurrency(totalAmount(receipt.items)) }}</td>
                       </tr>
                       <tr>
-                        <th>Receipt Status:</th>
-                        <td><span class="label label-primary" style="text-transform:uppercase;">RELEASED</span></td>
+                        <th class="text-start">Receipt Status:</th>
+                        <td class="text-end"><span class="label label-primary" style="text-transform:uppercase;">RELEASED</span></td>
                       </tr>
                       <tr>
-                        <th>Released By:</th>
-                        <td>{{ receipt.released_by || '-' }}</td>
+                        <th class="text-start">Released By:</th>
+                        <td class="text-end">{{ receipt.released_by || '-' }}</td>
                       </tr>
                       <tr>
-                        <th>Released At:</th>
-                        <td>{{ receipt.released_at ? formatDate(receipt.released_at) : '-' }}</td>
+                        <th class="text-start">Released At:</th>
+                        <td class="text-end">{{ receipt.released_at ? formatDate(receipt.released_at) : '-' }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -643,55 +656,110 @@ function printReceipt() {
 /* ─── Print media (global — not scoped) ─── */
 @page {
   size: A4;
-  margin: 0;
+  margin: 15mm;
 }
 
 @media print {
-  html, body {
-    height: 100%;
-    overflow: hidden;
+  /* Hide sidebar, topnav, dashboard footer, print toolbars, and background elements */
+  .pcoded-navbar,
+  .pcoded-header,
+  .dashboard-footer,
+  .no-print,
+  .x_footer {
+    display: none !important;
+  }
+  
+  /* Hide the main card view when the print preview is active to prevent duplicates */
+  .row:has(~ .print-preview-overlay) {
+    display: none !important;
+  }
+  
+  /* Reset offset margins for main wrappers */
+  .pcoded-main-container {
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    background: transparent !important;
   }
 
-  body * {
-    visibility: hidden;
+  .pcoded-content,
+  .main-body,
+  .page-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
   }
+
+  /* Reset html/body backgrounds */
+  html, body {
+    background: #fff !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Keep printed content visible */
   #print-area,
   #print-area * {
-    visibility: visible;
+    visibility: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
   #print-area {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    position: static !important;
+    width: 100% !important;
     page-break-after: avoid;
     page-break-inside: avoid;
   }
 
-  .no-print {
-    display: none !important;
-  }
-
+  /* Style print-preview-overlay and make it full-width */
   .print-preview-overlay {
     position: static !important;
+    display: block !important;
     background: none !important;
     padding: 0 !important;
+    margin: 0 !important;
     overflow: visible !important;
+    width: 100% !important;
+    z-index: auto !important;
+    opacity: 1 !important;
   }
 
   .print-preview-container {
     max-width: 100% !important;
     box-shadow: none !important;
-    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .print-preview-container .card {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    margin-bottom: 0 !important;
+  }
+
+  .print-preview-container .card-header {
+    background: transparent !important;
+    border-bottom: none !important;
+    padding: 0 0 5px 0 !important;
+  }
+
+  .print-preview-container .card-body {
+    padding: 0 !important;
   }
 
   .print-preview-page {
-    padding: 10mm 15mm !important;
+    padding: 0 !important;
+    background: #fff !important;
   }
 
   .print-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
     page-break-inside: avoid;
   }
 
@@ -710,10 +778,14 @@ function printReceipt() {
   .print-table th {
     background: #2c3e50 !important;
     color: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .print-table tbody tr:nth-child(even) {
     background: #f9f9f9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .print-header-left h2,

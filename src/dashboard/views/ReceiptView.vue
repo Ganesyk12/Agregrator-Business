@@ -14,22 +14,20 @@ interface Receipt {
   released_at: string
   payment_to: string | null
   payment_method: string | null
-  amount: number
+  total_amount: number
   requested_by: string | null
   released_by: string | null
   reviewed_by: string | null
-  items?: { amount: number }[]
 }
 
 const receipts = ref<Receipt[]>([])
 const loading = ref(true)
 const search = ref('')
-const filterReleaser = ref('')
 
 async function fetchReceipts() {
   try {
     const res = await fetch(`${apiUrl}/api/payment-requests`)
-    if (!res.ok) throw new Error('Failed')
+    if (!res.ok) throw new Error('Failed to fetch receipts')
     const json = await res.json()
     const all = (json.data || []) as Receipt[]
     receipts.value = all.filter((r: any) => r.status === 'released')
@@ -43,15 +41,12 @@ async function fetchReceipts() {
 
 onMounted(fetchReceipts)
 
-function totalAmount(items: any[]) {
-  return items?.reduce((s: number, i: any) => s + Number(i.amount), 0) || 0
-}
-
 function formatCurrency(v: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
 }
 
 function formatDate(d: string) {
+  if (!d) return '-'
   return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
@@ -76,63 +71,89 @@ const filtered = computed(() => {
 </script>
 
 <template>
-  <div class="x_panel">
-    <div class="x_title">
-      <h2>Receipts <small>Kwitansi Ter-release</small></h2>
-      <div class="clearfix"></div>
+  <div class="card">
+    <div class="card-header">
+      <h5>Receipts <small class="text-muted">Kwitansi Ter-release</small></h5>
     </div>
-    <div class="x_content">
-      <div class="row" style="margin-bottom:12px;">
+    
+    <div class="card-body">
+      <!-- Search Panel -->
+      <div class="row m-b-20">
         <div class="col-md-12">
           <div class="input-group">
-            <span class="input-group-addon"><i class="fa fa-search"></i></span>
-            <input type="text" v-model="search" class="form-control" placeholder="Search by receipt#, RFP#, title, payment to, requested by..." />
+            <span class="input-group-text"><i class="fa fa-search"></i></span>
+            <input type="text" v-model="search" class="form-control" placeholder="Search by receipt number, RFP number, title, payment to, requester..." />
           </div>
         </div>
       </div>
+      
+      <!-- Table View -->
       <div class="table-responsive" v-if="!loading">
         <table class="table table-striped table-bordered">
           <thead>
             <tr>
-              <th>Receipt Number</th>
-              <th>RFP Number</th>
+              <th class="text-center">Receipt Number</th>
+              <th class="text-center">RFP Number</th>
               <th>Title</th>
               <th>Payment To</th>
-              <th>Amount</th>
-              <th>Released At</th>
+              <th class="text-end">Amount</th>
+              <th class="text-center">Released At</th>
               <th>Released By</th>
               <th>Requester</th>
-              <th style="width:100px;">Actions</th>
+              <th class="text-center" style="width:100px;">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="r in filtered" :key="r.id_request">
-              <td><strong>{{ r.receipt_number }}</strong></td>
-              <td>{{ r.request_number }}</td>
+              <td class="text-center"><strong>{{ r.receipt_number }}</strong></td>
+              <td class="text-center">{{ r.request_number }}</td>
               <td>{{ r.title }}</td>
               <td>{{ r.payment_to || '-' }}</td>
-              <td>{{ formatCurrency(totalAmount(r.items)) }}</td>
-              <td>{{ formatDate(r.released_at) }}</td>
+              <td class="text-end font-weight-bold text-c-blue">{{ formatCurrency(r.total_amount) }}</td>
+              <td class="text-center">{{ formatDate(r.released_at) }}</td>
               <td>{{ r.released_by || '-' }}</td>
               <td>{{ r.requested_by || '-' }}</td>
-              <td style="white-space:nowrap;">
-                <button class="btn btn-info btn-xs" @click="viewDetail(r)" title="View Receipt"><i class="fa fa-file-text"></i> View</button>
+              <td class="text-center" style="white-space:nowrap;">
+                <button class="btn btn-info btn-xs" @click="viewDetail(r)" title="View Receipt">
+                  <i class="fa fa-file-text"></i> View
+                </button>
               </td>
             </tr>
             <tr v-if="filtered.length === 0">
-              <td colspan="9" style="text-align:center;">No released receipts found.</td>
+              <td colspan="9" class="text-center">No released receipts found.</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div v-else style="text-align:center;padding:40px;">Loading...</div>
+      
+      <!-- Loading Indicator -->
+      <div v-else class="text-center p-40">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <p class="m-t-10 text-muted">Loading receipts...</p>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.m-b-20 {
+  margin-bottom: 20px;
+}
+.p-40 {
+  padding: 40px;
+}
+.m-t-10 {
+  margin-top: 10px;
+}
+.font-weight-bold {
+  font-weight: bold;
+}
+.text-c-blue {
+  color: #4099ff;
+}
 @media (max-width: 767px) {
-  .table td, .table th { font-size: 12px; padding: 6px 4px; }
-  .btn-xs { padding: 2px 6px; font-size: 11px; }
+  .table td, .table th { font-size: 12px; padding: 8px 6px; }
 }
 </style>

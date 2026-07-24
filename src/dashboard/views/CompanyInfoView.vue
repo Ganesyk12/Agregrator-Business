@@ -82,13 +82,13 @@ onMounted(fetchInfo)
 </script>
 
 <template>
-  <div class="x_panel">
-    <div class="x_title">
-      <h2>Company Information</h2>
-      <div class="clearfix"></div>
+  <div class="card">
+    <div class="card-header">
+      <h5>Company Information</h5>
+      
     </div>
 
-    <div class="x_content">
+    <div class="card-body">
       <div v-if="loading" style="text-align:center;padding:40px;">
         <i class="fa fa-spinner fa-spin fa-3x"></i>
         <p>Loading...</p>

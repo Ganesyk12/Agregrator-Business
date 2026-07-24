@@ -22,7 +22,7 @@ const include = {
     orderBy: { term_order: 'asc' as const },
     include: {
       payments: {
-        select: { id_payment: true, amount: true, payment_type: true, status: true, paid_at: true },
+        select: { id_booking_payment: true, amount: true, payment_type: true, status: true, paid_at: true },
         orderBy: { date_created: 'asc' as const },
       },
     },

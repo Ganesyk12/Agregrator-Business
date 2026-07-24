@@ -12,7 +12,6 @@ interface PaymentRequest {
   title: string
   description: string | null
   request_date: string
-  requested_by: string
   notes: string | null
   payment_method: string | null
   bank_account_number: string | null
@@ -20,7 +19,6 @@ interface PaymentRequest {
   status: string
   total_amount: number
   outstanding: number
-  reviewed_by: string | null
   reviewed_at: string | null
   approval_notes: string | null
   receipt_number: string | null
@@ -277,13 +275,13 @@ const statusClass = (s: string) => {
 </script>
 
 <template>
-  <div class="x_panel">
-    <div class="x_title">
-      <h2>Request for Payment</h2>
-      <div class="clearfix"></div>
+  <div class="card">
+    <div class="card-header">
+      <h5>Request for Payment</h5>
+      
     </div>
 
-    <div class="x_content">
+    <div class="card-body">
       <div class="row" style="margin-bottom: 12px; overflow: hidden;">
         <div class="col-md-4 col-sm-6 col-xs-12">
           <button class="btn btn-success" @click="openAdd"><i class="fa fa-plus"></i> New Request</button>
