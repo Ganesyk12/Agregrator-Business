@@ -138,7 +138,7 @@ function printReceipt() {
                   </thead>
                   <tbody>
                     <tr v-for="(item, idx) in receipt.items" :key="item.id_item || idx">
-                      <td>{{ idx + 1 }}</td>
+                      <td>{{ Number(idx) + 1 }}</td>
                       <td><strong>{{ item.description }}</strong></td>
                       <td>{{ item.quantity || 1 }}</td>
                       <td>{{ formatCurrency(item.unit_price || item.amount) }}</td>
@@ -257,7 +257,7 @@ function printReceipt() {
           </thead>
           <tbody>
             <tr v-for="(item, idx) in receipt.items" :key="item.id_item || idx">
-              <td>{{ idx + 1 }}</td>
+              <td>{{ Number(idx) + 1 }}</td>
               <td><strong>{{ item.description }}</strong></td>
               <td>{{ item.quantity || 1 }}</td>
               <td style="text-align:right;">{{ formatCurrency(item.unit_price || item.amount) }}</td>
@@ -627,7 +627,7 @@ function printReceipt() {
   height: 100%;
 }
 
-@media (max-width: 767px) {
+@media screen and (max-width: 767px) {
   .invoice-header h1 { font-size: 20px; }
   .invoice-info .col-sm-4 { margin-bottom: 12px; }
   .table td, .table th { font-size: 12px; padding: 6px 4px; }
@@ -658,6 +658,8 @@ function printReceipt() {
   #print-area,
   #print-area * {
     visibility: visible;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   #print-area {
     position: absolute;
@@ -702,30 +704,21 @@ function printReceipt() {
   }
 
   .print-divider {
-    border-top-color: #000 !important;
+    border-top-color: #2c3e50 !important;
   }
 
   .print-table th {
-    background: #333 !important;
+    background: #2c3e50 !important;
     color: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
   }
 
   .print-table tbody tr:nth-child(even) {
-    background: #f5f5f5 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    background: #f9f9f9 !important;
   }
 
   .print-header-left h2,
   .print-header-right h1 {
-    color: #000 !important;
-  }
-
-  .print-stamp {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    color: #2c3e50 !important;
   }
 }
 </style>
