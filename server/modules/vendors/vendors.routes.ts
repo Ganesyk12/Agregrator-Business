@@ -1,58 +1,13 @@
 import { Router } from 'express'
+import { authenticate } from '../../middleware/auth'
 import * as vendorCtrl from './vendors.controller'
 
 const router = Router()
 
-/**
- * @openapi
- * /api/vendors:
- *   get:
- *     tags: [Vendors]
- *     summary: Daftar semua vendor
- *     responses:
- *       200:
- *         description: Berhasil
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Vendor'
- */
 router.get('/', vendorCtrl.getAll)
-
-/**
- * @openapi
- * /api/vendors/{id}:
- *   get:
- *     tags: [Vendors]
- *     summary: Detail vendor by ID
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Berhasil
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data: { $ref: '#/components/schemas/Vendor' }
- *       404:
- *         description: Vendor tidak ditemukan
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
+router.get('/me', authenticate, vendorCtrl.getMe)
+router.patch('/me', authenticate, vendorCtrl.updateMe)
 router.get('/:id', vendorCtrl.getById)
-
 router.post('/', vendorCtrl.create)
 router.put('/:id', vendorCtrl.update)
 router.delete('/:id', vendorCtrl.remove)

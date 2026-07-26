@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, watch } from 'vue'
 
 interface Inspiration {
   id: number
@@ -21,178 +21,41 @@ const props = defineProps<{
   celebrationFilter: string | null
 }>()
 
-const inspirations = ref<Inspiration[]>([
-  {
-    id: 1,
-    image: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&h=900&fit=crop',
-    occasion: 'Wedding',
-    style: 'Classic Elegance',
-    caption: 'Pernikahan klasik dengan sentuhan emas yang timeless',
-    budget: 'Rp 15-25 Juta',
-    saved: false,
-    height: 'tall',
-    vendorRefs: { photography: 'Alexandra Studio', mua: 'Glamour Beauty', bouquet: 'Bloom & Petal' }
-  },
-  {
-    id: 2,
-    image: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&h=700&fit=crop',
-    occasion: 'Graduation',
-    style: 'Modern Fresh',
-    caption: 'Momen wisuda dengan gaya preppy modern dan vibrant',
-    budget: 'Rp 3-8 Juta',
-    saved: false,
-    height: 'medium',
-    vendorRefs: { photography: 'Capture Studio', bouquet: 'Bunga Indah Florist' }
-  },
-  {
-    id: 3,
-    image: 'https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=600&h=800&fit=crop',
-    occasion: 'Birthday',
-    style: 'Pastel Dream',
-    caption: 'Ultah manis dengan dekorasi pastel dan bunga segar',
-    budget: 'Rp 5-10 Juta',
-    saved: false,
-    height: 'tall',
-    vendorRefs: { photography: 'Lensa Abadi', bouquet: 'Wonderful Blooms' }
-  },
-  {
-    id: 4,
-    image: 'https://images.unsplash.com/photo-1464693195488-9ae77abf4e32?w=600&h=600&fit=crop',
-    occasion: 'Engagement',
-    style: 'Romantic Glow',
-    caption: 'Sesi foto tunangan dengan golden hour yang magis',
-    budget: 'Rp 8-15 Juta',
-    saved: false,
-    height: 'short',
-    vendorRefs: { photography: 'Sunset Lens', mua: 'Perfect Look Studio' }
-  },
-  {
-    id: 5,
-    image: 'https://images.unsplash.com/photo-1529636798458-92182e662485?w=600&h=850&fit=crop',
-    occasion: 'Anniversary',
-    style: 'Timeless Love',
-    caption: 'Rayakan cinta dengan foto anniversary yang intimate',
-    budget: 'Rp 5-12 Juta',
-    saved: false,
-    height: 'tall',
-    vendorRefs: { photography: 'Alexandra Studio', bouquet: 'Bloom & Petal' }
-  },
-  {
-    id: 6,
-    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=750&fit=crop',
-    occasion: 'Wedding',
-    style: 'Garden Romance',
-    caption: 'Pernikahan taman dengan nuansa rustic dan natural',
-    budget: 'Rp 20-35 Juta',
-    saved: false,
-    height: 'medium',
-    vendorRefs: { photography: 'Sunset Lens', mua: 'Glamour Beauty', bouquet: 'Bloom & Petal' }
-  },
-  {
-    id: 7,
-    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&h=650&fit=crop',
-    occasion: 'Graduation',
-    style: 'Bold & Bright',
-    caption: 'Wisuda dengan statement bouquet dan foto kreatif',
-    budget: 'Rp 2-6 Juta',
-    saved: false,
-    height: 'short',
-    vendorRefs: { photography: 'Capture Studio', bouquet: 'Bunga Indah Florist' }
-  },
-  {
-    id: 8,
-    image: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=600&h=900&fit=crop',
-    occasion: 'Engagement',
-    style: 'Cinematic',
-    caption: 'Foto pre-wedding dengan konsep cinematic ala film',
-    budget: 'Rp 10-20 Juta',
-    saved: false,
-    height: 'tall',
-    vendorRefs: { photography: 'Lensa Abadi', mua: 'Perfect Look Studio', bouquet: 'Wonderful Blooms' }
-  },
-  {
-    id: 9,
-    image: 'https://images.unsplash.com/photo-1540573133985-87b1da6d5268?w=600&h=700&fit=crop',
-    occasion: 'Birthday',
-    style: 'Luxury Gold',
-    caption: 'Pesta ulang tahun mewah dengan tema gold dan glamor',
-    budget: 'Rp 10-25 Juta',
-    saved: false,
-    height: 'medium',
-    vendorRefs: { photography: 'Alexandra Studio', bouquet: 'Bloom & Petal' }
-  },
-  {
-    id: 10,
-    image: 'https://images.unsplash.com/photo-1583939003579-730e3918ea45?w=600&h=800&fit=crop',
-    occasion: 'Wedding',
-    style: 'Minimalist Chic',
-    caption: 'Pernikahan minimalis dengan detail yang elegan',
-    budget: 'Rp 12-18 Juta',
-    saved: false,
-    height: 'tall',
-    vendorRefs: { photography: 'Sunset Lens', mua: 'Glamour Beauty', bouquet: 'Bloom & Petal' }
-  },
-  {
-    id: 11,
-    image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&h=600&fit=crop',
-    occasion: 'Birthday',
-    style: 'Fun & Colorful',
-    caption: 'Pesta ulang tahun penuh warna untuk si kecil',
-    budget: 'Rp 3-8 Juta',
-    saved: false,
-    height: 'short',
-    vendorRefs: { photography: 'Lensa Abadi', bouquet: 'Bunga Indah Florist' }
-  },
-  {
-    id: 12,
-    image: 'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=600&h=850&fit=crop',
-    occasion: 'Graduation',
-    style: 'Elegant Classic',
-    caption: 'Momen wisuda dengan gaya elegan yang timeless',
-    budget: 'Rp 2-5 Juta',
-    saved: false,
-    height: 'tall',
-    vendorRefs: { photography: 'Capture Studio', bouquet: 'Wonderful Blooms' }
-  },
-  {
-    id: 13,
-    image: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=600&h=700&fit=crop',
-    occasion: 'Anniversary',
-    style: 'Romantic Dinner',
-    caption: 'Makan malam romantis dengan dekorasi spesial',
-    budget: 'Rp 3-7 Juta',
-    saved: false,
-    height: 'medium',
-    vendorRefs: { photography: 'Alexandra Studio', bouquet: 'Bloom & Petal' }
-  },
-  {
-    id: 14,
-    image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&h=750&fit=crop',
-    occasion: 'Wedding',
-    style: 'Beach Boho',
-    caption: 'Pernikahan pantai dengan nuansa boho yang santai',
-    budget: 'Rp 18-30 Juta',
-    saved: false,
-    height: 'medium',
-    vendorRefs: { photography: 'Sunset Lens', mua: 'Perfect Look Studio', bouquet: 'Wonderful Blooms' }
-  },
-  {
-    id: 15,
-    image: 'https://images.unsplash.com/photo-1559650656-5d1d361ad10e?w=600&h=900&fit=crop',
-    occasion: 'Engagement',
-    style: 'Fairytale',
-    caption: 'Tunangan dengan konsep dongeng yang romantis',
-    budget: 'Rp 8-18 Juta',
-    saved: false,
-    height: 'tall',
-    vendorRefs: { photography: 'Lensa Abadi', mua: 'Glamour Beauty', bouquet: 'Bloom & Petal' }
-  },
-])
+const inspirations = ref<Inspiration[]>([])
+const loading = ref(true)
 
-const filteredInspirations = computed(() => {
-  if (!props.celebrationFilter) return inspirations.value
-  return inspirations.value.filter(i => i.occasion.toLowerCase() === props.celebrationFilter!.toLowerCase())
-})
+async function fetchInspirations() {
+  loading.value = true
+  try {
+    const params = props.celebrationFilter ? `?label=${props.celebrationFilter}` : ''
+    const res = await fetch(`/api/portfolios${params}`)
+    const json = await res.json()
+    const items = json.data || []
+    inspirations.value = items.map((p: any) => ({
+      id: p.id_portfolio,
+      image: p.cover_url,
+      occasion: p.label || p.title || 'Creative',
+      style: p.vendor?.category || 'Creative',
+      caption: p.title || p.description || '',
+      budget: p.package?.price ? `Rp ${p.package.price.toLocaleString('id-ID')}` : '',
+      saved: false,
+      height: (['tall', 'medium', 'short'] as const)[Math.floor(Math.random() * 3)],
+      vendorRefs: {
+        photography: p.vendor?.category === 'Photography' ? p.vendor.business_name : undefined,
+        mua: p.vendor?.category === 'Makeup Artist' ? p.vendor.business_name : undefined,
+        bouquet: p.vendor?.category === 'Bouquet Flowers' ? p.vendor.business_name : undefined,
+      }
+    }))
+  } catch {
+    // API unavailable
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(() => props.celebrationFilter, () => {
+  fetchInspirations()
+}, { immediate: true })
 
 function getGridClass(height: string) {
   if (height === 'tall') return 'grid-tall'
@@ -200,11 +63,18 @@ function getGridClass(height: string) {
   return 'grid-medium'
 }
 
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 function toggleSave(id: number) {
   const idx = inspirations.value.findIndex(i => i.id === id)
   if (idx !== -1) inspirations.value[idx].saved = !inspirations.value[idx].saved
 }
 
+function goToInspiration(id: number) {
+  router.push(`/inspiration/${id}`)
+}
 </script>
 
 <template>
@@ -216,12 +86,21 @@ function toggleSave(id: number) {
         <p class="section-desc">Temukan gaya dan konsep yang sesuai dengan momen spesial Anda</p>
       </div>
 
-      <div class="inspiration-grid" data-aos="fade-up" data-aos-delay="100">
+      <div v-if="loading" class="text-center py-5">
+        <p class="text-muted">Loading inspirations...</p>
+      </div>
+
+      <div v-else-if="inspirations.length === 0" class="text-center py-5">
+        <p class="text-muted">No inspirations found for this celebration.</p>
+      </div>
+
+      <div v-else class="inspiration-grid" data-aos="fade-up" data-aos-delay="100">
         <div
-          v-for="item in filteredInspirations"
+          v-for="item in inspirations"
           :key="item.id"
           class="inspiration-card"
           :class="[getGridClass(item.height)]"
+          @click="goToInspiration(item.id)"
         >
           <div class="card-image">
             <img :src="item.image" :alt="item.caption" loading="lazy" />
@@ -257,10 +136,10 @@ function toggleSave(id: number) {
                 {{ item.budget }}
               </span>
               <router-link
-                :to="`/portfolio/${item.id}`"
+                :to="`/inspiration/${item.id}`"
                 class="card-link"
               >
-                View Vendors
+                View Details
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
@@ -271,7 +150,7 @@ function toggleSave(id: number) {
       </div>
 
       <div class="text-center mt-5" data-aos="fade-up">
-        <router-link to="/photography" class="btn-explore-more">
+        <router-link to="/inspiration" class="btn-explore-more">
           Explore More Inspirations
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M5 12h14M12 5l7 7-7 7"/>

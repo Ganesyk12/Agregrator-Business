@@ -56,6 +56,14 @@ const celebrations: Celebration[] = [
     description: 'Rayakan cinta yang terus bertumbuh dengan momen tak terlupakan.',
     image: 'https://images.unsplash.com/photo-1529636798458-92182e662485?w=600&h=800&fit=crop',
     count: '43 inspirasi'
+  },
+  {
+    id: 'formal',
+    name: 'Formal',
+    nameId: 'Formal',
+    description: 'Acara formal dan resmi dengan konsep elegan dan profesional.',
+    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=800&fit=crop',
+    count: '52 inspirasi'
   }
 ]
 </script>
@@ -159,7 +167,7 @@ const celebrations: Celebration[] = [
 
 .celebration-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
 }
 
@@ -301,11 +309,11 @@ const celebrations: Celebration[] = [
 
 @media (max-width: 992px) {
   .celebration-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .celebration-card:first-child {
-    aspect-ratio: 3/4;
+    aspect-ratio: 3/5;
   }
 
   .section-title {

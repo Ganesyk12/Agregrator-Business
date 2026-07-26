@@ -11,9 +11,11 @@ const includeAll = {
   },
 }
 
-export async function findAll(): Promise<Package[]> {
+export async function findAll(vendorId?: number): Promise<Package[]> {
+  const where: any = { status: { not: 'deleted' } }
+  if (vendorId) where.id_vendor = vendorId
   return prisma.package.findMany({
-    where: { status: { not: 'deleted' } },
+    where,
     orderBy: { date_created: 'desc' },
     include: includeAll,
   }) as unknown as Package[]

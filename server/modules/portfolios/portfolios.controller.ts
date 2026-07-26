@@ -8,7 +8,8 @@ import { attachExtras } from '../../config/extras'
 export async function getAll(req: Request, res: Response, next: NextFunction) {
   try {
     const label = req.query.label as string | undefined
-    const portfolios = await portfolioService.findAll(label)
+    const vendorId = req.query.vendorId ? Number(req.query.vendorId) : undefined
+    const portfolios = await portfolioService.findAll(label, vendorId)
     const data = portfolios.map((p: any) => ({
       ...p,
       vendor: p.vendor ? attachExtras(p.vendor) : p.vendor,

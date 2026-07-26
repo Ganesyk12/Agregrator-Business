@@ -46,6 +46,7 @@ const handleLogin = async () => {
         full_name: json.data.full_name,
         roles: json.data.roles,
       },
+      vendor_info: json.data.vendor_info,
     })
 
     const isCustomer = json.data.roles?.some((r: any) => r.role_code === 'eUser-Customer')

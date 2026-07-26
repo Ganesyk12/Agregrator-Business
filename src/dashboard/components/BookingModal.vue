@@ -163,11 +163,6 @@ function save() {
   if (!form.value.id_user || !form.value.package_ids.length || !form.value.event_date) return
   emit('save', { ...form.value })
 }
-
-function getVendorName(vendorId: number) {
-  const v = vendors.value.find((v: any) => v.id_vendor === vendorId)
-  return v?.business_name || 'Unknown'
-}
 </script>
 
 <template>

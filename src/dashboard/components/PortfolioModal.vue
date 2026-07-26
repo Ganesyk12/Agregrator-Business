@@ -10,6 +10,7 @@ export interface PortfolioForm {
   title: string
   description: string
   location: string
+  label: string | null
   sort_order: number
 }
 
@@ -30,14 +31,43 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const isUploading = ref(false)
 const uploadError = ref('')
 
+const celebrationOptions = [
+  { value: 'wedding', label: 'Wedding' },
+  { value: 'graduation', label: 'Graduation' },
+  { value: 'birthday', label: 'Birthday' },
+  { value: 'engagement', label: 'Engagement' },
+  { value: 'anniversary', label: 'Anniversary' },
+  { value: 'formal', label: 'Formal' },
+]
+
+const selectedLabels = computed({
+  get() {
+    return (form.value.label || '').split(',').filter(Boolean)
+  },
+  set(val: string[]) {
+    form.value.label = val.length > 0 ? val.join(',') : null
+  }
+})
+
+function toggleLabel(value: string) {
+  const current = selectedLabels.value
+  const idx = current.indexOf(value)
+  if (idx === -1) {
+    selectedLabels.value = [...current, value]
+  } else {
+    selectedLabels.value = current.filter(v => v !== value)
+  }
+}
+
 const form = ref<PortfolioForm>({
   id_vendor: 0,
   id_package: null,
   id_category: null,
-  media_url: '',
+  cover_url: '',
+  title: '',
   description: '',
   location: '',
-  label: '',
+  label: null,
   sort_order: 0,
 })
 
@@ -80,6 +110,7 @@ watch(() => props.visible, (val) => {
         title: '',
         description: '',
         location: '',
+        label: null,
         sort_order: 0,
       }
     } else if (props.portfolio) {
@@ -91,6 +122,7 @@ watch(() => props.visible, (val) => {
         title: props.portfolio.title || '',
         description: props.portfolio.description || '',
         location: props.portfolio.location || '',
+        label: props.portfolio.label || null,
         sort_order: props.portfolio.sort_order || 0,
       }
     }
@@ -121,12 +153,10 @@ async function onFileChange(event: Event) {
   uploadError.value = ''
 
   try {
-    let pkgNameClean = 'no-package'
     let catNameClean = 'no-category'
 
     const pkg = props.packages.find(p => Number(p.id_package) === Number(form.value.id_package))
     if (pkg) {
-      pkgNameClean = pkg.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
       if (pkg.category) {
         catNameClean = pkg.category.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
       }
@@ -183,7 +213,7 @@ function getMediaUrl(url: string) {
 
 function save() {
   if (!form.value.cover_url || !form.value.id_vendor || !form.value.title) return
-  emit('save', { ...form.value })
+  emit('save', { ...form.value, label: form.value.label || null })
 }
 </script>
 
@@ -229,6 +259,15 @@ function save() {
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block;">Location</label>
                     <input class="form-control" :value="portfolio.location || '-'" readonly />
+                  </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block;">Celebration / Occasion</label>
+                    <div v-if="portfolio.label">
+                      <span class="label label-primary" style="margin-right: 4px; display: inline-block; margin-bottom: 4px;" v-for="lbl in (portfolio.label || '').split(',').filter(Boolean)" :key="lbl">
+                        {{ lbl.charAt(0).toUpperCase() + lbl.slice(1) }}
+                      </span>
+                    </div>
+                    <input v-else class="form-control" value="-" readonly />
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -287,6 +326,16 @@ function save() {
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block;">Location</label>
                     <input v-model="form.location" class="form-control" placeholder="e.g. Jakarta, Bali, Bandung" />
+                  </div>
+                  <div class="form-group" style="text-align: left;">
+                    <label class="control-label" style="font-weight: bold; display: block; margin-bottom: 8px;">Celebration / Occasion</label>
+                    <div class="celebration-checkboxes">
+                      <label class="checkbox-inline" v-for="opt in celebrationOptions" :key="opt.value" style="margin-right: 12px; font-weight: normal; cursor: pointer;">
+                        <input type="checkbox" :value="opt.value" :checked="selectedLabels.includes(opt.value)" @change="toggleLabel(opt.value)" style="margin-right: 4px;" />
+                        {{ opt.label }}
+                      </label>
+                    </div>
+                    <p style="color: #888; font-size: 0.8em; margin-top: 4px;">Pilih lebih dari satu jika sesuai dengan beberapa momen.</p>
                   </div>
                 </div>
 

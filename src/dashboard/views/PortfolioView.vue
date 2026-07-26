@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import PortfolioModal, { type PortfolioForm } from '../components/PortfolioModal.vue'
 import Swal from 'sweetalert2'
 
@@ -14,6 +15,8 @@ const Toast = Swal.mixin({
     toast.onmouseleave = Swal.resumeTimer
   }
 })
+
+const auth = useAuthStore()
 
 interface Portfolio {
   id_portfolio: number
@@ -38,6 +41,7 @@ const portfolios = ref<Portfolio[]>([])
 const vendors = ref<Array<{ id_vendor: number; business_name: string }>>([])
 const packages = ref<any[]>([])
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const vendorId = computed(() => auth.user?.vendor_id)
 
 const modalVisible = ref(false)
 const modalMode = ref<'add' | 'edit' | 'detail'>('add')
@@ -45,7 +49,9 @@ const selectedPortfolio = ref<Portfolio | null>(null)
 
 async function fetchPortfolios() {
   try {
-    const res = await fetch(`${apiUrl}/api/portfolios`)
+    let url = `${apiUrl}/api/portfolios`
+    if (vendorId.value) url += `?vendorId=${vendorId.value}`
+    const res = await fetch(url)
     if (!res.ok) throw new Error('Failed to fetch portfolios')
     const json = await res.json()
     portfolios.value = json.data || []
@@ -105,19 +111,21 @@ function openDetail(p: Portfolio) {
 }
 
 async function handleSave(data: PortfolioForm) {
+  const vid = vendorId.value || Number(data.id_vendor)
   if (modalMode.value === 'add') {
     try {
       const res = await fetch(`${apiUrl}/api/portfolios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id_vendor: Number(data.id_vendor),
+          id_vendor: vid,
           id_package: data.id_package ? Number(data.id_package) : null,
           id_category: data.id_category ? Number(data.id_category) : null,
           cover_url: data.cover_url,
           title: data.title,
           description: data.description,
           location: data.location,
+          label: data.label || null,
           sort_order: portfolios.value.length + 1,
         })
       })
@@ -149,6 +157,7 @@ async function handleSave(data: PortfolioForm) {
           title: data.title,
           description: data.description,
           location: data.location,
+          label: data.label || null,
           sort_order: selectedPortfolio.value.sort_order,
         })
       })

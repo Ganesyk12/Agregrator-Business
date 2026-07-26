@@ -5,8 +5,6 @@ import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
 import aboutHero from '@/assets/kaira/images/banner-image-4.jpg'
-import aboutTeam from '@/assets/kaira/images/banner-image-3.jpg'
-
 const stats = [
   { number: '50+', label: 'Vendors Terkurasi' },
   { number: '200+', label: 'Projects Selesai' },
@@ -120,7 +118,7 @@ const values = [
               <div class="service-icon mx-auto mb-3">📷</div>
               <h4 class="text-uppercase">Photography</h4>
               <p class="text-muted">Abadikan momen berharga dengan fotografer profesional untuk wedding, prewedding, dan event spesial.</p>
-              <router-link to="/photography" class="btn-link text-uppercase text-decoration-none item-anchor">Explore</router-link>
+              <router-link to="/explore" class="btn-link text-uppercase text-decoration-none item-anchor">Explore</router-link>
             </div>
           </div>
           <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
@@ -128,7 +126,7 @@ const values = [
               <div class="service-icon mx-auto mb-3">💄</div>
               <h4 class="text-uppercase">MUA</h4>
               <p class="text-muted">Tampil memukau di hari spesialmu dengan makeup artist profesional dan berpengalaman.</p>
-              <router-link to="/mua" class="btn-link text-uppercase text-decoration-none item-anchor">Explore</router-link>
+              <router-link to="/explore" class="btn-link text-uppercase text-decoration-none item-anchor">Explore</router-link>
             </div>
           </div>
           <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
@@ -136,7 +134,7 @@ const values = [
               <div class="service-icon mx-auto mb-3">💅</div>
               <h4 class="text-uppercase">Nail Art</h4>
               <p class="text-muted">Sentuhan cantik di ujung jarimu dengan kreasi nail art yang unik dan stylish.</p>
-              <router-link to="/photography" class="btn-link text-uppercase text-decoration-none item-anchor">Explore</router-link>
+              <router-link to="/explore" class="btn-link text-uppercase text-decoration-none item-anchor">Explore</router-link>
             </div>
           </div>
           <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
@@ -144,7 +142,7 @@ const values = [
               <div class="service-icon mx-auto mb-3">💐</div>
               <h4 class="text-uppercase">Bouquet Flowers</h4>
               <p class="text-muted">Harum segar bunga pilihan untuk orang tersayang, dirangkai dengan seni dan cinta.</p>
-              <router-link to="/bouquet" class="btn-link text-uppercase text-decoration-none item-anchor">Explore</router-link>
+              <router-link to="/explore" class="btn-link text-uppercase text-decoration-none item-anchor">Explore</router-link>
             </div>
           </div>
         </div>
@@ -155,7 +153,7 @@ const values = [
       <div class="container">
         <h2 class="display-6 mb-3">Siap Memulai?</h2>
         <p class="text-muted mb-4">Temukan vendor impianmu dan wujudkan momen spesialmu bersama Sigyn.</p>
-        <router-link to="/photography" class="btn btn-dark btn-lg text-uppercase px-5 rounded-pill">
+        <router-link to="/explore" class="btn btn-dark btn-lg text-uppercase px-5 rounded-pill">
           Mulai Explore
         </router-link>
       </div>

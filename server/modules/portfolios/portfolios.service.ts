@@ -7,9 +7,10 @@ const includeRelations = {
   category: { select: { category_name: true } },
 }
 
-export async function findAll(label?: string): Promise<Portfolio[]> {
+export async function findAll(label?: string, vendorId?: number): Promise<Portfolio[]> {
   const where: any = { status: { not: 'deleted' } }
-  if (label) where.label = label
+  if (label) where.label = { contains: label }
+  if (vendorId) where.id_vendor = vendorId
 
   return prisma.portfolio.findMany({
     where,

@@ -29,11 +29,10 @@ const celebrationTaglines: Record<string, string> = {
   anniversary: 'Rayakan cinta yang tak pernah pudar'
 }
 
-const categoryOrder = ['Photography', 'Makeup Artist', 'Bouquet Flowers']
+const categoryOrder = ['Photography', 'Makeup Artist']
 const categoryDisplayNames: Record<string, string> = {
   Photography: 'Photography',
   'Makeup Artist': 'Makeup Artist',
-  'Bouquet Flowers': 'Bouquet Flowers'
 }
 
 const filteredByCategory = computed(() => {
@@ -53,19 +52,12 @@ function getCategoryEmoji(cat: string): string {
   const map: Record<string, string> = {
     Photography: '📷',
     'Makeup Artist': '💄',
-    'Bouquet Flowers': '💐'
   }
   return map[cat] || '✨'
 }
 
 function getCoverImage(vendor: VendorItem): string {
-  if (vendor.cover_url && vendor.cover_url !== '') return vendor.cover_url
-  const demoImages: Record<string, string> = {
-    Photography: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=400&h=500&fit=crop',
-    'Makeup Artist': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=500&fit=crop',
-    'Bouquet Flowers': 'https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=400&h=500&fit=crop'
-  }
-  return demoImages[vendor.category] || `https://picsum.photos/seed/${vendor.id_vendor}/400/500`
+  return vendor.cover_url || ''
 }
 
 function formatPrice(price?: number): string {
@@ -103,7 +95,7 @@ onMounted(async () => {
         category: v.category || 'Other',
         location: v.location || v.kota || '',
         cover_url: '',
-        logo_url: v.logo_url || v.logo || '',
+        logo_url: v.avatar_url || v.logo_url || v.logo || '',
         rating: rating.rating,
         review_count: rating.count,
         starting_price: 0,
@@ -124,19 +116,7 @@ onMounted(async () => {
     allVendors.value = Array.from(vendorMap.values())
       .filter(v => categoryOrder.includes(v.category))
   } catch {
-    const demos: VendorItem[] = [
-      { id_vendor: 1, business_name: 'Alexandra Studio', category: 'Photography', location: 'Jakarta', cover_url: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=400&h=500&fit=crop', logo_url: '', rating: 4.8, review_count: 124, starting_price: 2500000, verified: true },
-      { id_vendor: 2, business_name: 'Sunset Lens', category: 'Photography', location: 'Bandung', cover_url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=500&fit=crop', logo_url: '', rating: 4.6, review_count: 89, starting_price: 1800000, verified: true },
-      { id_vendor: 3, business_name: 'Capture Studio', category: 'Photography', location: 'Surabaya', cover_url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400&h=500&fit=crop', logo_url: '', rating: 4.7, review_count: 156, starting_price: 1500000, verified: true },
-      { id_vendor: 4, business_name: 'Lensa Abadi', category: 'Photography', location: 'Yogyakarta', cover_url: 'https://images.unsplash.com/photo-1552168324-d612d77725e3?w=400&h=500&fit=crop', logo_url: '', rating: 4.9, review_count: 203, starting_price: 3000000, verified: true },
-      { id_vendor: 5, business_name: 'Glamour Beauty', category: 'Makeup Artist', location: 'Jakarta', cover_url: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=500&fit=crop', logo_url: '', rating: 4.9, review_count: 178, starting_price: 1500000, verified: true },
-      { id_vendor: 6, business_name: 'Perfect Look Studio', category: 'Makeup Artist', location: 'Bandung', cover_url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop', logo_url: '', rating: 4.7, review_count: 92, starting_price: 1200000, verified: true },
-      { id_vendor: 7, business_name: 'Natural Glow MUA', category: 'Makeup Artist', location: 'Surabaya', cover_url: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=500&fit=crop', logo_url: '', rating: 4.5, review_count: 67, starting_price: 800000, verified: true },
-      { id_vendor: 8, business_name: 'Bloom & Petal', category: 'Bouquet Flowers', location: 'Jakarta', cover_url: 'https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=400&h=500&fit=crop', logo_url: '', rating: 4.8, review_count: 145, starting_price: 750000, verified: true },
-      { id_vendor: 9, business_name: 'Bunga Indah Florist', category: 'Bouquet Flowers', location: 'Bandung', cover_url: 'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=400&h=500&fit=crop', logo_url: '', rating: 4.6, review_count: 98, starting_price: 500000, verified: true },
-      { id_vendor: 10, business_name: 'Wonderful Blooms', category: 'Bouquet Flowers', location: 'Surabaya', cover_url: 'https://images.unsplash.com/photo-1490730141103-6cac27aaab94?w=400&h=500&fit=crop', logo_url: '', rating: 4.7, review_count: 112, starting_price: 600000, verified: true },
-    ]
-    allVendors.value = demos
+    allVendors.value = []
   } finally {
     loading.value = false
   }
@@ -177,7 +157,7 @@ onMounted(async () => {
               <span class="row-emoji">{{ getCategoryEmoji(cat) }}</span>
               <h3 class="row-title">{{ categoryDisplayNames[cat] || cat }}</h3>
             </div>
-            <router-link :to="cat === 'Photography' ? '/photography' : cat === 'Makeup Artist' ? '/mua' : '/bouquet'" class="row-link">
+            <router-link :to="cat === 'Photography' ? '/photography' : '/mua'" class="row-link">
               View All
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7"/>

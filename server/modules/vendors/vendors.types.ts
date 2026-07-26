@@ -7,6 +7,9 @@ export interface Vendor {
   category: string
   location: string | null
   years_exp: number
+  avatar_url: string | null
+  instagram: string | null
+  vendor_type: string | null
   status: string
   verified_at: Date | null
   date_created: Date

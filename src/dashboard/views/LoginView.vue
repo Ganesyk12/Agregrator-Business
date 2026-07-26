@@ -40,12 +40,20 @@ const handleLogin = async () => {
 
     // Save token and user details to localStorage
     localStorage.setItem('sigyn_token', result.data.token)
-    localStorage.setItem('sigyn_user', JSON.stringify({
+    const userData: Record<string, any> = {
       id_user: result.data.id_user,
       email: result.data.email,
       full_name: result.data.full_name,
-      roles: result.data.roles
-    }))
+      roles: result.data.roles,
+    }
+    if (result.data.vendor_info) {
+      userData.vendor_id = result.data.vendor_info.vendor_id
+      userData.vendor_category = result.data.vendor_info.vendor_category
+      userData.vendor_name = result.data.vendor_info.vendor_name
+      userData.vendor_type = result.data.vendor_info.vendor_type
+      userData.vendor_avatar = result.data.vendor_info.vendor_avatar
+    }
+    localStorage.setItem('sigyn_user', JSON.stringify(userData))
 
     Swal.fire({
       icon: 'success',

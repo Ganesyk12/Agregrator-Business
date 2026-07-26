@@ -63,6 +63,26 @@ const router = createRouter({
           component: () => import('@/dashboard/views/PackageView.vue'),
         },
         {
+          path: 'products',
+          name: 'products',
+          component: () => import('@/dashboard/views/ProductView.vue'),
+        },
+        {
+          path: 'product-categories',
+          name: 'product-categories',
+          component: () => import('@/dashboard/views/ProductCategoryView.vue'),
+        },
+        {
+          path: 'orders',
+          name: 'orders',
+          component: () => import('@/dashboard/views/OrderView.vue'),
+        },
+        {
+          path: 'inventory',
+          name: 'inventory',
+          component: () => import('@/dashboard/views/InventoryView.vue'),
+        },
+        {
           path: 'portfolios',
           name: 'portfolios',
           component: () => import('@/dashboard/views/PortfolioView.vue'),
@@ -87,22 +107,64 @@ const router = createRouter({
           name: 'company-info',
           component: () => import('@/dashboard/views/CompanyInfoView.vue'),
         },
+        {
+          path: 'vendor-profile',
+          name: 'vendor-profile',
+          component: () => import('@/dashboard/views/VendorProfileEditView.vue'),
+        },
+        // Product Vendor routes
+        {
+          path: 'my-store',
+          name: 'my-store',
+          component: () => import('@/dashboard/views/MyStoreView.vue'),
+        },
+        {
+          path: 'customers',
+          name: 'customers',
+          component: () => import('@/dashboard/views/CustomersView.vue'),
+        },
+        {
+          path: 'reviews',
+          name: 'reviews',
+          component: () => import('@/dashboard/views/ReviewsView.vue'),
+        },
+        {
+          path: 'analytics',
+          name: 'analytics',
+          component: () => import('@/dashboard/views/AnalyticsView.vue'),
+        },
+        {
+          path: 'store-settings',
+          name: 'store-settings',
+          component: () => import('@/dashboard/views/StoreSettingsView.vue'),
+        },
       ],
     },
   ],
 })
 
+const adminRoutes = new Set([
+  'payments', 'commissions', 'payouts', 'invoices', 'invoice-detail',
+  'vendors', 'categories', 'users', 'roles', 'user-roles', 'company-info',
+])
+
 router.beforeEach((to, _, next) => {
   const token = localStorage.getItem('sigyn_token')
   const user = localStorage.getItem('sigyn_user')
   const isAuthenticated = !!token && token !== 'undefined' && token !== 'null'
-  const isCustomer = isAuthenticated && user ? (JSON.parse(user).roles || []).some((r: any) => r.role_code === 'eUser-Customer') : false
+  const parsedUser = isAuthenticated && user ? JSON.parse(user) : null
+  const isCustomer = parsedUser ? (parsedUser.roles || []).some((r: any) => r.role_code === 'eUser-Customer') : false
+  const isVendor = parsedUser ? (parsedUser.roles || []).some((r: any) => r.role_code === 'eUser-Vendor') : false
+  const isAdmin = parsedUser ? (parsedUser.roles || []).some((r: any) => ['eUser-Admin', 'eUser-SuperAdmin'].includes(r.role_code)) : false
+
   if (to.name !== 'login' && !isAuthenticated) {
     next({ name: 'login' })
   } else if (to.name === 'login' && isAuthenticated) {
     next({ name: 'dashboard' })
   } else if (isCustomer && to.name !== 'login') {
     window.location.href = '/'
+  } else if (isVendor && !isAdmin && to.name && adminRoutes.has(to.name as string)) {
+    next({ name: 'dashboard' })
   } else {
     next()
   }
