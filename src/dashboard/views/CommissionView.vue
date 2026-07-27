@@ -112,9 +112,9 @@ function formatCurrency(v: number) { return new Intl.NumberFormat('id-ID', { sty
 </script>
 
 <template>
-  <div class="x_panel">
-    <div class="x_title"><h2>Commissions Management</h2><div class="clearfix"></div></div>
-    <div class="x_content">
+  <div class="card">
+    <div class="card-header"><h5>Commissions Management</h5></div>
+    <div class="card-body">
       <div class="row" style="margin-bottom: 12px;">
         <div class="col-md-6"><button class="btn btn-success" @click="openAdd"><i class="fa fa-plus"></i> Create Commission</button></div>
         <div class="col-md-6"><div class="input-group"><span class="input-group-addon"><i class="fa fa-search"></i></span><input type="text" v-model="search" class="form-control" placeholder="Search..." /></div></div>

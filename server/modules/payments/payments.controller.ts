@@ -27,13 +27,14 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_booking, amount, payment_type, payment_proof_url, paid_at, released_at } = req.body
+    const { id_booking, id_term, amount, payment_type, payment_proof_url, paid_at, released_at } = req.body
     if (!id_booking || amount === undefined || !payment_type) {
       throw createError(400, 'id_booking, amount, and payment_type are required')
     }
 
     const payment = await paymentService.create({
       id_booking: Number(id_booking),
+      id_term: id_term ? Number(id_term) : undefined,
       amount: Number(amount),
       payment_type,
       payment_proof_url: payment_proof_url || null,
@@ -50,9 +51,10 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 export async function update(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)
-    const { amount, payment_type, status, payment_proof_url, paid_at, released_at } = req.body
+    const { id_term, amount, payment_type, status, payment_proof_url, paid_at, released_at } = req.body
 
     const updateData: any = {}
+    if (id_term !== undefined) updateData.id_term = id_term ? Number(id_term) : null
     if (amount !== undefined) updateData.amount = Number(amount)
     if (payment_type !== undefined) updateData.payment_type = payment_type
     if (status !== undefined) updateData.status = status

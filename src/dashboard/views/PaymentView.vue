@@ -32,6 +32,10 @@ interface Payment {
       }
     }[]
   }
+  payment_term?: {
+    id_payment_term: number
+    term_name: string
+  }
 }
 
 const payments = ref<Payment[]>([])
@@ -184,6 +188,7 @@ const filtered = computed(() => {
       (p.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ')?.toLowerCase() || '').includes(q) ||
       (p.booking?.booking_packages?.map(bp => bp.package.name).join(', ')?.toLowerCase() || '').includes(q) ||
       (p.payment_type?.toLowerCase() || '').includes(q) ||
+      (p.payment_term?.term_name?.toLowerCase() || '').includes(q) ||
       (p.status?.toLowerCase() || '').includes(q)
     )
   }
@@ -252,13 +257,13 @@ function formatCurrency(value: number) {
 </script>
 
 <template>
-  <div class="x_panel">
-    <div class="x_title">
-      <h2>Payments Management</h2>
-      <div class="clearfix"></div>
+  <div class="card">
+    <div class="card-header">
+      <h5>Payments Management</h5>
+      
     </div>
 
-    <div class="x_content">
+    <div class="card-body">
       <div class="row" style="margin-bottom: 12px;">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <button class="btn btn-success" @click="openAdd">
@@ -289,6 +294,7 @@ function formatCurrency(value: number) {
                   { key: 'vendor_name', label: 'Vendor' },
                   { key: 'package_name', label: 'Package' },
                   { key: 'amount', label: 'Amount' },
+                  { key: 'payment_term', label: 'Term' },
                   { key: 'payment_type', label: 'Type' },
                   { key: 'status', label: 'Status' },
                   { key: 'paid_at', label: 'Paid At' },
@@ -314,6 +320,7 @@ function formatCurrency(value: number) {
               <td>{{ p.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ') || '-' }}</td>
               <td>{{ p.booking?.booking_packages?.map(bp => bp.package.name).join(', ') || '-' }}</td>
               <td>{{ formatCurrency(p.amount) }}</td>
+              <td>{{ p.payment_term?.term_name || '-' }}</td>
               <td>
                 <span
                   :class="{
@@ -343,7 +350,7 @@ function formatCurrency(value: number) {
               </td>
             </tr>
             <tr v-if="paginated.length === 0">
-              <td colspan="9" style="text-align: center;">No payments found.</td>
+              <td colspan="10" style="text-align: center;">No payments found.</td>
             </tr>
           </tbody>
         </table>

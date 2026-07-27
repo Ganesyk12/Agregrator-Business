@@ -7,8 +7,8 @@ const router = Router()
  * @openapi
  * /api/payments:
  *   get:
- *     tags: [Payments]
- *     summary: Daftar semua payment
+ *     tags: [BookingPayments]
+ *     summary: Daftar semua booking payment
  *     responses:
  *       200:
  *         description: Berhasil
@@ -22,8 +22,8 @@ const router = Router()
  *                   items:
  *                     $ref: '#/components/schemas/Payment'
  *   post:
- *     tags: [Payments]
- *     summary: Buat payment baru
+ *     tags: [BookingPayments]
+ *     summary: Buat booking payment baru
  *     requestBody:
  *       required: true
  *       content:
@@ -54,8 +54,8 @@ router.get('/', paymentCtrl.getAll)
  * @openapi
  * /api/payments/{id}:
  *   get:
- *     tags: [Payments]
- *     summary: Detail payment by ID
+ *     tags: [BookingPayments]
+ *     summary: Detail booking payment by ID
  *     parameters:
  *       - in: path
  *         name: id
@@ -73,8 +73,8 @@ router.get('/', paymentCtrl.getAll)
  *       404:
  *         description: Payment tidak ditemukan
  *   put:
- *     tags: [Payments]
- *     summary: Update data payment
+ *     tags: [BookingPayments]
+ *     summary: Update data booking payment
  *     parameters:
  *       - in: path
  *         name: id
@@ -105,8 +105,8 @@ router.get('/', paymentCtrl.getAll)
  *       404:
  *         description: Payment tidak ditemukan
  *   delete:
- *     tags: [Payments]
- *     summary: Hapus payment (soft delete)
+ *     tags: [BookingPayments]
+ *     summary: Hapus booking payment (soft delete)
  *     parameters:
  *       - in: path
  *         name: id

@@ -1,5 +1,6 @@
 import prisma from '../../db'
 import type { Booking, BookingCreateInput } from './bookings.types'
+import { autoGenerateTerms } from '../payment-terms/payment-terms.service'
 
 const include = {
   customer: { select: { id_user: true, email: true, full_name: true } },
@@ -16,6 +17,15 @@ const include = {
   },
   payments: {
     orderBy: { date_created: 'desc' as const },
+  },
+  payment_terms: {
+    orderBy: { term_order: 'asc' as const },
+    include: {
+      payments: {
+        select: { id_booking_payment: true, amount: true, payment_type: true, status: true, paid_at: true },
+        orderBy: { date_created: 'asc' as const },
+      },
+    },
   },
 } as const
 
@@ -61,7 +71,7 @@ export async function create(
   data: BookingCreateInput & { user_created?: string; user_modified?: string }
 ): Promise<Booking> {
   const { package_ids, ...rest } = data
-  return prisma.booking.create({
+  const booking = await prisma.booking.create({
     data: {
       ...rest,
       user_created: data.user_created ?? 'SYSTEM',
@@ -75,6 +85,17 @@ export async function create(
     },
     include,
   }) as unknown as Booking
+
+  if (booking.total_price > 0) {
+    await autoGenerateTerms(
+      booking.id_booking,
+      booking.total_price,
+      booking.dp_amount || 0,
+      data.user_created || 'SYSTEM'
+    )
+  }
+
+  return booking
 }
 
 export async function update(

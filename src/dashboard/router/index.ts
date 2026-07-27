@@ -23,19 +23,39 @@ const router = createRouter({
           component: () => import('@/dashboard/views/BookingView.vue'),
         },
         {
-          path: 'payments',
-          name: 'payments',
-          component: () => import('@/dashboard/views/PaymentView.vue'),
+          path: 'revenue-summary',
+          name: 'revenue-summary',
+          component: () => import('@/dashboard/views/RevenueSummaryView.vue'),
+        },
+        {
+          path: 'payment-requests',
+          name: 'payment-requests',
+          component: () => import('@/dashboard/views/PaymentRequestView.vue'),
+        },
+        {
+          path: 'payment-requests/:id',
+          name: 'payment-request-detail',
+          component: () => import('@/dashboard/views/PaymentRequestDetailView.vue'),
+        },
+        {
+          path: 'payment-requests/:id/payment',
+          name: 'payment-request-payment',
+          component: () => import('@/dashboard/views/RFPaymentDetailView.vue'),
+        },
+        {
+          path: 'rfp-payments',
+          name: 'rfp-payments',
+          component: () => import('@/dashboard/views/RFPaymentView.vue'),
+        },
+        {
+          path: 'rfp-payments/:id',
+          name: 'rfp-payment-detail',
+          component: () => import('@/dashboard/views/RFPaymentDetailView.vue'),
         },
         {
           path: 'commissions',
           name: 'commissions',
           component: () => import('@/dashboard/views/CommissionView.vue'),
-        },
-        {
-          path: 'payouts',
-          name: 'payouts',
-          component: () => import('@/dashboard/views/PayoutView.vue'),
         },
         {
           path: 'invoices',
@@ -46,6 +66,16 @@ const router = createRouter({
           path: 'invoices/:paymentId',
           name: 'invoice-detail',
           component: () => import('@/dashboard/views/InvoiceDetailView.vue'),
+        },
+        {
+          path: 'receipts',
+          name: 'receipts',
+          component: () => import('@/dashboard/views/ReceiptView.vue'),
+        },
+        {
+          path: 'receipts/:id',
+          name: 'receipt-detail',
+          component: () => import('@/dashboard/views/ReceiptDetailView.vue'),
         },
         {
           path: 'vendors',

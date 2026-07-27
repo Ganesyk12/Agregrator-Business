@@ -1,330 +1,318 @@
 <script setup lang="ts">
-import { ref, computed, inject, type Ref, onMounted } from 'vue'
+import { ref, computed, inject, watch, onMounted, type Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import Swal from 'sweetalert2'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
 const sidebarCollapsed = inject<Ref<boolean>>('sidebarCollapsed', ref(false))
+const mobileOpen = inject<Ref<boolean>>('mobileOpen', ref(false))
 
 interface MenuItem {
   label: string
   icon: string
   to?: string
-  children?: MenuItem[]
 }
 
 interface MenuSection {
   title: string
-  items: MenuItem[]
+  icon: string
   roles: string[]
+  items: MenuItem[]
 }
 
 const userRoles = ref<string[]>([])
+const userName = ref('Undefined')
+const userRoleText = ref('Undefined')
+const showUserMenu = ref(false)
+
+const openSections = ref<Record<string, boolean>>({
+  'Vendor Management': false,
+  'Finance & Accounting': false,
+  'System': false,
+})
+
+function toggleUserMenu() {
+  showUserMenu.value = !showUserMenu.value
+}
+
+function handleLogout() {
+  localStorage.removeItem('sigyn_token')
+  localStorage.removeItem('sigyn_user')
+  Swal.fire({
+    icon: 'success',
+    title: 'Logout Berhasil',
+    text: 'Sampai jumpa lagi!',
+    timer: 1000,
+    showConfirmButton: false
+  })
+  setTimeout(() => {
+    router.push('/login')
+  }, 1000)
+}
 
 function loadUserRoles() {
-  if (auth.user?.roles) {
-    userRoles.value = auth.user.roles.map((r: any) => r.role_code)
+  try {
+    const raw = localStorage.getItem('sigyn_user')
+    if (raw) {
+      const user = JSON.parse(raw)
+      userRoles.value = (user.roles || []).map((r: any) => r.role_code)
+      userName.value = user.full_name || 'Undefined'
+      userRoleText.value = (user.roles || []).map((r: any) => r.name || r.role_name).join(', ') || 'Undefined'
+    }
+  } catch {
+    userRoles.value = []
   }
 }
 
-onMounted(loadUserRoles)
+loadUserRoles()
 
 const isSuperAdmin = computed(() => userRoles.value.includes('eUser-SuperAdmin'))
 const isAdmin = computed(() => isSuperAdmin.value || userRoles.value.includes('eUser-Admin'))
 const isVendor = computed(() => userRoles.value.includes('eUser-Vendor'))
 const isProductVendor = computed(() => auth.isProductVendor)
+const isFinance = computed(() => userRoles.value.includes('eUser-Finance'))
 
-const vendorAvatar = computed(() => {
-  if (auth.user?.vendor_avatar) return auth.user.vendor_avatar
-  return null
-})
-
-function getServiceMenuItems(): MenuItem[] {
-  return [
-    { label: 'Packages', icon: 'fa-cube', to: '/packages' },
-    { label: 'Portfolio', icon: 'fa-picture-o', to: '/portfolios' },
-    { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' },
-  ]
-}
-
-function getProductMenuItems(): MenuItem[] {
-  return [
-    { label: 'My Store', icon: 'fa-store', to: '/my-store' },
-    { label: 'Products', icon: 'fa-shopping-bag', to: '/products' },
-    { label: 'Categories', icon: 'fa-tags', to: '/product-categories' },
-    { label: 'Orders', icon: 'fa-truck', to: '/orders' },
-    { label: 'Inventory', icon: 'fa-cubes', to: '/inventory' },
-    { label: 'Customers', icon: 'fa-users', to: '/customers' },
-    { label: 'Reviews', icon: 'fa-star', to: '/reviews' },
-    { label: 'Analytics', icon: 'fa-bar-chart', to: '/analytics' },
-    { label: 'Store Settings', icon: 'fa-cog', to: '/store-settings' },
-  ]
-}
-
-function getVendorMenuItems(): MenuItem[] {
-  const items: MenuItem[] = [
-    { label: 'My Profile', icon: 'fa-user-circle', to: '/vendor-profile' },
-  ]
-  if (isProductVendor.value) {
-    items.push(...getProductMenuItems())
-  } else {
-    items.push(...getServiceMenuItems())
+function getVendorItems(): MenuItem[] {
+  const items: MenuItem[] = []
+  if (isVendor.value) {
+    items.push({ label: 'My Profile', icon: 'fa-user-circle', to: '/vendor-profile' })
+    if (isProductVendor.value) {
+      items.push(
+        { label: 'My Store', icon: 'fa-store', to: '/my-store' },
+        { label: 'Products', icon: 'fa-shopping-bag', to: '/products' },
+        { label: 'Categories', icon: 'fa-tags', to: '/product-categories' },
+        { label: 'Orders', icon: 'fa-truck', to: '/orders' },
+        { label: 'Inventory', icon: 'fa-cubes', to: '/inventory' },
+        { label: 'Customers', icon: 'fa-users', to: '/customers' },
+        { label: 'Reviews', icon: 'fa-star', to: '/reviews' },
+        { label: 'Analytics', icon: 'fa-bar-chart', to: '/analytics' },
+        { label: 'Store Settings', icon: 'fa-cog', to: '/store-settings' }
+      )
+    } else {
+      items.push(
+        { label: 'Packages', icon: 'fa-cube', to: '/packages' },
+        { label: 'Portfolio', icon: 'fa-picture-o', to: '/portfolios' },
+        { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' }
+      )
+    }
+  } else if (isAdmin.value) {
+    items.push({ label: 'Vendors', icon: 'fa-building', to: '/vendors' })
   }
   return items
 }
 
-function getAdminMenuItems(): MenuItem[] {
-  return [
-    { label: 'Dashboard', icon: 'fa-dashboard', to: '/' },
-    { label: 'Vendors', icon: 'fa-building', to: '/vendors' },
-    { label: 'Categories', icon: 'fa-tags', to: '/categories' },
-    { label: 'Users', icon: 'fa-users', to: '/users' },
-    { label: 'Roles', icon: 'fa-lock', to: '/roles' },
-    { label: 'User Access', icon: 'fa-tag', to: '/user-roles' },
-    { label: 'Payments', icon: 'fa-credit-card', to: '/payments' },
-    { label: 'Commissions', icon: 'fa-percent', to: '/commissions' },
-    { label: 'Payouts', icon: 'fa-money', to: '/payouts' },
-    { label: 'Invoices', icon: 'fa-file-text-o', to: '/invoices' },
-    { label: 'Company Info', icon: 'fa-building-o', to: '/company-info' },
-  ]
-}
-
-function getAllSections(): MenuSection[] {
+const menuSections = computed(() => {
   const sections: MenuSection[] = []
 
-  // Admin/SuperAdmin get full management
-  if (isAdmin.value) {
+  // 1. General
+  sections.push({
+    title: 'General',
+    icon: 'fa-dashboard',
+    roles: ['eUser-Customer', 'eUser-Vendor', 'eUser-Finance', 'eUser-Admin', 'eUser-SuperAdmin'],
+    items: [
+      { label: 'Dashboard', icon: 'fa-dashboard', to: '/' }
+    ]
+  })
+
+  // 2. Vendor Management
+  if (isVendor.value || isAdmin.value) {
     sections.push({
-      title: 'Administration',
-      roles: ['eUser-Admin', 'eUser-SuperAdmin'],
-      items: getAdminMenuItems(),
+      title: 'Vendor Management',
+      icon: 'fa-building',
+      roles: ['eUser-Vendor', 'eUser-Admin', 'eUser-SuperAdmin'],
+      items: getVendorItems()
     })
   }
 
-  // Vendor section
-  if (isVendor.value) {
+  // 3. Finance & Accounting
+  if (isFinance.value || isAdmin.value) {
     sections.push({
-      title: 'My Business',
-      roles: ['eUser-Vendor'],
-      items: getVendorMenuItems(),
+      title: 'Finance & Accounting',
+      icon: 'fa-money',
+      roles: ['eUser-Finance', 'eUser-Admin', 'eUser-SuperAdmin'],
+      items: [
+        { label: 'Revenue Summary', icon: 'fa-line-chart', to: '/revenue-summary' },
+        { label: 'Request for Payment', icon: 'fa-credit-card', to: '/payment-requests' },
+        { label: 'RFP Payment', icon: 'fa-money', to: '/rfp-payments' },
+        { label: 'Commissions', icon: 'fa-percent', to: '/commissions' },
+        { label: 'Invoices', icon: 'fa-file-text-o', to: '/invoices' },
+        { label: 'Receipts', icon: 'fa-file-pdf-o', to: '/receipts' }
+      ]
+    })
+  }
+
+  // 4. System
+  if (isAdmin.value) {
+    sections.push({
+      title: 'System',
+      icon: 'fa-cogs',
+      roles: ['eUser-Admin', 'eUser-SuperAdmin'],
+      items: [
+        { label: 'Categories', icon: 'fa-tags', to: '/categories' },
+        { label: 'Users', icon: 'fa-users', to: '/users' },
+        { label: 'Roles', icon: 'fa-lock', to: '/roles' },
+        { label: 'User Access', icon: 'fa-tag', to: '/user-roles' },
+        { label: 'Company Info', icon: 'fa-building-o', to: '/company-info' }
+      ]
     })
   }
 
   return sections
-}
-
-const menuSections = computed(() => {
-  return getAllSections().filter(s => s.roles.some(r => userRoles.value.includes(r)))
 })
 
-function isActive(path?: string) {
-  if (!path) return false
-  return route.path === path || route.path.startsWith(path + '/')
+function isItemActive(item: MenuItem): boolean {
+  if (item.to) {
+    if (item.to === '/') return route.path === '/'
+    if (route.path === item.to || route.path.startsWith(item.to + '/')) return true
+  }
+  return false
 }
 
-function logout() {
-  auth.logout()
-  router.push('/login')
+function isSectionActive(section: MenuSection): boolean {
+  return section.items.some(isItemActive)
 }
+
+function toggleSection(title: string) {
+  openSections.value[title] = !openSections.value[title]
+}
+
+function navigateTo(path: string) {
+  router.push(path)
+  if (window.innerWidth < 992) {
+    mobileOpen.value = false
+  }
+}
+
+onMounted(() => {
+  // Auto-expand the active section on mount
+  menuSections.value.forEach(section => {
+    if (isSectionActive(section)) {
+      openSections.value[section.title] = true
+    }
+  })
+})
+
+// Auto-expand section on route change if it's active
+watch(() => route.path, () => {
+  menuSections.value.forEach(section => {
+    if (isSectionActive(section)) {
+      openSections.value[section.title] = true
+    }
+  })
+})
 </script>
 
 <template>
-  <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
-    <div class="sidebar-header">
-      <router-link to="/" class="sidebar-brand">
-        <i class="fa fa-diamond"></i>
-        <span class="brand-text">Agregrator</span>
-      </router-link>
-    </div>
-
-    <!-- Vendor Profile Card -->
-    <div v-if="isVendor && auth.user" class="vendor-profile-card">
-      <div class="vendor-avatar">
-        <img v-if="vendorAvatar" :src="vendorAvatar" :alt="auth.user.vendor_name || ''" />
-        <i v-else class="fa fa-user-circle-o"></i>
+  <nav class="pcoded-navbar" :class="{ 'navbar-collapsed': sidebarCollapsed, 'mob-open': mobileOpen }">
+    <div class="navbar-wrapper">
+      
+      <!-- Top profile block -->
+      <div class="main-menu-header-wrap">
+        <div class="main-menu-header">
+          <div class="user-details" style="margin-top: 10px; text-align: center; width: 100%;">
+            <span style="font-size: 16px; font-weight: bold;">{{ userName }}</span>
+            <div id="more-details" style="cursor: pointer; user-select: none; margin-top: 5px; font-size: 13px;" @click="toggleUserMenu">
+              {{ userRoleText }} <i class="fa fa-chevron-down m-l-5"></i>
+            </div>
+          </div>
+        </div>
+        <div class="collapse" :class="{ show: showUserMenu }" id="nav-user-link">
+          <ul class="list-unstyled">
+            <li class="list-group-item">
+              <a href="javascript:;" @click.prevent="handleLogout">
+                <i class="feather icon-log-out m-r-5"></i>Logout
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
-      <div class="vendor-details">
-        <span class="vendor-name">{{ auth.user.vendor_name || auth.user.full_name }}</span>
-        <span class="vendor-cat">{{ auth.user.vendor_category || 'Vendor' }}</span>
+
+      <!-- Navigation links content (Scrollable container) -->
+      <div class="navbar-content scroll-div">
+        <ul class="nav pcoded-inner-navbar">
+          <li class="nav-item pcoded-menu-caption">
+            <label>Navigation</label>
+          </li>
+          
+          <!-- Root Home Link: Dashboard -->
+          <li class="nav-item" :class="{ 'active': route.path === '/' }">
+            <a href="#!" class="nav-link" @click.prevent="navigateTo('/')">
+              <span class="pcoded-micon"><i class="fa fa-dashboard"></i></span>
+              <span class="pcoded-mtext">Dashboard</span>
+            </a>
+          </li>
+
+          <!-- Collapsible sections for Management -->
+          <template v-for="section in menuSections" :key="section.title">
+            <li v-if="section.title !== 'General'"
+              class="nav-item pcoded-hasmenu"
+              :class="{
+                'pcoded-trigger': openSections[section.title],
+                'active': isSectionActive(section)
+              }">
+              
+              <a href="#!" class="nav-link" @click.prevent="toggleSection(section.title)">
+                <span class="pcoded-micon"><i :class="'fa ' + section.icon"></i></span>
+                <span class="pcoded-mtext">{{ section.title }}</span>
+              </a>
+              
+              <ul class="pcoded-submenu" :style="{ display: openSections[section.title] ? 'block' : 'none' }">
+                <li v-for="item in section.items" :key="item.label" :class="{ 'active': isItemActive(item) }">
+                  <a href="#!" @click.prevent="item.to && navigateTo(item.to)">
+                    <i :class="'fa ' + item.icon" style="margin-right: 8px; width: 14px; text-align: center;"></i>
+                    {{ item.label }}
+                  </a>
+                </li>
+              </ul>
+            </li>
+          </template>
+        </ul>
       </div>
-    </div>
 
-    <nav class="sidebar-nav">
-      <template v-for="section in menuSections" :key="section.title">
-        <div class="menu-section-label">{{ section.title }}</div>
-        <router-link
-          v-for="item in section.items"
-          :key="item.label"
-          :to="item.to || '#'"
-          :class="{ active: isActive(item.to) }"
-          class="nav-item"
-        >
-          <i :class="'fa ' + item.icon"></i>
-          <span class="nav-label">{{ item.label }}</span>
-        </router-link>
-      </template>
-    </nav>
-
-    <div class="sidebar-footer">
-      <button class="logout-btn" @click="logout">
-        <i class="fa fa-sign-out"></i>
-        <span class="nav-label">Logout</span>
-      </button>
     </div>
-  </aside>
+  </nav>
 </template>
 
 <style scoped>
-.sidebar {
-  width: 260px;
-  height: 100vh;
-  background: #1e293b;
-  color: #cbd5e1;
-  display: flex;
-  flex-direction: column;
-  transition: width 0.3s;
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 100;
-  overflow-y: auto;
+.main-menu-header-wrap {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 5px;
 }
-
-.sidebar.collapsed { width: 64px; }
-
-.sidebar-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #fff;
-  text-decoration: none;
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.sidebar-brand i { color: var(--bs-secondary, #B89C7B); font-size: 1.4rem; }
-
-/* Vendor Profile Card */
-.vendor-profile-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.03);
-}
-
-.vendor-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: rgba(255,255,255,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.vendor-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.vendor-avatar i { font-size: 1.6rem; color: #94a3b8; }
-
-.vendor-details {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.vendor-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #f1f5f9;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.vendor-cat {
-  font-size: 0.7rem;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
-
-.menu-section-label {
-  padding: 12px 24px 6px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #64748b;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 24px;
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 0.88rem;
-  transition: all 0.2s;
-  border-left: 3px solid transparent;
-}
-
-.nav-item:hover {
-  background: rgba(255,255,255,0.05);
-  color: #e2e8f0;
-}
-
-.nav-item.active {
-  background: rgba(184, 156, 123, 0.1);
-  color: var(--bs-secondary, #B89C7B);
-  border-left-color: var(--bs-secondary, #B89C7B);
-}
-
-.nav-item i { width: 20px; text-align: center; font-size: 1rem; }
-
-.sidebar-footer {
-  padding: 12px 0;
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-
-.logout-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 24px;
-  border: none;
+#nav-user-link .list-group-item {
   background: transparent;
-  color: #94a3b8;
-  font-size: 0.88rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  border: none;
+  padding: 8px 20px;
+}
+#nav-user-link .list-group-item a {
+  color: #a9b7d0;
+  display: block;
+}
+#nav-user-link .list-group-item a:hover {
+  color: #fff;
 }
 
-.logout-btn:hover {
-  background: rgba(239,68,68,0.1);
-  color: #ef4444;
+/* Sidebar vertical native scrollbar container */
+.navbar-content {
+  height: calc(100vh - 120px) !important;
+  position: relative;
+  overflow-y: auto !important;
 }
 
-.logout-btn i { width: 20px; text-align: center; }
+/* Native modern scrollbar styling */
+.navbar-content::-webkit-scrollbar {
+  width: 5px;
+}
+.navbar-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+}
+.navbar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
 </style>

@@ -280,13 +280,13 @@ function formatCurrency(value: number) {
 </script>
 
 <template>
-  <div class="x_panel">
-    <div class="x_title">
-      <h2>Bookings Management</h2>
-      <div class="clearfix"></div>
+  <div class="card">
+    <div class="card-header">
+      <h5>Bookings Management</h5>
+      
     </div>
 
-    <div class="x_content">
+    <div class="card-body">
       <div class="row" style="margin-bottom: 12px;">
         <div class="col-md-6 col-sm-6 col-xs-12">
           <button class="btn btn-success" @click="openAdd">

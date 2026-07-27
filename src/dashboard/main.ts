@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import 'font-awesome/css/font-awesome.min.css'
-import '@/assets/css/custom.min.css'
+import '@/assets/css/overrides.css'
 
 import App from './App.vue'
 import router from './router'

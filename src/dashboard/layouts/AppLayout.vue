@@ -1,78 +1,96 @@
 <script setup lang="ts">
-import { ref, provide, watch, onMounted } from 'vue'
+import { ref, provide, onMounted, onUnmounted } from 'vue'
 import AppSidebar from '@/dashboard/components/AppSidebar.vue'
 import AppTopNav from '@/dashboard/components/AppTopNav.vue'
-import { useAuthStore } from '@/stores/auth'
 
-const auth = useAuthStore()
 const sidebarCollapsed = ref(false)
+const mobileOpen = ref(false)
+const appName = import.meta.env.VITE_APP_NAME || 'Agregator Business'
 
 function toggleSidebar() {
-  sidebarCollapsed.value = !sidebarCollapsed.value
+  if (window.innerWidth >= 992) {
+    sidebarCollapsed.value = !sidebarCollapsed.value
+  } else {
+    mobileOpen.value = !mobileOpen.value
+  }
+}
+
+function closeMobileNav() {
+  if (mobileOpen.value) {
+    mobileOpen.value = false
+  }
 }
 
 provide('sidebarCollapsed', sidebarCollapsed)
+provide('mobileOpen', mobileOpen)
 provide('toggleSidebar', toggleSidebar)
 
-watch(sidebarCollapsed, (val) => {
-  document.body.classList.toggle('nav-sm', val)
-  document.body.classList.toggle('nav-md', !val)
-})
+const handleResize = () => {
+  if (window.innerWidth < 992) {
+    sidebarCollapsed.value = false
+  } else {
+    mobileOpen.value = false
+  }
+}
 
 onMounted(() => {
-  if (window.innerWidth < 768) {
-    sidebarCollapsed.value = true
-  }
-  auth.fetchVendorProfile()
+  window.addEventListener('resize', handleResize)
+  handleResize()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <template>
-  <div class="container body">
-    <div class="main_container">
-      <AppSidebar />
-      <AppTopNav />
-      <div class="right_col" role="main">
+  <div class="pcoded-wrapper">
+    <AppSidebar />
+    <AppTopNav />
+    <div class="pcoded-main-container" @click="closeMobileNav">
+      <div class="pcoded-content">
         <router-view />
       </div>
-      <footer>
-        <div class="pull-right">
-          Agregrator-Business Dashboard
+      
+      <!-- Footer outside pcoded-content -->
+      <footer class="dashboard-footer py-3 border-top text-muted">
+        <div class="container-fluid">
+          <div class="row align-items-center">
+            <div class="col-sm-6 text-start text-sm-left">
+              <span>&copy; 2026 {{ appName }}. All rights reserved.</span>
+            </div>
+            <div class="col-sm-6 text-end text-sm-right d-none d-sm-block">
+              <span>{{ appName }} Dashboard</span>
+            </div>
+          </div>
         </div>
-        <div class="clearfix"></div>
       </footer>
     </div>
   </div>
 </template>
 
 <style>
-/* Fix spacing between sidebar and content */
-.nav-md .container.body .right_col {
-  margin-left: 260px !important;
+/* Custom style fixes for SPA page header under Flat Able */
+.pcoded-main-container {
+  min-height: 100vh;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-.nav-md .main_container .top_nav {
-  margin-left: 260px;
+.pcoded-content {
+  flex: 1 0 auto !important;
 }
 
-.nav-sm .container.body .right_col {
-  margin-left: 64px !important;
+.dashboard-footer {
+  flex-shrink: 0 !important;
+  background-color: #fff;
+  padding: 15px 30px !important;
+  z-index: 1;
 }
 
-.nav-sm .main_container .top_nav {
-  margin-left: 64px;
-}
-
-small,
-.count_top,
-.count_bottom,
-.tile_stats_count .count_top,
-.tile_stats_count .count_bottom,
-.x_title small,
-.x_panel h2 small,
-footer small,
-.btn-xs,
-.btn-sm {
-  font-size: inherit !important;
+/* Make all modals scrollable if content exceeds screen height */
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
 }
 </style>

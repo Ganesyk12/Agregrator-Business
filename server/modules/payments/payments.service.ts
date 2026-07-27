@@ -1,5 +1,6 @@
 import prisma from '../../db'
-import type { Payment } from './payments.types'
+import type { BookingPayment } from './payments.types'
+import { updateTermStatus } from '../payment-terms/payment-terms.service'
 
 const bookingInclude = {
   customer: { select: { id_user: true, email: true, full_name: true, phone: true } },
@@ -16,26 +17,31 @@ const bookingInclude = {
   },
 } as const
 
-export async function findAll(): Promise<Payment[]> {
-  return prisma.payment.findMany({
+const paymentInclude = {
+  booking: { include: bookingInclude },
+  payment_term: { select: { id_term: true, term_name: true, term_order: true, amount: true, status: true } },
+} as const
+
+export async function findAll(): Promise<BookingPayment[]> {
+  return prisma.bookingPayment.findMany({
     where: { status: { not: 'deleted' } },
-    include: { booking: { include: bookingInclude } },
+    include: paymentInclude,
     orderBy: { date_created: 'desc' },
-  }) as unknown as Payment[]
+  }) as unknown as BookingPayment[]
 }
 
-export async function findById(id: number): Promise<Payment | null> {
-  return prisma.payment.findFirst({
-    where: { id_payment: id, status: { not: 'deleted' } },
-    include: { booking: { include: bookingInclude } },
-  }) as unknown as Payment | null
+export async function findById(id: number): Promise<BookingPayment | null> {
+  return prisma.bookingPayment.findFirst({
+    where: { id_booking_payment: id, status: { not: 'deleted' } },
+    include: paymentInclude,
+  }) as unknown as BookingPayment | null
 }
 
 export async function create(
-  data: Pick<Payment, 'id_booking' | 'amount' | 'payment_type'> &
-    Partial<Pick<Payment, 'payment_proof_url' | 'paid_at' | 'released_at' | 'status' | 'user_created' | 'user_modified'>>
-): Promise<Payment> {
-  const payload = {
+  data: Pick<BookingPayment, 'id_booking' | 'amount' | 'payment_type'> &
+    Partial<Pick<BookingPayment, 'id_term' | 'payment_proof_url' | 'paid_at' | 'released_at' | 'status' | 'user_created' | 'user_modified'>>
+): Promise<BookingPayment> {
+  const payload: any = {
     id_booking: data.id_booking,
     amount: data.amount,
     payment_type: data.payment_type,
@@ -46,18 +52,26 @@ export async function create(
     user_created: data.user_created ?? 'SYSTEM',
     user_modified: data.user_modified ?? 'SYSTEM',
   }
-  return prisma.payment.create({
+  if (data.id_term !== undefined) payload.id_term = data.id_term
+
+  const payment = await prisma.bookingPayment.create({
     data: payload,
-    include: { booking: { include: bookingInclude } },
-  }) as unknown as Payment
+    include: paymentInclude,
+  }) as unknown as BookingPayment
+
+  if (data.id_term) {
+    await updateTermStatus(data.id_term)
+  }
+
+  return payment
 }
 
 export async function update(
   id: number,
-  data: Partial<Pick<Payment, 'amount' | 'payment_type' | 'status' | 'payment_proof_url' | 'paid_at' | 'released_at' | 'user_modified'>>
-): Promise<Payment | null> {
-  const existing = await prisma.payment.findFirst({
-    where: { id_payment: id, status: { not: 'deleted' } },
+  data: Partial<Pick<BookingPayment, 'id_term' | 'amount' | 'payment_type' | 'status' | 'payment_proof_url' | 'paid_at' | 'released_at' | 'user_modified'>>
+): Promise<BookingPayment | null> {
+  const existing = await prisma.bookingPayment.findFirst({
+    where: { id_booking_payment: id, status: { not: 'deleted' } },
   })
   if (!existing) return null
 
@@ -65,20 +79,27 @@ export async function update(
     ...data,
     user_modified: data.user_modified ?? 'SYSTEM',
   }
-  return prisma.payment.update({
-    where: { id_payment: id },
+  const payment = await prisma.bookingPayment.update({
+    where: { id_booking_payment: id },
     data: payload,
-    include: { booking: { include: bookingInclude } },
-  }) as unknown as Payment
+    include: paymentInclude,
+  }) as unknown as BookingPayment
+
+  const termId = data.id_term ?? existing.id_term
+  if (termId) {
+    await updateTermStatus(termId)
+  }
+
+  return payment
 }
 
 export async function remove(id: number): Promise<boolean> {
-  const existing = await prisma.payment.findFirst({
-    where: { id_payment: id, status: { not: 'deleted' } },
+  const existing = await prisma.bookingPayment.findFirst({
+    where: { id_booking_payment: id, status: { not: 'deleted' } },
   })
   if (!existing) return false
-  await prisma.payment.update({
-    where: { id_payment: id },
+  await prisma.bookingPayment.update({
+    where: { id_booking_payment: id },
     data: { status: 'deleted' },
   })
   return true
