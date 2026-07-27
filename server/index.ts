@@ -20,7 +20,6 @@ import uploadRoutes from './modules/upload/upload.routes'
 import paymentRoutes from './modules/payments/payments.routes'
 import paymentRequestRoutes from './modules/payment-requests/payment-requests.routes'
 import paymentRequestPaymentRoutes from './modules/payment-request-payments/payment-request-payments.routes'
-import commissionRoutes from './modules/commissions/commissions.routes'
 
 import companyInfoRoutes from './modules/company-info/company-info.routes'
 import contactMessageRoutes from './modules/contact-messages/contact-messages.routes'
@@ -61,7 +60,7 @@ app.use('/api/upload', uploadRoutes)
 app.use('/api/payments', paymentRoutes)
 app.use('/api/payment-requests', paymentRequestRoutes)
 app.use('/api/payment-requests', paymentRequestPaymentRoutes)
-app.use('/api/commissions', commissionRoutes)
+
 
 app.use('/api/company-info', companyInfoRoutes)
 app.use('/api/contact-messages', contactMessageRoutes)

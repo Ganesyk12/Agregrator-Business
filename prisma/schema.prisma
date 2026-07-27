@@ -95,8 +95,6 @@ model Vendor {
   availability VendorAvailability[]
 
   reviews      Review[]
-  commissions  Commission[]
-  payouts      Payout[]
 
   @@index([status])
   @@schema("sigyn")
@@ -266,8 +264,6 @@ model Booking {
   payments         BookingPayment[]
   payment_terms    PaymentTerm[]
   review           Review?
-  commissions      Commission[]
-  payouts          Payout[]
 
   @@index([id_user])
   @@schema("sigyn")
@@ -354,45 +350,6 @@ model Review {
   @@schema("sigyn")
 }
 
-model Commission {
-  id_commission Int      @id @default(autoincrement())
-  id_booking    Int
-  id_vendor     Int
-  percentage    Float
-  amount        Float
-  status        String   @default("pending")
-  date_created  DateTime @default(now())
-  date_modified DateTime @updatedAt
-  user_created  String?
-  user_modified String?
-
-  booking Booking @relation(fields: [id_booking], references: [id_booking])
-  vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
-
-  @@unique([id_booking, id_vendor])
-  @@index([id_vendor])
-  @@schema("sigyn")
-}
-
-model Payout {
-  id_payout     Int       @id @default(autoincrement())
-  id_vendor     Int
-  id_booking    Int
-  amount        Float
-  status        String    @default("pending")
-  paid_at       DateTime?
-  date_created  DateTime  @default(now())
-  date_modified DateTime  @updatedAt
-  user_created  String?
-  user_modified String?
-
-  vendor  Vendor  @relation(fields: [id_vendor], references: [id_vendor])
-  booking Booking @relation(fields: [id_booking], references: [id_booking])
-
-  @@unique([id_booking, id_vendor])
-  @@index([id_vendor])
-  @@schema("sigyn")
-}
 
 model ProductOccasion {
   id_occasion   Int      @id @default(autoincrement())

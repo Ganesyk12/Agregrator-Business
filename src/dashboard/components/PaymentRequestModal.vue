@@ -299,7 +299,7 @@ function submitFromDetail() {
               <table class="table table-bordered table-striped" v-if="request.items?.length">
                 <thead>
                   <tr>
-                    <th style="width: 40px;">#</th>
+                    <th style="width: 40px;">No</th>
                     <th>Description</th>
                     <th style="width: 60px;">Qty</th>
                     <th style="width: 150px;">Unit Price</th>

@@ -51,7 +51,7 @@ function formatCurrency(v: number) {
             <div class="col-auto text-center">
               <div style="width:90px; height:90px; border-radius:50%; overflow:hidden; background:#eee; display:flex; align-items:center; justify-content:center; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.12);">
                 <img v-if="store.avatar" :src="store.avatar" style="width:100%; height:100%; object-fit:cover;" />
-                <i v-else class="fa fa-store" style="font-size:2.5rem; color:#ccc;"></i>
+                <i v-else class="fa fa-shopping-basket" style="font-size:2.5rem; color:#ccc;"></i>
               </div>
             </div>
             <div class="col">

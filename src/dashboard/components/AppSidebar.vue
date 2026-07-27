@@ -84,7 +84,7 @@ function getVendorItems(): MenuItem[] {
       { label: 'Packages', icon: 'fa-cube', to: '/packages' },
       { label: 'Portfolio', icon: 'fa-picture-o', to: '/portfolios' },
       { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' },
-      { label: 'My Store', icon: 'fa-store', to: '/my-store' },
+      { label: 'My Store', icon: 'fa-shopping-basket', to: '/my-store' },
       { label: 'Products', icon: 'fa-shopping-bag', to: '/products' },
       { label: 'Categories (Product)', icon: 'fa-tags', to: '/product-categories' },
       { label: 'Orders', icon: 'fa-truck', to: '/orders' },
@@ -105,7 +105,7 @@ function getVendorItems(): MenuItem[] {
     items.push({ label: 'My Profile', icon: 'fa-user-circle', to: '/vendor-profile' })
     if (isProductVendor.value) {
       items.push(
-        { label: 'My Store', icon: 'fa-store', to: '/my-store' },
+        { label: 'My Store', icon: 'fa-shopping-basket', to: '/my-store' },
         { label: 'Products', icon: 'fa-shopping-bag', to: '/products' },
         { label: 'Categories', icon: 'fa-tags', to: '/product-categories' },
         { label: 'Orders', icon: 'fa-truck', to: '/orders' },
@@ -159,7 +159,6 @@ const menuSections = computed(() => {
         { label: 'Revenue Summary', icon: 'fa-line-chart', to: '/revenue-summary' },
         { label: 'Request for Payment', icon: 'fa-credit-card', to: '/payment-requests' },
         { label: 'RFP Payment', icon: 'fa-money', to: '/rfp-payments' },
-        { label: 'Commissions', icon: 'fa-percent', to: '/commissions' },
         { label: 'Invoices', icon: 'fa-file-text-o', to: '/invoices' },
         { label: 'Receipts', icon: 'fa-file-pdf-o', to: '/receipts' }
       ]

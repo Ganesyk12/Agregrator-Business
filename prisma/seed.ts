@@ -23,8 +23,6 @@ async function main() {
   await prisma.review.deleteMany()
   await prisma.userFavorite.deleteMany()
   await prisma.contactMessage.deleteMany()
-  await prisma.payout.deleteMany()
-  await prisma.commission.deleteMany()
   await prisma.payment.deleteMany()
   await prisma.bookingPackageExtra.deleteMany()
   await prisma.bookingPackage.deleteMany()

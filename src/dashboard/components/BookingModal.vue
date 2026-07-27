@@ -244,7 +244,7 @@ function save() {
                 <table class="table table-bordered table-striped" style="margin-bottom:0;">
                   <thead>
                     <tr>
-                      <th style="width:40px;">#</th>
+                      <th style="width:40px;">No</th>
                       <th>Term</th>
                       <th style="width:120px;">Amount</th>
                       <th style="width:100px;">Paid</th>

@@ -106,7 +106,7 @@ async function updateStatus(orderId: number, status: string) {
       </div>
       <div class="table-responsive">
         <table class="table table-striped table-bordered">
-          <thead><tr><th>#</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+          <thead><tr><th>No</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
           <tbody>
             <tr v-for="o in paginated" :key="o.id_order">
               <td>{{ o.id_order }}</td>

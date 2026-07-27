@@ -52,11 +52,7 @@ const router = createRouter({
           name: 'rfp-payment-detail',
           component: () => import('@/dashboard/views/RFPaymentDetailView.vue'),
         },
-        {
-          path: 'commissions',
-          name: 'commissions',
-          component: () => import('@/dashboard/views/CommissionView.vue'),
-        },
+
         {
           path: 'invoices',
           name: 'invoices',
@@ -174,7 +170,7 @@ const router = createRouter({
 })
 
 const adminRoutes = new Set([
-  'payments', 'commissions', 'payouts', 'invoices', 'invoice-detail',
+  'payments', 'rfp-payments', 'invoices', 'invoice-detail',
   'vendors', 'categories', 'users', 'roles', 'user-roles', 'company-info',
 ])
 
