@@ -28,41 +28,80 @@ onMounted(fetchAll)
 </script>
 
 <template>
-  <div class="x_panel">
-    <div class="x_title"><h2>Product Categories</h2><div class="clearfix"></div></div>
-    <div class="x_content">
-      <div class="alert alert-info">Manage product occasion, type, and size categories here.</div>
+  <div class="row">
+    <!-- Description Card -->
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Product Classifications</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted m-b-0">
+            <i class="fa fa-info-circle text-primary"></i> 
+            This system categorizes physical store items by Occasion, Type, and Size attributes to optimize catalog presentation.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      <div class="row">
-        <div class="col-md-4">
-          <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Occasions</h3></div>
-            <div class="panel-body">
-              <ul class="list-group">
-                <li v-for="o in occasions" :key="o.id_occasion" class="list-group-item">{{ o.name }} <span class="badge">{{ o.sort_order }}</span></li>
-              </ul>
-            </div>
-          </div>
+  <div class="row">
+    <!-- Occasions -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="fa fa-gift text-c-blue m-r-10"></i>Occasions</h5>
         </div>
-        <div class="col-md-4">
-          <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Types</h3></div>
-            <div class="panel-body">
-              <ul class="list-group">
-                <li v-for="t in types" :key="t.id_type" class="list-group-item">{{ t.name }} <span class="badge">{{ t.sort_order }}</span></li>
-              </ul>
-            </div>
-          </div>
+        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+          <ul class="list-group list-group-flush" style="padding-left:0; margin-bottom:0;">
+            <li v-for="o in occasions" :key="o.id_occasion" 
+                class="list-group-item" 
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid #f1f1f1;">
+              <span style="font-weight: 600; color: #2c3e50;">{{ o.name }}</span>
+              <span class="badge bg-c-blue text-white" style="font-size: 11px;">Index: {{ o.sort_order }}</span>
+            </li>
+            <li v-if="occasions.length === 0" class="text-muted text-center" style="padding: 15px 0; list-style:none;">No occasions defined.</li>
+          </ul>
         </div>
-        <div class="col-md-4">
-          <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Sizes</h3></div>
-            <div class="panel-body">
-              <ul class="list-group">
-                <li v-for="s in sizes" :key="s.id_size" class="list-group-item">{{ s.name }} <span class="badge">{{ s.sort_order }}</span></li>
-              </ul>
-            </div>
-          </div>
+      </div>
+    </div>
+
+    <!-- Types -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="fa fa-tags text-c-green m-r-10"></i>Types</h5>
+        </div>
+        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+          <ul class="list-group list-group-flush" style="padding-left:0; margin-bottom:0;">
+            <li v-for="t in types" :key="t.id_type" 
+                class="list-group-item" 
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid #f1f1f1;">
+              <span style="font-weight: 600; color: #2c3e50;">{{ t.name }}</span>
+              <span class="badge bg-c-green text-white" style="font-size: 11px;">Index: {{ t.sort_order }}</span>
+            </li>
+            <li v-if="types.length === 0" class="text-muted text-center" style="padding: 15px 0; list-style:none;">No types defined.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sizes -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="fa fa-arrows-alt text-c-red m-r-10"></i>Sizes</h5>
+        </div>
+        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+          <ul class="list-group list-group-flush" style="padding-left:0; margin-bottom:0;">
+            <li v-for="s in sizes" :key="s.id_size" 
+                class="list-group-item" 
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid #f1f1f1;">
+              <span style="font-weight: 600; color: #2c3e50;">{{ s.name }}</span>
+              <span class="badge bg-c-red text-white" style="font-size: 11px;">Index: {{ s.sort_order }}</span>
+            </li>
+            <li v-if="sizes.length === 0" class="text-muted text-center" style="padding: 15px 0; list-style:none;">No sizes defined.</li>
+          </ul>
         </div>
       </div>
     </div>

@@ -78,7 +78,30 @@ const isFinance = computed(() => userRoles.value.includes('eUser-Finance'))
 
 function getVendorItems(): MenuItem[] {
   const items: MenuItem[] = []
-  if (isVendor.value) {
+  if (isSuperAdmin.value) {
+    items.push(
+      { label: 'Vendors', icon: 'fa-building', to: '/vendors' },
+      { label: 'Packages', icon: 'fa-cube', to: '/packages' },
+      { label: 'Portfolio', icon: 'fa-picture-o', to: '/portfolios' },
+      { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' },
+      { label: 'My Store', icon: 'fa-store', to: '/my-store' },
+      { label: 'Products', icon: 'fa-shopping-bag', to: '/products' },
+      { label: 'Categories (Product)', icon: 'fa-tags', to: '/product-categories' },
+      { label: 'Orders', icon: 'fa-truck', to: '/orders' },
+      { label: 'Inventory', icon: 'fa-cubes', to: '/inventory' },
+      { label: 'Customers', icon: 'fa-users', to: '/customers' },
+      { label: 'Reviews', icon: 'fa-star', to: '/reviews' },
+      { label: 'Analytics', icon: 'fa-bar-chart', to: '/analytics' },
+      { label: 'Store Settings', icon: 'fa-cog', to: '/store-settings' }
+    )
+  } else if (isAdmin.value) {
+    items.push(
+      { label: 'Vendors', icon: 'fa-building', to: '/vendors' },
+      { label: 'Packages', icon: 'fa-cube', to: '/packages' },
+      { label: 'Portfolio', icon: 'fa-picture-o', to: '/portfolios' },
+      { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' }
+    )
+  } else if (isVendor.value) {
     items.push({ label: 'My Profile', icon: 'fa-user-circle', to: '/vendor-profile' })
     if (isProductVendor.value) {
       items.push(
@@ -99,8 +122,6 @@ function getVendorItems(): MenuItem[] {
         { label: 'Bookings', icon: 'fa-calendar', to: '/bookings' }
       )
     }
-  } else if (isAdmin.value) {
-    items.push({ label: 'Vendors', icon: 'fa-building', to: '/vendors' })
   }
   return items
 }
