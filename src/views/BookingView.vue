@@ -69,9 +69,12 @@ function formatPrice(v: number) {
 
 onMounted(async () => {
   const vid = route.query.vendorId as string
+  const name = route.query.businessName as string
+  const price = route.query.startingPrice as string
   const pkgId = route.query.packageId as string
   const pkgName = route.query.packageName as string
   const pkgPrice = route.query.packagePrice as string
+
   if (vid) {
     try {
       const res = await fetch(`/api/portfolios/vendor/${vid}/info`)
@@ -100,7 +103,7 @@ onMounted(async () => {
         } else {
           const minPrice = vendorData.packages?.length > 0
             ? Math.min(...vendorData.packages.map((p: any) => p.price))
-            : Number(pkgPrice) || 0
+            : Number(price) || 0
           bookedVendors.value.push({
             id_vendor: vendorData.vendor.id_vendor,
             business_name: vendorData.vendor.business_name,
@@ -113,50 +116,47 @@ onMounted(async () => {
             expanded: false,
           })
         }
+        if (vendorData.vendor.extras?.length) {
+          vendorExtrasCache.value[vendorData.vendor.id_vendor] = vendorData.vendor.extras.map((e: any) => ({
+            id: String(e.id_extra || e.id),
+            name: e.name,
+            price: e.price,
+            icon: e.icon || '',
+            selected: false,
+          }))
+        }
       }
-    } catch (_) {
-      try {
-        if (pkgId) {
-          bookedVendors.value.push({
-            id_vendor: Number(vid),
-            id_package: Number(pkgId),
-            package_name: pkgName || 'Package',
-            business_name: pkgName || 'Vendor',
-            category: 'Photography',
-            starting_price: Number(pkgPrice) || 0,
-            description: '',
-            cover_url: '',
-            rating: 0,
-            selectedExtras: [],
-            expanded: false,
-          })
-          if (vendorData.vendor.extras?.length) {
-            vendorExtrasCache.value[vendorData.vendor.id_vendor] = vendorData.vendor.extras.map((e: any) => ({
-              id: String(e.id_extra || e.id),
-              name: e.name,
-              price: e.price,
-              icon: e.icon || '',
-              selected: false,
-            }))
-          }
-        }
-      } catch (_) {
-        if (name) {
-          bookedVendors.value.push({
-            id_vendor: Number(vid),
-            business_name: pkgName,
-            category: 'Photography',
-            starting_price: Number(pkgPrice) || 0,
-            description: '',
-            cover_url: '',
-            rating: 0,
-            selectedExtras: [],
-            expanded: false,
-          })
-        }
+    } catch {
+      if (pkgId) {
+        bookedVendors.value.push({
+          id_vendor: Number(vid),
+          id_package: Number(pkgId),
+          package_name: pkgName || 'Package',
+          business_name: name || pkgName || 'Vendor',
+          category: 'Photography',
+          starting_price: Number(pkgPrice) || 0,
+          description: '',
+          cover_url: '',
+          rating: 0,
+          selectedExtras: [],
+          expanded: false,
+        })
+      } else if (name) {
+        bookedVendors.value.push({
+          id_vendor: Number(vid),
+          business_name: name,
+          category: 'Photography',
+          starting_price: Number(price) || 0,
+          description: '',
+          cover_url: '',
+          rating: 0,
+          selectedExtras: [],
+          expanded: false,
+        })
       }
     }
   }
+
   // load cart items if coming from cart
   const cartData = localStorage.getItem('sigyn_cart_checkout')
   if (cartData) {

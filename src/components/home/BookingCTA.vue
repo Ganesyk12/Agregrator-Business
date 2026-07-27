@@ -17,7 +17,7 @@ import ctaBg from '@/assets/kaira/images/banner-image-2.jpg'
             Temukan vendor impianmu dan wujudkan momen spesialmu bersama Sigyn.
           </p>
           <router-link
-            to="/photography"
+            to="/explore"
             class="btn btn-lg btn-cta text-uppercase px-5 py-3"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" class="me-2">

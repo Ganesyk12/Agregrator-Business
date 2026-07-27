@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 interface PortfolioImage {
   image_url: string
@@ -44,71 +47,6 @@ const mouseY = ref(0)
 const heroRef = ref<HTMLElement | null>(null)
 let intervalId: ReturnType<typeof setInterval> | null = null
 let pollId: ReturnType<typeof setInterval> | null = null
-const categoryDemoMap: Record<string, string> = {
-  Photography: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=400&h=533&fit=crop',
-  'Makeup Artist': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=533&fit=crop',
-  'Nail Art': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=533&fit=crop',
-  Florist: 'https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=400&h=533&fit=crop',
-  'Event Decoration': 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&h=533&fit=crop',
-  Videography: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400&h=533&fit=crop',
-  Catering: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=400&h=533&fit=crop',
-  Dekorasi: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&h=533&fit=crop',
-  'Tata Rias': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=533&fit=crop',
-  Fotografi: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=400&h=533&fit=crop',
-}
-
-const categoryNames: Record<string, string> = {
-  Fotografi: 'Photography',
-  Videografi: 'Videography',
-  'Tata Rias': 'Makeup Artist',
-  Dekorasi: 'Event Decoration',
-  Katering: 'Catering',
-}
-
-function mapCategory(raw: string): string {
-  return categoryNames[raw] || raw
-}
-
-function getDemoImage(category: string): string {
-  const cat = mapCategory(category)
-  return categoryDemoMap[cat] || `https://picsum.photos/seed/${cat.toLowerCase().replace(/\s+/g, '')}/400/533`
-}
-
-function generateDemoData(): PortfolioItem[] {
-  const demos: Array<{ vendor: string; category: string; title: string; location: string; price: number }> = [
-    { vendor: 'Alexandra Studio', category: 'Photography', title: 'Wedding Moments', location: 'Jakarta', price: 2500000 },
-    { vendor: 'Glamour Beauty', category: 'Makeup Artist', title: 'Bridal Makeup', location: 'Bandung', price: 1500000 },
-    { vendor: 'Bloom & Petal', category: 'Florist', title: 'Elegant Bouquet', location: 'Surabaya', price: 750000 },
-    { vendor: 'Nail Artistry', category: 'Nail Art', title: 'Artistic Nails', location: 'Jakarta', price: 500000 },
-    { vendor: 'Elegant Decor', category: 'Event Decoration', title: 'Grand Setup', location: 'Yogyakarta', price: 5000000 },
-    { vendor: 'Capture Moments', category: 'Videography', title: 'Cinematic Film', location: 'Bali', price: 3500000 },
-    { vendor: 'Luminous Beauty', category: 'Makeup Artist', title: 'Glam Look', location: 'Jakarta', price: 2000000 },
-  ]
-  return demos.map((d, i) => ({
-    id_portfolio: 1000 + i,
-    cover_url: getDemoImage(d.category),
-    title: d.title,
-    label: 'Featured',
-    description: '',
-    location: d.location,
-    sort_order: i,
-    vendor: {
-      id_vendor: 100 + i,
-      business_name: d.vendor,
-      category: d.category,
-      location: d.location,
-      description: '',
-      _count: { portfolios: 3, reviews: 12 + i * 3 },
-    },
-    package: { name: 'Paket ' + d.category, price: d.price },
-    category: { category_name: d.category },
-    images: [
-      { image_url: getDemoImage(d.category), caption: '', sort_order: 0 },
-      { image_url: getDemoImage(d.category), caption: '', sort_order: 1 },
-    ],
-  }))
-}
-
 async function fetchPortfolios() {
   try {
     const res = await fetch('/api/portfolios')
@@ -116,7 +54,7 @@ async function fetchPortfolios() {
     const items: PortfolioItem[] = json.data || []
 
     if (!Array.isArray(items) || items.length === 0) {
-      portfolios.value = generateDemoData()
+      portfolios.value = []
       return
     }
 
@@ -126,15 +64,10 @@ async function fetchPortfolios() {
     if (featured.length >= 4) {
       portfolios.value = featured.slice(0, 7)
     } else if (items.length > 0) {
-      const need = 7 - featured.length
-      portfolios.value = [...featured, ...others.slice(0, need)]
-      if (portfolios.value.length < 4) {
-        const fill = generateDemoData().slice(0, 7 - portfolios.value.length)
-        portfolios.value = [...portfolios.value, ...fill]
-      }
+      portfolios.value = [...featured, ...others]
     }
   } catch {
-    portfolios.value = generateDemoData()
+    portfolios.value = []
   } finally {
     loading.value = false
   }
@@ -183,7 +116,7 @@ function formatPrice(price?: number): string {
 }
 
 function displayCategory(cat: { category_name?: string } | null | undefined, vendorCat: string): string {
-  if (cat?.category_name) return mapCategory(cat.category_name)
+  if (cat?.category_name) return cat.category_name
   return vendorCat || 'Kreatif'
 }
 
@@ -197,6 +130,14 @@ onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
   if (pollId) clearInterval(pollId)
 })
+
+function goToPortfolio(id: number) {
+  router.push(`/portfolio/${id}`)
+}
+
+function goToVendor(id: number) {
+  router.push(`/vendor/${id}`)
+}
 
 function handleMouseMove(e: MouseEvent) {
   if (!heroRef.value) return
@@ -228,10 +169,10 @@ function handleMouseMove(e: MouseEvent) {
             decoration — find inspiration and book instantly.
           </p>
           <div class="hero-actions">
-            <router-link to="/portfolios" class="btn btn-primary btn-lg rounded-pill px-4">
+            <router-link to="/explore" class="btn btn-primary btn-lg rounded-pill px-4">
               Explore Portfolio
             </router-link>
-            <router-link to="/register" class="btn btn-outline-dark btn-lg rounded-pill px-4">
+            <router-link to="/partner" class="btn btn-outline-dark btn-lg rounded-pill px-4">
               Become a Vendor
             </router-link>
           </div>
@@ -259,15 +200,16 @@ function handleMouseMove(e: MouseEvent) {
           </div>
         </div>
         <div v-else class="cards-viewport">
-          <div
-            v-for="card in allCards"
-            :key="card.id_portfolio"
-            class="card-wrapper"
-            :class="{ 'card-hidden': Math.abs(card.offset) > 2 }"
-            :data-offset="card.offset"
-            :style="cardStyle(card.offset)"
-          >
-            <div class="portfolio-card">
+            <div
+              v-for="card in allCards"
+              :key="card.id_portfolio"
+              class="card-wrapper"
+              :class="{ 'card-hidden': Math.abs(card.offset) > 2 }"
+              :data-offset="card.offset"
+              :style="cardStyle(card.offset)"
+              @click="goToPortfolio(card.id_portfolio)"
+            >
+              <div class="portfolio-card">
               <div class="card-image-wrap">
                 <img
                   :src="card.cover_url"
@@ -288,7 +230,7 @@ function handleMouseMove(e: MouseEvent) {
                   <span class="stars">★★★★★</span>
                   <span class="rating-text">5.0</span>
                 </div>
-                <button class="btn-book" @click.stop>Book Now</button>
+                <button class="btn-book" @click.stop="goToVendor(card.vendor?.id_vendor)">Book Now</button>
               </div>
             </div>
           </div>

@@ -79,7 +79,7 @@ const iconPaths: Record<string, string> = {
                 </div>
               </div>
 
-              <router-link to="/about?join=partner" class="btn-partner">
+              <router-link to="/partner" class="btn-partner">
                 Become a Partner
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M5 12h14M12 5l7 7-7 7"/>

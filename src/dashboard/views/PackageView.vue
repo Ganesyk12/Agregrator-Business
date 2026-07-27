@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import PackageModal, { type PackageForm } from '../components/PackageModal.vue'
 import Swal from 'sweetalert2'
 
@@ -14,6 +15,8 @@ const Toast = Swal.mixin({
     toast.onmouseleave = Swal.resumeTimer
   }
 })
+
+const auth = useAuthStore()
 
 interface Package {
   id_package: number
@@ -49,10 +52,13 @@ const packages = ref<Package[]>([])
 const vendors = ref<Array<{ id_vendor: number; business_name: string }>>([])
 const categories = ref<Array<{ id_category: number; category_name: string }>>([])
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const vendorId = computed(() => auth.user?.vendor_id)
 
 async function fetchPackages() {
   try {
-    const res = await fetch(`${apiUrl}/api/packages`)
+    let url = `${apiUrl}/api/packages`
+    if (vendorId.value) url += `?vendorId=${vendorId.value}`
+    const res = await fetch(url)
     if (!res.ok) throw new Error('Failed to fetch packages')
     const json = await res.json()
     packages.value = json.data || []
@@ -135,7 +141,7 @@ async function handleSave(data: PackageForm) {
   }
 
   if (modalMode.value === 'add') {
-    body.id_vendor = Number(data.id_vendor)
+    body.id_vendor = vendorId.value || Number(data.id_vendor)
     try {
       const res = await fetch(`${apiUrl}/api/packages`, {
         method: 'POST',

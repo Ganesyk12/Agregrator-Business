@@ -2,9 +2,15 @@ import type { Request, Response, NextFunction } from 'express'
 import * as bookingService from './bookings.service'
 import { createError } from '../../middleware/error-handler'
 
-export async function getAll(_req: Request, res: Response, next: NextFunction) {
+export async function getAll(req: Request, res: Response, next: NextFunction) {
   try {
-    const bookings = await bookingService.findAll()
+    const { vendorId } = req.query
+    let bookings
+    if (vendorId) {
+      bookings = await bookingService.findByVendor(Number(vendorId))
+    } else {
+      bookings = await bookingService.findAll()
+    }
     res.json({ data: bookings })
   } catch (err) {
     next(err)

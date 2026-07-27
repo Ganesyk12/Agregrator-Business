@@ -13,10 +13,26 @@ export async function getMyCart(req: Request, res: Response, next: NextFunction)
 
 export async function addItem(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_package } = req.body
-    if (!id_package) throw createError(400, 'id_package is required')
-    const item = await cartService.addItem(req.user!.id_user, Number(id_package))
-    res.status(201).json({ data: item })
+    const { id_package, id_product, quantity } = req.body
+    if (id_package) {
+      const item = await cartService.addPackageItem(req.user!.id_user, Number(id_package))
+      return res.status(201).json({ data: item })
+    }
+    if (id_product) {
+      const item = await cartService.addProductItem(req.user!.id_user, Number(id_product), Number(quantity || 1))
+      return res.status(201).json({ data: item })
+    }
+    throw createError(400, 'id_package or id_product is required')
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updateItem(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { quantity } = req.body
+    const item = await cartService.updateItemQuantity(Number(req.params.itemId), Number(quantity))
+    res.json({ data: item })
   } catch (err) {
     next(err)
   }
@@ -24,8 +40,7 @@ export async function addItem(req: Request, res: Response, next: NextFunction) {
 
 export async function removeItem(req: Request, res: Response, next: NextFunction) {
   try {
-    const itemId = Number(req.params.itemId)
-    await cartService.removeItem(itemId)
+    await cartService.removeItem(Number(req.params.itemId))
     res.status(204).send()
   } catch (err) {
     next(err)

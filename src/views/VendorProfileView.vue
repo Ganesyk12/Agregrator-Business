@@ -12,10 +12,15 @@ const router = useRouter()
 const vendor = ref<any>(null)
 const vendorPackages = ref<any[]>([])
 const vendorPortfolios = ref<any[]>([])
+const vendorProducts = ref<any[]>([])
 const reviews = ref<any[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const activeTab = ref<'services' | 'portfolio' | 'reviews'>('services')
+
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+const isBouquetVendor = computed(() => vendor.value?.category === 'Bouquet Flowers')
 
 const averageRating = computed(() => {
   if (!reviews.value.length) return 0
@@ -39,19 +44,27 @@ async function fetchVendorProfile() {
   try {
     const id = route.params.id
 
-    const vendorRes = await fetch(`/api/vendors/${id}`)
+    const vendorRes = await fetch(`${apiUrl}/api/vendors/${id}`)
     const vendorJson = await vendorRes.json()
     if (!vendorRes.ok) throw new Error(vendorJson.error?.message || 'Vendor not found')
     vendor.value = vendorJson.data
 
-    const infoRes = await fetch(`/api/portfolios/vendor/${id}/info`)
-    const infoJson = await infoRes.json()
-    if (infoRes.ok) {
-      vendorPackages.value = infoJson.data.packages || []
-      reviews.value = infoJson.data.reviews || []
+    if (vendor.value?.category === 'Bouquet Flowers') {
+      const prodRes = await fetch(`${apiUrl}/api/products/vendor/${id}`)
+      if (prodRes.ok) {
+        const prodJson = await prodRes.json()
+        vendorProducts.value = prodJson.data || []
+      }
+    } else {
+      const infoRes = await fetch(`${apiUrl}/api/portfolios/vendor/${id}/info`)
+      const infoJson = await infoRes.json()
+      if (infoRes.ok) {
+        vendorPackages.value = infoJson.data.packages || []
+        reviews.value = infoJson.data.reviews || []
+      }
     }
 
-    const portfolioRes = await fetch(`/api/portfolios/vendor/${id}`)
+    const portfolioRes = await fetch(`${apiUrl}/api/portfolios/vendor/${id}`)
     const portfolioJson = await portfolioRes.json()
     if (portfolioRes.ok) vendorPortfolios.value = portfolioJson.data || []
 
@@ -81,6 +94,10 @@ function handleBookPackage(pkg: any) {
   router.push(`/booking?${query.toString()}`)
 }
 
+function goToProduct(id: number) {
+  router.push(`/product/${id}`)
+}
+
 onMounted(fetchVendorProfile)
 </script>
 
@@ -107,7 +124,8 @@ onMounted(fetchVendorProfile)
         <div class="container">
           <div class="vendor-hero-inner">
             <div class="vendor-avatar-large">
-              <span class="avatar-text">{{ vendor.business_name?.charAt(0) || 'V' }}</span>
+              <img v-if="vendor.avatar_url" :src="vendor.avatar_url" :alt="vendor.business_name" />
+              <span v-else class="avatar-text">{{ vendor.business_name?.charAt(0) || 'V' }}</span>
             </div>
             <div class="vendor-hero-info">
               <h1 class="vendor-business-name">{{ vendor.business_name }}</h1>
@@ -127,12 +145,21 @@ onMounted(fetchVendorProfile)
               <p class="vendor-location" v-if="vendor.location">
                 📍 {{ vendor.location }}
               </p>
-              <div class="price-range" v-if="vendorPackages.length > 0">
+              <p class="vendor-instagram" v-if="vendor.instagram">
+                <a :href="vendor.instagram" target="_blank" rel="noopener noreferrer">
+                  📷 {{ vendor.instagram.replace('https://instagram.com/', '@') }}
+                </a>
+              </p>
+              <div class="price-range" v-if="!isBouquetVendor && vendorPackages.length > 0">
                 <span class="price-range-label">Price Range</span>
                 <span class="price-range-value">
                   {{ formatPrice(Math.min(...vendorPackages.map(p => p.price))) }} 
                   - {{ formatPrice(Math.max(...vendorPackages.map(p => p.price))) }}
                 </span>
+              </div>
+              <div class="price-range" v-if="isBouquetVendor && vendorProducts.length > 0">
+                <span class="price-range-label">Products</span>
+                <span class="price-range-value">{{ vendorProducts.length }} Items</span>
               </div>
             </div>
           </div>
@@ -147,7 +174,7 @@ onMounted(fetchVendorProfile)
               :class="['tab-btn', { active: activeTab === 'services' }]"
               @click="activeTab = 'services'"
             >
-              Services ({{ vendorPackages.length }})
+              {{ isBouquetVendor ? 'Products' : 'Services' }} ({{ isBouquetVendor ? vendorProducts.length : vendorPackages.length }})
             </button>
             <button
               :class="['tab-btn', { active: activeTab === 'portfolio' }]"
@@ -165,8 +192,8 @@ onMounted(fetchVendorProfile)
         </div>
       </section>
 
-      <!-- Services / Packages by Category -->
-      <section v-if="activeTab === 'services'" class="section services-section">
+      <!-- Services / Packages by Category (Service Vendors) -->
+      <section v-if="activeTab === 'services' && !isBouquetVendor" class="section services-section">
         <div class="container">
           <div v-if="vendorPackages.length === 0" class="empty-state">
             No services available yet.
@@ -191,6 +218,35 @@ onMounted(fetchVendorProfile)
                   <button class="btn-book-package" @click.stop="handleBookPackage(pkg)">
                     Book Now - {{ formatPrice(pkg.price) }}
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Product Catalog (Bouquet Vendors) -->
+      <section v-if="activeTab === 'services' && isBouquetVendor" class="section products-section">
+        <div class="container">
+          <div v-if="vendorProducts.length === 0" class="empty-state">
+            No products available yet.
+          </div>
+          <div v-else class="products-grid">
+            <div v-for="product in vendorProducts" :key="product.id_product" class="product-card" @click="goToProduct(product.id_product)">
+              <div class="product-image">
+                <img :src="product.images?.[0]?.image_url || ''" :alt="product.name" loading="lazy" />
+                <span class="product-occasion-badge" v-if="product.labels">{{ (product.labels.split(',')[0]).charAt(0).toUpperCase() + (product.labels.split(',')[0]).slice(1) }}</span>
+              </div>
+              <div class="product-info">
+                <h4 class="product-name">{{ product.name }}</h4>
+                <div class="product-meta-row">
+                  <span class="product-type" v-if="product.type_name">{{ product.type_name }}</span>
+                  <span class="product-size" v-if="product.size_name">{{ product.size_name }}</span>
+                </div>
+                <span class="product-price">{{ formatPrice(product.price) }}</span>
+                <div class="product-actions">
+                  <button class="btn-add-cart" @click.stop><i class="fa fa-shopping-cart"></i> Add to Cart</button>
+                  <router-link :to="`/product/${product.id_product}`" class="btn-view">View Detail</router-link>
                 </div>
               </div>
             </div>
@@ -296,14 +352,21 @@ onMounted(fetchVendorProfile)
 }
 
 .vendor-avatar-large {
-  width: 120px;
-  height: 120px;
+  width: 130px;
+  height: 130px;
   border-radius: 50%;
+  overflow: hidden;
   background: #222;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.vendor-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar-text {
@@ -314,6 +377,21 @@ onMounted(fetchVendorProfile)
 
 .vendor-hero-info {
   flex: 1;
+}
+
+.vendor-instagram {
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+.vendor-instagram a {
+  color: var(--bs-secondary, #B89C7B);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.vendor-instagram a:hover {
+  text-decoration: underline;
 }
 
 .vendor-business-name {
@@ -645,5 +723,143 @@ onMounted(fetchVendorProfile)
     font-size: 0.9rem;
     white-space: nowrap;
   }
+}
+
+/* Product Catalog (Bouquet) */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.product-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.product-image {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.05);
+}
+
+.product-occasion-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.product-info {
+  padding: 16px;
+}
+
+.product-info .product-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.product-meta-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.product-type,
+.product-size {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.product-info .product-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #222;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.product-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-add-cart {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid #222;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-cart:hover {
+  background: #222;
+  color: #fff;
+}
+
+.btn-view {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid #222;
+  background: #222;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.btn-view:hover {
+  background: #444;
+  border-color: #444;
+}
+
+@media (max-width: 992px) {
+  .products-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 576px) {
+  .products-grid { grid-template-columns: 1fr; }
 }
 </style>

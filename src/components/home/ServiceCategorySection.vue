@@ -17,7 +17,7 @@ const services: Service[] = [
     title: 'Photography',
     nameId: 'Fotografi Profesional',
     description: 'Capture unforgettable memories. Abadikan setiap momen berharga dengan fotografer profesional terbaik.',
-    link: '/photography',
+    link: '/explore',
     gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     image: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=800&h=1000&fit=crop'
   },
@@ -27,7 +27,7 @@ const services: Service[] = [
     title: 'Makeup Artist',
     nameId: 'Tata Rias Profesional',
     description: 'Professional artists for your special moments. Tampil memukau dengan sentuhan makeup artist berpengalaman.',
-    link: '/mua',
+    link: '/explore',
     gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
     image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=1000&fit=crop'
   },
@@ -37,7 +37,7 @@ const services: Service[] = [
     title: 'Bouquet Flowers',
     nameId: 'Rangkaian Bunga Indah',
     description: 'Beautiful handcrafted bouquets. Harum segar bunga pilihan, dirangkai dengan seni dan cinta.',
-    link: '/bouquet',
+    link: '/explore',
     gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
     image: 'https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=800&h=1000&fit=crop'
   }

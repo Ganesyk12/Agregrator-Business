@@ -24,6 +24,8 @@ import companyInfoRoutes from './modules/company-info/company-info.routes'
 import contactMessageRoutes from './modules/contact-messages/contact-messages.routes'
 import favoriteRoutes from './modules/favorites/favorites.routes'
 import cartRoutes from './modules/cart/cart.routes'
+import productRoutes from './modules/products/products.routes'
+import orderRoutes from './modules/orders/orders.routes'
 
 const app = express()
 
@@ -60,6 +62,8 @@ app.use('/api/company-info', companyInfoRoutes)
 app.use('/api/contact-messages', contactMessageRoutes)
 app.use('/api/favorites', favoriteRoutes)
 app.use('/api/cart', cartRoutes)
+app.use('/api/products', productRoutes)
+app.use('/api/orders', orderRoutes)
 
 app.use(errorHandler)
 

@@ -86,7 +86,7 @@ async function addToCart(packageId: number) {
     router.push('/login')
     return
   }
-  await cart.addItem(packageId)
+  await cart.addPackage(packageId)
 }
 
 onMounted(async () => {

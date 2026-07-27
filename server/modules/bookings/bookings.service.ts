@@ -42,6 +42,21 @@ export async function findByUser(userId: number): Promise<Booking[]> {
   }) as unknown as Booking[]
 }
 
+export async function findByVendor(vendorId: number): Promise<Booking[]> {
+  return prisma.booking.findMany({
+    where: {
+      status: { not: 'deleted' },
+      booking_packages: {
+        some: {
+          package: { id_vendor: vendorId },
+        },
+      },
+    },
+    include,
+    orderBy: { date_created: 'desc' },
+  }) as unknown as Booking[]
+}
+
 export async function create(
   data: BookingCreateInput & { user_created?: string; user_modified?: string }
 ): Promise<Booking> {

@@ -3,9 +3,10 @@ import * as packageService from './packages.service'
 import prisma from '../../db'
 import { createError } from '../../middleware/error-handler'
 
-export async function getAll(_req: Request, res: Response, next: NextFunction) {
+export async function getAll(req: Request, res: Response, next: NextFunction) {
   try {
-    const packages = await packageService.findAll()
+    const { vendorId } = req.query
+    const packages = await packageService.findAll(vendorId ? Number(vendorId) : undefined)
     res.json({ data: packages.length === 0 ? null : packages })
   } catch (err) {
     next(err)

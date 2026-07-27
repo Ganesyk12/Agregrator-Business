@@ -4,6 +4,41 @@ import * as userRoleService from '../user-roles/user-roles.service'
 import { createError } from '../../middleware/error-handler'
 import prisma from '../../db'
 
+export async function getMe(req: Request, res: Response, next: NextFunction) {
+  try {
+    const vendor = await vendorService.findByUserId(req.user!.id_user)
+    if (!vendor) {
+      res.status(404).json({ error: { message: 'Vendor profile not found' } })
+      return
+    }
+    res.json({ data: vendor })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function updateMe(req: Request, res: Response, next: NextFunction) {
+  try {
+    const vendor = await vendorService.findByUserId(req.user!.id_user)
+    if (!vendor) {
+      throw createError(404, 'Vendor profile not found')
+    }
+
+    const { business_name, description, location, avatar_url, instagram } = req.body
+    const updated = await vendorService.update(vendor.id_vendor, {
+      business_name,
+      description,
+      location,
+      avatar_url,
+      instagram,
+    })
+
+    res.json({ data: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function getAll(_req: Request, res: Response, next: NextFunction) {
   try {
     const vendors = await vendorService.findAll()

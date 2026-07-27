@@ -2,7 +2,9 @@
 import { ref, provide, watch, onMounted } from 'vue'
 import AppSidebar from '@/dashboard/components/AppSidebar.vue'
 import AppTopNav from '@/dashboard/components/AppTopNav.vue'
+import { useAuthStore } from '@/stores/auth'
 
+const auth = useAuthStore()
 const sidebarCollapsed = ref(false)
 
 function toggleSidebar() {
@@ -21,6 +23,7 @@ onMounted(() => {
   if (window.innerWidth < 768) {
     sidebarCollapsed.value = true
   }
+  auth.fetchVendorProfile()
 })
 </script>
 
@@ -43,6 +46,23 @@ onMounted(() => {
 </template>
 
 <style>
+/* Fix spacing between sidebar and content */
+.nav-md .container.body .right_col {
+  margin-left: 260px !important;
+}
+
+.nav-md .main_container .top_nav {
+  margin-left: 260px;
+}
+
+.nav-sm .container.body .right_col {
+  margin-left: 64px !important;
+}
+
+.nav-sm .main_container .top_nav {
+  margin-left: 64px;
+}
+
 small,
 .count_top,
 .count_bottom,

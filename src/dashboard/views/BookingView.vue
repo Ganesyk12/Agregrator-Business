@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import Swal from 'sweetalert2'
 import BookingModal, { type BookingForm } from '../components/BookingModal.vue'
+
+const auth = useAuthStore()
 
 interface Booking {
   id_booking: number
@@ -33,16 +36,13 @@ const sortColumn = ref<keyof Booking | 'customer_name' | 'vendor_name' | 'packag
 
 const userRoles = ref<string[]>([])
 function loadRoles() {
-  try {
-    const raw = localStorage.getItem('sigyn_user')
-    if (raw) {
-      const user = JSON.parse(raw)
-      userRoles.value = (user.roles || []).map((r: any) => r.role_code)
-    }
-  } catch (_) { userRoles.value = [] }
+  if (auth.user?.roles) {
+    userRoles.value = auth.user.roles.map((r: any) => r.role_code)
+  }
 }
 loadRoles()
 const isSuperAdmin = computed(() => userRoles.value.includes('eUser-SuperAdmin'))
+const vendorId = computed(() => auth.user?.vendor_id)
 const sortDirection = ref<'asc' | 'desc'>('desc')
 const currentPage = ref(1)
 const perPage = ref(5)
@@ -63,7 +63,9 @@ const Toast = Swal.mixin({
 
 async function fetchBookings() {
   try {
-    const res = await fetch(`${apiUrl}/api/bookings`)
+    let url = `${apiUrl}/api/bookings`
+    if (vendorId.value) url += `?vendorId=${vendorId.value}`
+    const res = await fetch(url)
     if (!res.ok) throw new Error('Failed to fetch bookings')
     const json = await res.json()
     bookings.value = json.data || []

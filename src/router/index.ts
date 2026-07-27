@@ -4,22 +4,52 @@ import BaseView from '../views/BaseView.vue'
 import PhotographyView from '../views/PhotographyView.vue'
 import MUAView from '../views/MUAView.vue'
 import BouquetView from '../views/BouquetView.vue'
-import ServicesView from '../views/ServicesView.vue'
-import ContactView from '../views/ContactView.vue'
-import LoginView from '../views/LoginView.vue'
-import WishlistView from '../views/WishlistView.vue'
 import PortfolioDetailView from '../views/PortfolioDetailView.vue'
-import VendorProfileView from '../views/VendorProfileView.vue'
 import BookingView from '../views/BookingView.vue'
 import BookingHistoryView from '../views/BookingHistoryView.vue'
 import ShopView from '../views/ShopView.vue'
 import AboutView from '../views/AboutView.vue'
+import LoginView from '../views/LoginView.vue'
+import VendorProfileView from '../views/VendorProfileView.vue'
+import ContactView from '../views/ContactView.vue'
+import ExploreView from '../views/ExploreView.vue'
+import InspirationDetailView from '../views/InspirationDetailView.vue'
+import PartnerView from '../views/PartnerView.vue'
+import ProductDetailView from '../views/ProductDetailView.vue'
+import ProductCheckoutView from '../views/ProductCheckoutView.vue'
+import WishlistView from '../views/WishlistView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
     component: HomeView
+  },
+  {
+    path: '/explore',
+    name: 'explore',
+    component: ExploreView
+  },
+  {
+    path: '/inspiration',
+    name: 'inspiration',
+    component: ExploreView,
+    props: { defaultTab: 'inspirations' }
+  },
+  {
+    path: '/inspiration/:id',
+    name: 'inspiration-detail',
+    component: InspirationDetailView
+  },
+  {
+    path: '/partner',
+    name: 'partner',
+    component: PartnerView
+  },
+  {
+    path: '/contact',
+    name: 'contact',
+    component: ContactView
   },
   {
     path: '/shop',
@@ -29,13 +59,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/product/:id',
     name: 'product',
-    component: BaseView,
-    props: { title: 'Product Detail' }
-  },
-  {
-    path: '/services',
-    name: 'services',
-    component: ServicesView
+    component: ProductDetailView
   },
   {
     path: '/photography',
@@ -58,29 +82,9 @@ const routes: RouteRecordRaw[] = [
     component: PortfolioDetailView
   },
   {
-    path: '/vendor/:id',
-    name: 'vendor-profile',
-    component: VendorProfileView
-  },
-  {
     path: '/booking',
     name: 'booking',
     component: BookingView
-  },
-  {
-    path: '/about',
-    name: 'about',
-    component: AboutView
-  },
-  {
-    path: '/wishlist',
-    name: 'wishlist',
-    component: WishlistView
-  },
-  {
-    path: '/booking-history',
-    name: 'booking-history',
-    component: BookingHistoryView
   },
   {
     path: '/login',
@@ -88,9 +92,14 @@ const routes: RouteRecordRaw[] = [
     component: LoginView
   },
   {
-    path: '/contact',
-    name: 'contact',
-    component: ContactView
+    path: '/vendor/:id',
+    name: 'vendor-profile',
+    component: VendorProfileView
+  },
+  {
+    path: '/about',
+    name: 'about',
+    component: AboutView
   },
   {
     path: '/cart',
@@ -103,6 +112,21 @@ const routes: RouteRecordRaw[] = [
     name: 'checkout',
     component: BaseView,
     props: { title: 'Checkout' }
+  },
+  {
+    path: '/checkout/product',
+    name: 'product-checkout',
+    component: ProductCheckoutView
+  },
+  {
+    path: '/wishlist',
+    name: 'wishlist',
+    component: WishlistView
+  },
+  {
+    path: '/booking-history',
+    name: 'booking-history',
+    component: BookingHistoryView
   },
   {
     path: '/faqs',
@@ -124,7 +148,13 @@ const routes: RouteRecordRaw[] = [
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
+  scrollBehavior(to) {
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
+    return { top: 0 }
+  }
 })
 
 export default router

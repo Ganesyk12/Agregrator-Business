@@ -42,6 +42,34 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       name: ur.role?.name ?? ur.role_code,
     })) ?? []
 
+    const isVendor = roles.some(r => r.role_code === 'eUser-Vendor')
+
+    let vendorInfo = null
+    if (isVendor) {
+      const prisma = (await import('../../db')).default
+      const vendor = await prisma.vendor.findUnique({
+        where: { id_user: user.id_user },
+        select: {
+          id_vendor: true,
+          vendor_code: true,
+          business_name: true,
+          category: true,
+          vendor_type: true,
+          avatar_url: true,
+        },
+      })
+      if (vendor) {
+        vendorInfo = {
+          vendor_id: vendor.id_vendor,
+          vendor_code: vendor.vendor_code,
+          vendor_category: vendor.category,
+          vendor_name: vendor.business_name,
+          vendor_type: vendor.vendor_type,
+          vendor_avatar: vendor.avatar_url,
+        }
+      }
+    }
+
     const token = signToken({
       id_user: user.id_user,
       email: user.email,
@@ -56,6 +84,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         full_name: user.full_name,
         roles,
         token,
+        ...(vendorInfo && { vendor_info: vendorInfo }),
       },
     })
   } catch (err) {

@@ -12,10 +12,24 @@ function formatPrice(v: number) {
   return 'Rp ' + v.toLocaleString('id-ID')
 }
 
+function isProductItem(item: any) {
+  return !!item.product
+}
+
+function isPackageItem(item: any) {
+  return !!item.package
+}
+
 function goToCheckout() {
   if (cart.items.length === 0) return
   localStorage.setItem('sigyn_cart_checkout', JSON.stringify(cart.items))
-  router.push('/booking')
+  const hasProducts = cart.items.some((i: any) => i.product)
+  const hasPackages = cart.items.some((i: any) => i.package)
+  if (hasProducts && !hasPackages) {
+    router.push('/checkout/product')
+  } else {
+    router.push('/booking')
+  }
 }
 
 onMounted(() => {
@@ -54,11 +68,27 @@ onMounted(() => {
               <div class="d-flex align-items-center gap-2">
                 <button class="btn-remove" @click="cart.removeItem(item.id_cart_item)" title="Remove">&times;</button>
                 <div>
-                  <h6 class="my-0">{{ item.package?.name }}</h6>
-                  <small class="text-body-secondary">{{ item.package?.vendor?.business_name }}</small>
+                  <!-- Package item -->
+                  <template v-if="isPackageItem(item)">
+                    <h6 class="my-0">{{ item.package?.name }}</h6>
+                    <small class="text-body-secondary">{{ item.package?.vendor?.business_name }}</small>
+                  </template>
+                  <!-- Product item -->
+                  <template v-if="isProductItem(item)">
+                    <h6 class="my-0">{{ item.product?.name }}</h6>
+                    <small class="text-body-secondary">{{ item.product?.vendor?.business_name }}</small>
+                    <div class="cart-qty">
+                      <button class="qty-btn" @click="cart.updateQuantity(item.id_cart_item, Math.max(1, item.quantity - 1))">-</button>
+                      <span class="qty-val">{{ item.quantity }}</span>
+                      <button class="qty-btn" @click="cart.updateQuantity(item.id_cart_item, item.quantity + 1)">+</button>
+                    </div>
+                  </template>
                 </div>
               </div>
-              <span class="fw-semibold text-nowrap">{{ formatPrice(item.package?.price) }}</span>
+              <span class="fw-semibold text-nowrap">
+                <template v-if="isPackageItem(item)">{{ formatPrice(item.package?.price) }}</template>
+                <template v-if="isProductItem(item)">{{ formatPrice(item.product?.price * item.quantity) }}</template>
+              </span>
             </li>
             <li class="list-group-item d-flex justify-content-between">
               <span>Total</span>
@@ -155,5 +185,32 @@ onMounted(() => {
 .offcanvas-header .btn-close:hover::before,
 .offcanvas-header .btn-close:hover::after {
   background: #e74c3c;
+}
+.cart-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.qty-btn {
+  width: 22px;
+  height: 22px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.qty-btn:hover { background: #eee; }
+.qty-val {
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
 }
 </style>

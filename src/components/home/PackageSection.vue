@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
@@ -26,15 +26,43 @@ interface PackageItem {
   category: { category_name: string }
 }
 
+interface Idea {
+  id_portfolio: number
+  id_package: number | null
+  label: string | null
+}
+
+const props = defineProps<{
+  celebrationFilter: string | null
+}>()
+
 const categories = ref<Category[]>([])
 const packages = ref<PackageItem[]>([])
+const ideas = ref<Idea[]>([])
 const activeCategory = ref<number | null>(null)
 const loading = ref(true)
 const favoriteIds = ref<Set<number>>(new Set())
 
 const filteredPackages = computed(() => {
-  if (activeCategory.value === null) return packages.value
-  return packages.value.filter(p => p.category?.category_name === categories.value.find(c => c.id_category === activeCategory.value)?.category_name)
+  let result = packages.value
+
+  if (props.celebrationFilter) {
+    const pkgIdsWithLabel = new Set(
+      ideas.value
+        .filter(i => i.id_package && (i.label || '').split(',').includes(props.celebrationFilter!))
+        .map(i => i.id_package)
+    )
+    result = result.filter(p => pkgIdsWithLabel.has(p.id_package))
+  }
+
+  if (activeCategory.value !== null) {
+    const catName = categories.value.find(c => c.id_category === activeCategory.value)?.category_name
+    if (catName) {
+      result = result.filter(p => p.category?.category_name === catName)
+    }
+  }
+
+  return result
 })
 
 function formatPrice(price: number) {
@@ -81,14 +109,16 @@ async function addToCart(packageId: number) {
     router.push('/login')
     return
   }
-  await cart.addItem(packageId)
+  await cart.addPackage(packageId)
 }
 
-onMounted(async () => {
+async function fetchData() {
+  loading.value = true
   try {
-    const [catRes, pkgRes] = await Promise.all([
+    const [catRes, pkgRes, ideaRes] = await Promise.all([
       fetch('/api/categories'),
-      fetch('/api/packages')
+      fetch('/api/packages'),
+      fetch('/api/portfolios')
     ])
     if (catRes.ok) {
       const catJson = await catRes.json()
@@ -96,13 +126,29 @@ onMounted(async () => {
     }
     if (pkgRes.ok) {
       const pkgJson = await pkgRes.json()
-      packages.value = (pkgJson.data || []).filter((p: PackageItem) => p.status !== 'deleted' && p.status !== 'inactive')
+      packages.value = (pkgJson.data || []).filter((p: PackageItem) => p.status !== 'inactive')
+    }
+    if (ideaRes.ok) {
+      const ideaJson = await ideaRes.json()
+      ideas.value = (ideaJson.data || []).map((p: any) => ({
+        id_portfolio: p.id_portfolio,
+        id_package: p.id_package,
+        label: p.label,
+      }))
     }
   } catch {
     // fallback
   } finally {
     loading.value = false
   }
+}
+
+watch(() => props.celebrationFilter, () => {
+  fetchFavorites()
+})
+
+onMounted(async () => {
+  await fetchData()
   await fetchFavorites()
 })
 </script>
@@ -135,12 +181,18 @@ onMounted(async () => {
         </button>
       </div>
 
+      <div v-if="celebrationFilter" class="text-center mb-3">
+        <span class="badge bg-secondary" style="font-size: 0.85rem; padding: 6px 16px;">
+          Showing packages for <strong>{{ celebrationFilter }}</strong>
+        </span>
+      </div>
+
       <div v-if="loading" class="text-center py-5">
         <p class="text-muted">Loading packages...</p>
       </div>
 
       <div v-else-if="filteredPackages.length === 0" class="text-center py-5">
-        <p class="text-muted">No packages available in this category.</p>
+        <p class="text-muted">No packages available for this selection.</p>
       </div>
 
       <div v-else class="row g-4">

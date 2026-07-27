@@ -7,7 +7,11 @@ export const useCartStore = defineStore('cart', () => {
   const loading = ref(false)
 
   const count = computed(() => items.value.length)
-  const total = computed(() => items.value.reduce((s, i) => s + i.package.price, 0))
+  const total = computed(() => items.value.reduce((s, i) => {
+    if (i.package) return s + i.package.price
+    if (i.product) return s + i.product.price * i.quantity
+    return s
+  }, 0))
 
   async function fetchCart() {
     const auth = useAuthStore()
@@ -27,11 +31,31 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  async function addItem(packageId: number) {
+  async function addPackage(packageId: number) {
     const auth = useAuthStore()
     const res = await auth.authFetch('/api/cart/items', {
       method: 'POST',
       body: JSON.stringify({ id_package: packageId }),
+    })
+    if (res.ok) await fetchCart()
+    return res.ok
+  }
+
+  async function addProduct(productId: number, quantity: number = 1) {
+    const auth = useAuthStore()
+    const res = await auth.authFetch('/api/cart/items', {
+      method: 'POST',
+      body: JSON.stringify({ id_product: productId, quantity }),
+    })
+    if (res.ok) await fetchCart()
+    return res.ok
+  }
+
+  async function updateQuantity(itemId: number, quantity: number) {
+    const auth = useAuthStore()
+    const res = await auth.authFetch(`/api/cart/items/${itemId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ quantity }),
     })
     if (res.ok) await fetchCart()
     return res.ok
@@ -51,5 +75,5 @@ export const useCartStore = defineStore('cart', () => {
     return res.ok
   }
 
-  return { items, loading, count, total, fetchCart, addItem, removeItem, clearCart }
+  return { items, loading, count, total, fetchCart, addPackage, addProduct, updateQuantity, removeItem, clearCart }
 })
