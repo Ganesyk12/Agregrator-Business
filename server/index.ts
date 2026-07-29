@@ -5,7 +5,9 @@ import swaggerUi from 'swagger-ui-express'
 import { env } from './config/env'
 import { swaggerSpec } from './config/swagger'
 import { errorHandler } from './middleware/error-handler'
+import { guard } from './middleware/guard'
 
+import guardRoutes from './modules/guard/guard.router'
 import authRoutes from './modules/auth/auth.routes'
 import userRoutes from './modules/users/users.routes'
 import userRoleRoutes from './modules/user-roles/user-roles.routes'
@@ -45,6 +47,9 @@ app.get('/api-docs.json', (_req, res) => { res.json(swaggerSpec) })
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
+
+app.use('/api/guard', guardRoutes)
+app.use(guard)
 
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
