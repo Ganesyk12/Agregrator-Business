@@ -12,4 +12,8 @@ export const env = {
   jwtSecret: req('JWT_SECRET'),
   corsOrigin: req('CORS_ORIGIN'),
   databaseUrl: req('DATABASE_URL'),
+  midtransServerKey: process.env.MIDTRANS_SERVER_KEY || '',
+  midtransClientKey: process.env.MIDTRANS_CLIENT_KEY || '',
+  midtransIsProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
 }
+
