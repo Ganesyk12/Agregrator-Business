@@ -267,28 +267,34 @@ function formatDate(d: string) {
             <!-- Customer -->
             <h6 class="detail-head">Customer Information</h6>
             <table class="table table-sm table-bordered">
-              <tr><th style="width:200px;">Customer Name</th><td>{{ detail.user?.full_name || 'Not Available' }}</td></tr>
-              <tr><th>Email</th><td>{{ detail.user?.email || 'Not Available' }}</td></tr>
-              <tr><th>Phone</th><td>{{ detail.user?.phone || 'Not Available' }}</td></tr>
+              <tbody>
+                <tr><th style="width:200px;">Customer Name</th><td>{{ detail.user?.full_name || 'Not Available' }}</td></tr>
+                <tr><th>Email</th><td>{{ detail.user?.email || 'Not Available' }}</td></tr>
+                <tr><th>Phone</th><td>{{ detail.user?.phone || 'Not Available' }}</td></tr>
+              </tbody>
             </table>
 
             <!-- Recipient -->
             <h6 class="detail-head">Recipient Information</h6>
             <table class="table table-sm table-bordered">
-              <tr><th style="width:200px;">Recipient Name</th><td>{{ na(detail.recipient_name) }}</td></tr>
-              <tr><th>Recipient Phone</th><td>{{ na(detail.recipient_phone) }}</td></tr>
+              <tbody>
+                <tr><th style="width:200px;">Recipient Name</th><td>{{ na(detail.recipient_name) }}</td></tr>
+                <tr><th>Recipient Phone</th><td>{{ na(detail.recipient_phone) }}</td></tr>
+              </tbody>
             </table>
 
             <!-- Delivery -->
             <h6 class="detail-head">Delivery Information</h6>
             <table class="table table-sm table-bordered">
-              <tr><th style="width:200px;">Full Address</th><td>{{ na(detail.delivery_address) }}</td></tr>
-              <tr><th>City</th><td>{{ na(detail.delivery_city) }}</td></tr>
-              <tr><th>Province</th><td>{{ na(detail.delivery_province) }}</td></tr>
-              <tr><th>Postal Code</th><td>{{ na(detail.delivery_postal_code) }}</td></tr>
-              <tr><th>Delivery Notes</th><td>{{ na(detail.delivery_notes) }}</td></tr>
-              <tr><th>Preferred Delivery Date</th><td>{{ detail.delivery_date ? formatDate(detail.delivery_date) : 'Not Available' }}</td></tr>
-              <tr><th>Preferred Delivery Time</th><td>{{ na(detail.delivery_time) }}</td></tr>
+              <tbody>
+                <tr><th style="width:200px;">Full Address</th><td>{{ na(detail.delivery_address) }}</td></tr>
+                <tr><th>City</th><td>{{ na(detail.delivery_city) }}</td></tr>
+                <tr><th>Province</th><td>{{ na(detail.delivery_province) }}</td></tr>
+                <tr><th>Postal Code</th><td>{{ na(detail.delivery_postal_code) }}</td></tr>
+                <tr><th>Delivery Notes</th><td>{{ na(detail.delivery_notes) }}</td></tr>
+                <tr><th>Preferred Delivery Date</th><td>{{ detail.delivery_date ? formatDate(detail.delivery_date) : 'Not Available' }}</td></tr>
+                <tr><th>Preferred Delivery Time</th><td>{{ na(detail.delivery_time) }}</td></tr>
+              </tbody>
             </table>
 
             <!-- Products -->
@@ -316,10 +322,12 @@ function formatDate(d: string) {
             <div class="row" style="justify-content:flex-end;">
               <div class="col-md-4">
                 <table class="table table-sm table-bordered">
-                  <tr><th>Subtotal</th><td>{{ formatCurrency(detail.total_price - (detail.delivery_fee || 0) - (detail.service_fee || 0)) }}</td></tr>
-                  <tr><th>Delivery Fee</th><td>{{ formatCurrency(detail.delivery_fee || 0) }}</td></tr>
-                  <tr><th>Service Fee</th><td>{{ formatCurrency(detail.service_fee || 0) }}</td></tr>
-                  <tr><th>Grand Total</th><td><strong>{{ formatCurrency(detail.total_price) }}</strong></td></tr>
+                  <tbody>
+                    <tr><th>Subtotal</th><td>{{ formatCurrency(detail.total_price - (detail.delivery_fee || 0) - (detail.service_fee || 0)) }}</td></tr>
+                    <tr><th>Delivery Fee</th><td>{{ formatCurrency(detail.delivery_fee || 0) }}</td></tr>
+                    <tr><th>Service Fee</th><td>{{ formatCurrency(detail.service_fee || 0) }}</td></tr>
+                    <tr><th>Grand Total</th><td><strong>{{ formatCurrency(detail.total_price) }}</strong></td></tr>
+                  </tbody>
                 </table>
               </div>
             </div>

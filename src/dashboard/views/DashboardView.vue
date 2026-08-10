@@ -90,34 +90,73 @@ async function fetchServiceVendorStats() {
     <div class="x_panel">
       <div class="x_title"><h2>Dashboard — {{ auth.user?.vendor_name || 'My Store' }}</h2><div class="clearfix"></div></div>
       <div class="x_content">
-        <div class="row tile_count">
-          <div class="tile_stats_count col-md-3 col-sm-6">
-            <span class="count_top"><i class="fa fa-shopping-bag"></i> Products</span>
-            <div class="count">{{ productCount }}</div>
-            <span class="count_bottom"><i :class="lowStockCount > 0 ? 'red' : 'green'">{{ lowStockCount }}</i> low stock items</span>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper icon-blue">
+              <i class="fa fa-shopping-bag"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Products</span>
+              <div class="stat-value">{{ productCount }}</div>
+              <span class="stat-desc">
+                <span :class="lowStockCount > 0 ? 'badge-red' : 'badge-green'">
+                  {{ lowStockCount }} low stock
+                </span>
+              </span>
+            </div>
           </div>
-          <div class="tile_stats_count col-md-3 col-sm-6">
-            <span class="count_top"><i class="fa fa-truck"></i> Orders</span>
-            <div class="count green">{{ orderCount }}</div>
-            <span class="count_bottom"><i class="red">{{ pendingOrders }}</i> pending</span>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper icon-green">
+              <i class="fa fa-truck"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Orders</span>
+              <div class="stat-value">{{ orderCount }}</div>
+              <span class="stat-desc">
+                <span class="badge-red" v-if="pendingOrders > 0">{{ pendingOrders }} pending</span>
+                <span class="badge-green" v-else>All clear</span>
+              </span>
+            </div>
           </div>
-          <div class="tile_stats_count col-md-3 col-sm-6">
-            <span class="count_top"><i class="fa fa-money"></i> Today's Sales</span>
-            <div class="count">{{ 'Rp ' + todaySales.toLocaleString('id-ID') }}</div>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper icon-orange">
+              <i class="fa fa-money"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Today's Sales</span>
+              <div class="stat-value">{{ 'Rp ' + todaySales.toLocaleString('id-ID') }}</div>
+              <span class="stat-desc">Delivered/Completed</span>
+            </div>
           </div>
-          <div class="tile_stats_count col-md-3 col-sm-6">
-            <span class="count_top"><i class="fa fa-cube"></i> Products Sold</span>
-            <div class="count">{{ productsSold }}</div>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper icon-purple">
+              <i class="fa fa-cube"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Products Sold</span>
+              <div class="stat-value">{{ productsSold }}</div>
+              <span class="stat-desc">Total quantities</span>
+            </div>
           </div>
-        </div>
-        <div class="row tile_count">
-          <div class="tile_stats_count col-md-3 col-sm-6">
-            <span class="count_top"><i class="fa fa-money"></i> This Week</span>
-            <div class="count">{{ 'Rp ' + weekSales.toLocaleString('id-ID') }}</div>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper icon-teal">
+              <i class="fa fa-money"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">This Week</span>
+              <div class="stat-value">{{ 'Rp ' + weekSales.toLocaleString('id-ID') }}</div>
+              <span class="stat-desc">Last 7 days</span>
+            </div>
           </div>
-          <div class="tile_stats_count col-md-3 col-sm-6">
-            <span class="count_top"><i class="fa fa-money"></i> This Month</span>
-            <div class="count">{{ 'Rp ' + monthSales.toLocaleString('id-ID') }}</div>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper icon-pink">
+              <i class="fa fa-money"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">This Month</span>
+              <div class="stat-value">{{ 'Rp ' + monthSales.toLocaleString('id-ID') }}</div>
+              <span class="stat-desc">Last 30 days</span>
+            </div>
           </div>
         </div>
       </div>
@@ -126,26 +165,56 @@ async function fetchServiceVendorStats() {
 
   <!-- Service Vendor Dashboard -->
   <template v-else-if="isVendor && !isAdmin">
-    <div class="row tile_count">
-      <div class="tile_stats_count">
-        <span class="count_top"><i class="fa fa-shopping-bag"></i> My Products</span>
-        <div class="count">{{ vendorProductsCount }}</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon-wrapper icon-blue">
+          <i class="fa fa-shopping-bag"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">My Products</span>
+          <div class="stat-value">{{ vendorProductsCount }}</div>
+          <span class="stat-desc">Active listings</span>
+        </div>
       </div>
-      <div class="tile_stats_count">
-        <span class="count_top"><i class="fa fa-truck"></i> My Orders</span>
-        <div class="count">{{ vendorOrdersCount }}</div>
+      <div class="stat-card">
+        <div class="stat-icon-wrapper icon-green">
+          <i class="fa fa-truck"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">My Orders</span>
+          <div class="stat-value">{{ vendorOrdersCount }}</div>
+          <span class="stat-desc">Customer orders</span>
+        </div>
       </div>
-      <div class="tile_stats_count">
-        <span class="count_top"><i class="fa fa-cube"></i> My Packages</span>
-        <div class="count">{{ vendorPackagesCount }}</div>
+      <div class="stat-card">
+        <div class="stat-icon-wrapper icon-orange">
+          <i class="fa fa-cube"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">My Packages</span>
+          <div class="stat-value">{{ vendorPackagesCount }}</div>
+          <span class="stat-desc">Service packages</span>
+        </div>
       </div>
-      <div class="tile_stats_count">
-        <span class="count_top"><i class="fa fa-picture-o"></i> My Portfolios</span>
-        <div class="count">{{ vendorPortfoliosCount }}</div>
+      <div class="stat-card">
+        <div class="stat-icon-wrapper icon-purple">
+          <i class="fa fa-picture-o"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">My Portfolios</span>
+          <div class="stat-value">{{ vendorPortfoliosCount }}</div>
+          <span class="stat-desc">Inspiration items</span>
+        </div>
       </div>
-      <div class="tile_stats_count">
-        <span class="count_top"><i class="fa fa-calendar"></i> My Bookings</span>
-        <div class="count">{{ vendorBookingsCount }}</div>
+      <div class="stat-card">
+        <div class="stat-icon-wrapper icon-teal">
+          <i class="fa fa-calendar"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">My Bookings</span>
+          <div class="stat-value">{{ vendorBookingsCount }}</div>
+          <span class="stat-desc">Scheduled bookings</span>
+        </div>
       </div>
     </div>
 
@@ -183,3 +252,96 @@ async function fetchServiceVendorStats() {
     </div>
   </template>
 </template>
+
+<style scoped>
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid #eef2f6;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+}
+
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.icon-blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.icon-green { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.icon-purple { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.icon-orange { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.icon-pink { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
+.icon-teal { background: rgba(20, 184, 166, 0.1); color: #14b8a6; }
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.stat-desc {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.badge-green {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.badge-red {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+</style>
