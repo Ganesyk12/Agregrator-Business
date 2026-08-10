@@ -24,6 +24,7 @@ const addedToCart = ref(false)
 const selectedOptions = ref<Record<string, string>>({})
 const selectedSize = ref<string | null>(null)
 const selectedExtras = ref<string[]>([])
+const greetingMessage = ref('')
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -35,12 +36,40 @@ onMounted(async () => {
     if (!res.ok) throw new Error('Not found')
     const json = await res.json()
     product.value = json.data
+    if (route.query.edit) applyEditConfig(cart.editTarget)
   } catch {
     router.push('/404')
   } finally {
     loading.value = false
   }
 })
+
+function applyEditConfig(cfg: any) {
+  if (!cfg || !product.value) return
+  if (cfg.quantity) quantity.value = cfg.quantity
+  if (cfg.sizeName) selectedSize.value = cfg.sizeName
+  if (cfg.variantId != null && cfg.variantId) selectedVariant.value = cfg.variantId
+  if (cfg.variantName) {
+    const v = product.value.variants?.find((x: any) => x.name === cfg.variantName)
+    if (v) selectedVariant.value = v.id_variant
+  }
+  if (Array.isArray(cfg.options)) {
+    for (const o of cfg.options) {
+      if (o.groupName) selectedOptions.value[o.groupName] = o.valueName
+    }
+  }
+  if (Array.isArray(cfg.extras)) {
+    if (isNewProduct.value) {
+      selectedExtras.value = cfg.extras.map((e: any) => e.name)
+    } else {
+      const s = new Set<number>()
+      for (const e of cfg.extras) if (e.id) s.add(Number(e.id))
+      selectedAddons.value = s
+    }
+  }
+  if (cfg.greetingMessage) greetingMessage.value = cfg.greetingMessage
+  cart.editTarget = null
+}
 
 const images = computed(() => {
   if (!product.value) return []
@@ -102,6 +131,62 @@ const currentPrice = computed(() => {
   return basePrice.value + variantAdjustment.value + optionsAdjustment.value + sizePrice.value + extrasTotal.value
 })
 
+const grandTotal = computed(() => currentPrice.value * quantity.value)
+
+const greetingGroupName = computed(() => {
+  const groups = product.value?.option_groups || []
+  const g = groups.find((grp: any) => grp.name.toLowerCase().includes('greeting'))
+  return g?.name || ''
+})
+
+function buildConfig() {
+  const extras: any[] = []
+  const addonIds: number[] = []
+  if (isNewProduct.value) {
+    for (const name of selectedExtras.value) {
+      const extra = product.value?.optional_extras?.find((e: any) => e.name === name)
+      if (extra) extras.push({ id: extra.id_optional_extra, name: extra.name, price: Number(extra.price) })
+    }
+  } else {
+    for (const id of selectedAddons.value) {
+      const a = product.value?.addons?.find((x: any) => x.id_addon === id)
+      if (a) extras.push({ id, name: a.name, price: Number(a.price) })
+      addonIds.push(id)
+    }
+  }
+
+  const options: any[] = []
+  let greetingCard = ''
+  for (const [groupName, valueName] of Object.entries(selectedOptions.value)) {
+    const group = product.value?.option_groups?.find((g: any) => g.name === groupName)
+    const val = group?.values?.find((v: any) => v.name === valueName)
+    options.push({ groupName, valueName, priceAdjust: Number(val?.price_adjust || 0) })
+    if (groupName.toLowerCase().includes('greeting')) greetingCard = valueName
+  }
+
+  const variant = product.value?.variants?.find((v: any) => v.id_variant === selectedVariant.value)
+  const unitPrice = currentPrice.value
+
+  return {
+    productId: product.value.id_product,
+    productName: product.value.name,
+    thumbnail: images.value[0]?.image_url || '',
+    vendorName: product.value.vendor?.business_name || '',
+    variantId: selectedVariant.value,
+    variantName: isNewProduct.value ? '' : variant?.name || '',
+    sizeName: selectedSize.value,
+    options,
+    greetingCard,
+    greetingMessage: greetingMessage.value,
+    extras,
+    addonIds,
+    quantity: quantity.value,
+    unitPrice,
+    extrasPrice: extrasTotal.value,
+    subtotal: unitPrice * quantity.value,
+  }
+}
+
 function toggleAddon(id: number) {
   const s = new Set(selectedAddons.value)
   if (s.has(id)) s.delete(id)
@@ -123,7 +208,7 @@ function formatPrice(val: number) {
 
 async function addToCart() {
   if (!auth.isLoggedIn) { router.push('/login'); return }
-  const ok = await cart.addProduct(product.value.id_product, quantity.value)
+  const ok = await cart.addProduct(product.value.id_product, quantity.value, buildConfig())
   if (ok) {
     addedToCart.value = true
     setTimeout(() => { addedToCart.value = false }, 2000)
@@ -132,6 +217,7 @@ async function addToCart() {
 
 function buyNow() {
   if (!auth.isLoggedIn) { router.push('/login'); return }
+  localStorage.setItem('sigyn_checkout_config', JSON.stringify(buildConfig()))
   const params = new URLSearchParams({
     productId: String(product.value.id_product),
     quantity: String(quantity.value),
@@ -187,7 +273,10 @@ function buyNow() {
                 </div>
               </div>
 
-              <div class="product-price">{{ formatPrice(currentPrice) }}</div>
+              <div class="product-price">
+                {{ formatPrice(grandTotal) }}
+                <span class="price-unit" v-if="quantity > 1">({{ formatPrice(currentPrice) }} / unit)</span>
+              </div>
 
               <p class="product-desc">{{ product.description }}</p>
 
@@ -234,6 +323,18 @@ function buyNow() {
                       <span class="addon-price">+{{ formatPrice(extra.price) }}</span>
                     </label>
                   </div>
+                </div>
+
+                <!-- Greeting Message -->
+                <div v-if="greetingGroupName && selectedOptions[greetingGroupName]" class="section">
+                  <h3 class="section-title">Greeting Message</h3>
+                  <textarea
+                    v-model="greetingMessage"
+                    class="greeting-input"
+                    rows="3"
+                    maxlength="300"
+                    placeholder="Write a message to include with your bouquet..."
+                  ></textarea>
                 </div>
               </template>
 
@@ -333,6 +434,9 @@ function buyNow() {
 .product-occasion { background: #f0f0f0; padding: 2px 10px; border-radius: 20px; font-size: 0.78rem; }
 
 .product-price { font-family: 'Marcellus', serif; font-size: 2rem; font-weight: 700; color: var(--bs-black, #2a2a2a); margin-bottom: 20px; }
+.price-unit { font-size: 0.85rem; font-weight: 400; color: #888; font-family: 'Jost', sans-serif; margin-left: 8px; }
+.greeting-input { width: 100%; padding: 12px 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-family: 'Jost', sans-serif; font-size: 0.9rem; resize: vertical; }
+.greeting-input:focus { outline: none; border-color: var(--bs-secondary, #B89C7B); }
 .product-desc { font-family: 'Jost', sans-serif; font-size: 0.95rem; color: #5a5a5a; line-height: 1.7; margin-bottom: 24px; }
 
 .section { margin-bottom: 24px; }

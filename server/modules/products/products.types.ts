@@ -21,6 +21,7 @@ export interface Product {
     id_vendor: number
     business_name: string
     location: string | null
+    category: string | null
   }
   occasion?: { id_occasion: number; name: string; slug: string }
   template?: ProductTemplate | null

@@ -5,11 +5,15 @@ import { useAuthStore } from './auth'
 export const useCartStore = defineStore('cart', () => {
   const items = ref<any[]>([])
   const loading = ref(false)
+  const editTarget = ref<any>(null)
 
   const count = computed(() => items.value.length)
   const total = computed(() => items.value.reduce((s, i) => {
     if (i.package) return s + i.package.price
-    if (i.product) return s + i.product.price * i.quantity
+    if (i.product) {
+      if (typeof i.subtotal === 'number' && i.subtotal) return s + i.subtotal
+      return s + i.product.price * i.quantity
+    }
     return s
   }, 0))
 
@@ -41,11 +45,11 @@ export const useCartStore = defineStore('cart', () => {
     return res.ok
   }
 
-  async function addProduct(productId: number, quantity: number = 1) {
+  async function addProduct(productId: number, quantity: number = 1, config: any = {}) {
     const auth = useAuthStore()
     const res = await auth.authFetch('/api/cart/items', {
       method: 'POST',
-      body: JSON.stringify({ id_product: productId, quantity }),
+      body: JSON.stringify({ id_product: productId, quantity, ...config }),
     })
     if (res.ok) await fetchCart()
     return res.ok
@@ -75,5 +79,5 @@ export const useCartStore = defineStore('cart', () => {
     return res.ok
   }
 
-  return { items, loading, count, total, fetchCart, addPackage, addProduct, updateQuantity, removeItem, clearCart }
+  return { items, loading, editTarget, count, total, fetchCart, addPackage, addProduct, updateQuantity, removeItem, clearCart }
 })

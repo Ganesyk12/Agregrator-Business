@@ -13,7 +13,6 @@ interface Celebration {
   nameId: string
   description: string
   image: string
-  count: string
 }
 
 const celebrations: Celebration[] = [
@@ -22,48 +21,42 @@ const celebrations: Celebration[] = [
     name: 'Wedding',
     nameId: 'Pernikahan',
     description: 'Abadikan hari bahagia Anda dengan sentuhan kreatif dari vendor terbaik.',
-    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=800&fit=crop',
-    count: '124 inspirasi'
+    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=800&fit=crop'
   },
   {
     id: 'graduation',
     name: 'Graduation',
     nameId: 'Wisuda',
     description: 'Rayakan pencapaian istimewa dengan foto dan rangkaian bunga spesial.',
-    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&h=800&fit=crop',
-    count: '89 inspirasi'
+    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&h=800&fit=crop'
   },
   {
     id: 'birthday',
     name: 'Birthday',
     nameId: 'Ulang Tahun',
     description: 'Momen spesial penuh kebahagiaan bersama orang-orang tercinta.',
-    image: 'https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=600&h=800&fit=crop',
-    count: '156 inspirasi'
+    image: 'https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=600&h=800&fit=crop'
   },
   {
     id: 'engagement',
     name: 'Engagement',
     nameId: 'Tunangan',
     description: 'Awal dari perjalanan indah. Abadikan momen tunangan yang romantis.',
-    image: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=600&h=800&fit=crop',
-    count: '67 inspirasi'
+    image: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=600&h=800&fit=crop'
   },
   {
     id: 'anniversary',
     name: 'Anniversary',
     nameId: 'Anniversary',
     description: 'Rayakan cinta yang terus bertumbuh dengan momen tak terlupakan.',
-    image: 'https://images.unsplash.com/photo-1529636798458-92182e662485?w=600&h=800&fit=crop',
-    count: '43 inspirasi'
+    image: 'https://images.unsplash.com/photo-1529636798458-92182e662485?w=600&h=800&fit=crop'
   },
   {
     id: 'formal',
     name: 'Formal',
     nameId: 'Formal',
     description: 'Acara formal dan resmi dengan konsep elegan dan profesional.',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=800&fit=crop',
-    count: '52 inspirasi'
+    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=800&fit=crop'
   }
 ]
 </script>
@@ -113,7 +106,6 @@ const celebrations: Celebration[] = [
           </div>
           <div class="card-overlay"></div>
           <div class="card-content">
-            <div class="card-count">{{ c.count }}</div>
             <h3 class="card-title">{{ c.name }}</h3>
             <p class="card-desc">{{ c.description }}</p>
             <span class="card-cta">
@@ -242,21 +234,6 @@ const celebrations: Celebration[] = [
   right: 0;
   padding: 28px 24px;
   z-index: 2;
-}
-
-.card-count {
-  display: inline-block;
-  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-  padding: 4px 12px;
-  border-radius: 20px;
-  margin-bottom: 12px;
 }
 
 .card-title {

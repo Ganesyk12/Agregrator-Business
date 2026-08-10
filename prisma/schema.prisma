@@ -595,13 +595,27 @@ model OptionalExtra {
 }
 
 model Order {
-  id_order       Int      @id @default(autoincrement())
-  id_user        Int
-  id_vendor      Int
-  total_price    Float
-  status         String   @default("pending")
-  delivery_info  String?
-  notes          String?
+  id_order            Int      @id @default(autoincrement())
+  id_user             Int
+  id_vendor           Int
+  total_price         Float
+  status              String   @default("pending")
+  delivery_info       String?
+  notes               String?
+  order_number        String?
+  recipient_name      String?
+  recipient_phone     String?
+  delivery_address    String?
+  delivery_city       String?
+  delivery_province   String?
+  delivery_postal_code String?
+  delivery_notes      String?
+  delivery_date       DateTime?
+  delivery_time       String?
+  payment_status      String   @default("pending")
+  fulfillment_status  String   @default("pending")
+  delivery_fee        Float    @default(0)
+  service_fee         Float    @default(0)
   date_created   DateTime @default(now())
   date_modified  DateTime @updatedAt
   user_created   String?
@@ -617,14 +631,24 @@ model Order {
 }
 
 model OrderItem {
-  id_order_item Int      @id @default(autoincrement())
-  id_order      Int
-  id_product    Int
-  id_variant    Int?
-  quantity      Int      @default(1)
-  price         Float
-  addon_ids     String?
-  date_created  DateTime @default(now())
+  id_order_item   Int      @id @default(autoincrement())
+  id_order        Int
+  id_product      Int
+  id_variant      Int?
+  quantity        Int      @default(1)
+  price           Float
+  addon_ids       String?
+  size_name       String?
+  variant_name    String?
+  options         Json?
+  greeting_card   String?
+  greeting_message String?
+  extras          Json?
+  unit_price      Float?
+  extras_price    Float    @default(0)
+  subtotal        Float?
+  thumbnail       String?
+  date_created    DateTime @default(now())
 
   order   Order   @relation(fields: [id_order], references: [id_order], onDelete: Cascade)
   product Product @relation(fields: [id_product], references: [id_product])
@@ -648,12 +672,24 @@ model Cart {
 }
 
 model CartItem {
-  id_cart_item Int      @id @default(autoincrement())
-  id_cart      Int
-  id_package   Int?
-  id_product   Int?
-  quantity     Int      @default(1)
-  date_created DateTime @default(now())
+  id_cart_item    Int      @id @default(autoincrement())
+  id_cart         Int
+  id_package      Int?
+  id_product      Int?
+  quantity        Int      @default(1)
+  id_variant      Int?
+  variant_name    String?
+  size_name       String?
+  options         Json?
+  greeting_card   String?
+  greeting_message String?
+  extras          Json?
+  unit_price      Float?
+  extras_price    Float    @default(0)
+  subtotal        Float?
+  thumbnail       String?
+  vendor_name     String?
+  date_created    DateTime @default(now())
 
   cart    Cart     @relation(fields: [id_cart], references: [id_cart], onDelete: Cascade)
   package Package? @relation(fields: [id_package], references: [id_package])

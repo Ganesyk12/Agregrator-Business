@@ -86,7 +86,7 @@ function onCelebrationSelect(celebration: string | null) {
             <h4 class="text-uppercase section-title mb-0">Bouquet Flowers</h4>
             <p class="text-muted mb-0">Fresh floral arrangements for every occasion</p>
           </div>
-          <a href="/explore" class="btn-link">View All Products</a>
+          <router-link to="/bouquet" class="btn-link">View All Products</router-link>
         </div>
 
         <div v-if="productsLoading" class="text-center py-5">

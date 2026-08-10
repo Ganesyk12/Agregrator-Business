@@ -21,6 +21,7 @@ interface GalleryItem {
   url: string
   alt?: string
   id_portfolio?: number
+  to?: string
 }
 
 const props = defineProps<{
@@ -37,7 +38,9 @@ const resolvedItems = computed<GalleryItem[]>(() => {
 })
 
 function handleClick(item: GalleryItem) {
-  if (item.id_portfolio) {
+  if (item.to) {
+    router.push(item.to)
+  } else if (item.id_portfolio) {
     router.push(`/portfolio/${item.id_portfolio}`)
   }
 }

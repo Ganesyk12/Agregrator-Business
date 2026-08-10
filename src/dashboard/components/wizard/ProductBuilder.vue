@@ -69,12 +69,17 @@ async function uploadWrappingImage(index: number, e: Event) {
   if (!input.files?.length) return
   const key = 'wc-' + index
   uploading.value[key] = true
+  const vCode = auth.vendorCode || auth.user?.vendor_code || 'general'
   try {
     const fd = new FormData()
-    fd.append('vendor_code', auth.vendorCode || '')
+    fd.append('vendor_code', vCode)
     fd.append('category', 'products')
     fd.append('file', input.files[0])
-    const res = await fetch(`${apiUrl}/api/upload`, { method: 'POST', body: fd })
+    const res = await fetch(`${apiUrl}/api/upload?vendor_code=${encodeURIComponent(vCode)}&category=products`, {
+      method: 'POST',
+      headers: auth.token ? { 'Authorization': `Bearer ${auth.token}` } : {},
+      body: fd,
+    })
     if (res.ok) {
       const data = await res.json()
       wrappingColors.value[index].image_url = data.url

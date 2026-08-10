@@ -13,13 +13,13 @@ export async function getMyCart(req: Request, res: Response, next: NextFunction)
 
 export async function addItem(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_package, id_product, quantity } = req.body
+    const { id_package, id_product, quantity, ...cfg } = req.body
     if (id_package) {
       const item = await cartService.addPackageItem(req.user!.id_user, Number(id_package))
       return res.status(201).json({ data: item })
     }
     if (id_product) {
-      const item = await cartService.addProductItem(req.user!.id_user, Number(id_product), Number(quantity || 1))
+      const item = await cartService.addProductItem(req.user!.id_user, Number(id_product), Number(quantity || 1), cfg)
       return res.status(201).json({ data: item })
     }
     throw createError(400, 'id_package or id_product is required')
@@ -31,7 +31,7 @@ export async function addItem(req: Request, res: Response, next: NextFunction) {
 export async function updateItem(req: Request, res: Response, next: NextFunction) {
   try {
     const { quantity } = req.body
-    const item = await cartService.updateItemQuantity(Number(req.params.itemId), Number(quantity))
+    const item = await cartService.updateItem(req.user!.id_user, Number(req.params.itemId), Number(quantity))
     res.json({ data: item })
   } catch (err) {
     next(err)

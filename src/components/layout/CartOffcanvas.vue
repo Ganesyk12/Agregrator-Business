@@ -32,6 +32,15 @@ function goToCheckout() {
   }
 }
 
+function editItem(item: any) {
+  cart.editTarget = item
+  router.push(`/product/${item.product?.id_product}?edit=1`)
+}
+
+function formatExtras(extras: any[]) {
+  return (extras || []).map((e: any) => e.name).join(', ')
+}
+
 onMounted(() => {
   if (auth.isLoggedIn) cart.fetchCart()
 })
@@ -75,19 +84,45 @@ onMounted(() => {
                   </template>
                   <!-- Product item -->
                   <template v-if="isProductItem(item)">
-                    <h6 class="my-0">{{ item.product?.name }}</h6>
-                    <small class="text-body-secondary">{{ item.product?.vendor?.business_name }}</small>
-                    <div class="cart-qty">
-                      <button class="qty-btn" @click="cart.updateQuantity(item.id_cart_item, Math.max(1, item.quantity - 1))">-</button>
-                      <span class="qty-val">{{ item.quantity }}</span>
-                      <button class="qty-btn" @click="cart.updateQuantity(item.id_cart_item, item.quantity + 1)">+</button>
+                    <div class="cart-prod">
+                      <img
+                        class="cart-thumb"
+                        :src="item.thumbnail || item.product?.images?.[0]?.image_url || 'https://placehold.co/60x60?text=Flower'"
+                        :alt="item.product?.name"
+                      />
+                      <div>
+                        <h6 class="my-0">{{ item.product?.name }}</h6>
+                        <small class="text-body-secondary">{{ item.vendor_name || item.product?.vendor?.business_name }}</small>
+                        <div v-if="item.size_name" class="cart-opt"><span class="opt-label">Size:</span> {{ item.size_name }}</div>
+                        <div v-if="item.variant_name" class="cart-opt"><span class="opt-label">Variant:</span> {{ item.variant_name }}</div>
+                        <div v-if="item.options?.length" class="cart-opt">
+                          <div v-for="o in item.options" :key="o.groupName">
+                            <span class="opt-label">{{ o.groupName }}:</span> {{ o.valueName }}
+                            <span v-if="o.priceAdjust > 0"> (+{{ formatPrice(o.priceAdjust) }})</span>
+                          </div>
+                        </div>
+                        <div v-if="item.extras?.length" class="cart-opt">
+                          <span class="opt-label">Extras:</span> {{ formatExtras(item.extras) }}
+                        </div>
+                        <div v-if="item.greeting_card" class="cart-opt"><span class="opt-label">Greeting:</span> {{ item.greeting_card }}</div>
+                        <div v-if="item.greeting_message" class="cart-opt cart-note">"{{ item.greeting_message }}"</div>
+                        <div class="cart-qty">
+                          <button class="qty-btn" @click="cart.updateQuantity(item.id_cart_item, Math.max(1, item.quantity - 1))">-</button>
+                          <span class="qty-val">{{ item.quantity }}</span>
+                          <button class="qty-btn" @click="cart.updateQuantity(item.id_cart_item, item.quantity + 1)">+</button>
+                          <button class="qty-btn" @click="editItem(item)" title="Edit">✎</button>
+                        </div>
+                      </div>
                     </div>
                   </template>
                 </div>
               </div>
-              <span class="fw-semibold text-nowrap">
+              <span class="fw-semibold text-nowrap cart-line-price">
                 <template v-if="isPackageItem(item)">{{ formatPrice(item.package?.price) }}</template>
-                <template v-if="isProductItem(item)">{{ formatPrice(item.product?.price * item.quantity) }}</template>
+                <template v-if="isProductItem(item)">
+                  <template v-if="item.subtotal">{{ formatPrice(item.subtotal) }}</template>
+                  <template v-else>{{ formatPrice(item.product?.price * item.quantity) }}</template>
+                </template>
               </span>
             </li>
             <li class="list-group-item d-flex justify-content-between">
@@ -191,6 +226,35 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   margin-top: 4px;
+}
+.cart-prod {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.cart-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.cart-opt {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.opt-label {
+  font-weight: 600;
+  color: #444;
+}
+.cart-note {
+  font-style: italic;
+  color: #888;
+}
+.cart-line-price {
+  align-self: center;
 }
 .qty-btn {
   width: 22px;

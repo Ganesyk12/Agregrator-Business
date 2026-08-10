@@ -137,14 +137,15 @@ async function onImageUpload(event: Event) {
   const file = target.files[0]
   const vendor = props.vendors.find(v => v.id_vendor === form.value.id_vendor)
   if (!vendor) { uploadError.value = 'Pilih vendor terlebih dahulu'; return }
+  const vCode = vendor.vendor_code || 'general'
   const formData = new FormData()
-  formData.append('vendor_code', vendor.vendor_code)
+  formData.append('vendor_code', vCode)
   formData.append('category', 'products')
   formData.append('file', file)
   isUploading.value = true
   uploadError.value = ''
   try {
-    const res = await fetch(`${apiUrl}/api/upload`, { method: 'POST', body: formData })
+    const res = await fetch(`${apiUrl}/api/upload?vendor_code=${encodeURIComponent(vCode)}&category=products`, { method: 'POST', body: formData })
     if (!res.ok) throw new Error((await res.json()).error?.message || 'Upload failed')
     const result = await res.json()
     form.value.images.push({ image_url: result.url, caption: null })

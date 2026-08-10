@@ -22,7 +22,7 @@ onMounted(async () => {
     if (res.ok) {
       const allPortfolios = json.data || []
       images.value = allPortfolios
-        .filter((p: any) => p.vendor?.category === 'MUA')
+        .filter((p: any) => p.vendor?.category === 'Makeup Artist')
         .map((p: any) => ({
           url: p.cover_url,
           id_portfolio: p.id_portfolio,

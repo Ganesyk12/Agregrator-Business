@@ -30,15 +30,17 @@ async function handleUpload(e: Event) {
 
   uploading.value = true
   uploadError.value = ''
+  const vCode = auth.vendorCode || auth.user?.vendor_code || 'general'
   try {
     for (const file of Array.from(input.files)) {
       const formData = new FormData()
-      formData.append('vendor_code', auth.vendorCode || '')
+      formData.append('vendor_code', vCode)
       formData.append('category', 'products')
       formData.append('file', file)
 
-      const res = await fetch(`${apiUrl}/api/upload`, {
+      const res = await fetch(`${apiUrl}/api/upload?vendor_code=${encodeURIComponent(vCode)}&category=products`, {
         method: 'POST',
+        headers: auth.token ? { 'Authorization': `Bearer ${auth.token}` } : {},
         body: formData,
       })
 

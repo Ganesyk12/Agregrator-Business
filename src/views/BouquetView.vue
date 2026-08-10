@@ -8,29 +8,31 @@ import PinterestGallery from '@/components/layout/PinterestGallery.vue'
 
 interface GalleryItem {
   url: string
-  id_portfolio: number
   alt?: string
+  to: string
 }
 
+const products = ref<any[]>([])
 const images = ref<GalleryItem[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/portfolios')
+    const res = await fetch('/api/products')
     const json = await res.json()
     if (res.ok) {
-      const allPortfolios = json.data || []
-      images.value = allPortfolios
-        .filter((p: any) => p.vendor?.category === 'Bouquet' || p.category === 'Product')
-        .map((p: any) => ({
-          url: p.cover_url,
-          id_portfolio: p.id_portfolio,
-          alt: p.title,
-        }))
+      products.value = (json.data || []).filter(
+        (p: any) =>
+          p.status === 'active' && p.vendor?.category === 'Bouquet Flowers'
+      )
+      images.value = products.value.map((p: any) => ({
+        url: p.images?.[0]?.image_url || 'https://placehold.co/400x400?text=Flower',
+        alt: p.name,
+        to: '/product/' + p.id_product,
+      }))
     }
   } catch {
-    // fallback
+    products.value = []
   } finally {
     loading.value = false
   }
@@ -44,12 +46,12 @@ onMounted(async () => {
     <CartOffcanvas />
 
     <div class="gallery-header">
-      <h1 class="gallery-title">Bouquet & Product</h1>
-      <p class="gallery-subtitle">Beautiful arrangements and product showcases</p>
+      <h1 class="gallery-title">Portfolio</h1>
+      <p class="gallery-subtitle">Explore all bouquet products from our vendors</p>
     </div>
 
     <div v-if="loading" class="loading-state">
-      <p>Loading portfolios...</p>
+      <p>Loading products...</p>
     </div>
 
     <PinterestGallery v-else :images="images" />

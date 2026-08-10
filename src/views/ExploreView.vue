@@ -39,14 +39,17 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const [venRes, porRes] = await Promise.all([
+    const [venRes, porRes, prodRes] = await Promise.all([
       fetch('/api/vendors'),
-      fetch('/api/portfolios')
+      fetch('/api/portfolios'),
+      fetch('/api/products')
     ])
     const venJson = await venRes.json()
     const porJson = await porRes.json()
+    const prodJson = await prodRes.json()
     const vendors = venJson.data || []
     const portfolios = porJson.data || []
+    const products = prodJson.data || []
 
     allVendors.value = vendors.map((v: any) => ({
       id: v.id_vendor,
@@ -56,12 +59,12 @@ onMounted(async () => {
       rating: 0,
       reviews: 0,
       startingPrice: 0,
-      image: '',
+      image: v.avatar_url || '',
       logo: (v.business_name || 'V')[0],
       verified: v.status === 'verified'
     }))
 
-    allInspirations.value = portfolios.map((p: any) => ({
+    const portfolioInspirations = portfolios.map((p: any) => ({
       id: p.id_portfolio,
       image: p.cover_url,
       occasion: p.label || p.title || 'Creative',
@@ -71,8 +74,25 @@ onMounted(async () => {
       saved: false,
       height: 'medium' as const,
       vendor: p.vendor?.business_name || '',
-      category: p.vendor?.category || ''
+      category: p.vendor?.category || '',
+      source: 'portfolio' as const
     }))
+
+    const productInspirations = products.map((pr: any) => ({
+      id: `product-${pr.id_product}`,
+      image: pr.images?.[0]?.image_url || '',
+      occasion: pr.occasion?.name || pr.labels || 'Bouquet',
+      style: 'Bouquet Flowers',
+      caption: pr.name || '',
+      budget: pr.price ? `Rp ${pr.price.toLocaleString('id-ID')}` : '',
+      saved: false,
+      height: 'medium' as const,
+      vendor: pr.vendor?.business_name || '',
+      category: 'Bouquet Flowers',
+      source: 'product' as const
+    }))
+
+    allInspirations.value = [...portfolioInspirations, ...productInspirations]
   } catch {
     // API unavailable — stay empty
   } finally {
@@ -118,7 +138,7 @@ const filteredInspirations = computed(() => {
   return result
 })
 
-function toggleSave(id: number) {
+function toggleSave(id: number | string) {
   const idx = allInspirations.value.findIndex(i => i.id === id)
   if (idx !== -1) allInspirations.value[idx].saved = !allInspirations.value[idx].saved
 }
@@ -137,8 +157,13 @@ function goToVendor(id: number) {
   router.push(`/vendor/${id}`)
 }
 
-function goToInspiration(id: number) {
-  router.push(`/inspiration/${id}`)
+function goToInspiration(id: number | string) {
+  if (typeof id === 'string' && id.startsWith('product-')) {
+    const productId = id.replace('product-', '')
+    router.push(`/product/${productId}`)
+  } else {
+    router.push(`/inspiration/${id}`)
+  }
 }
 
 </script>
@@ -234,7 +259,10 @@ function goToInspiration(id: number) {
             @click="goToVendor(vendor.id)"
           >
             <div class="vendor-card-image">
-              <img :src="vendor.image" :alt="vendor.name" />
+              <img v-if="vendor.image" :src="vendor.image" :alt="vendor.name" />
+              <div v-else class="vendor-card-placeholder">
+                <span>{{ vendor.logo }}</span>
+              </div>
               <div class="vendor-card-badge">{{ vendor.category }}</div>
               <div v-if="vendor.verified" class="vendor-verified-badge">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -545,6 +573,22 @@ function goToInspiration(id: number) {
   height: 100%;
   object-fit: cover;
   transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.vendor-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #e0b3b3, #c96f6f);
+}
+.vendor-card-placeholder span {
+  text-transform: uppercase;
+  opacity: 0.85;
 }
 
 .vendor-card:hover .vendor-card-image img {

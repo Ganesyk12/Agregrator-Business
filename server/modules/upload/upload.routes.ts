@@ -13,15 +13,17 @@ if (!fs.existsSync(baseDir)) {
 const storage = multer.diskStorage({
   destination: async (req, _file, cb) => {
     try {
-      const vendorCode = req.query.vendor_code || req.body.vendor_code
-      const category = req.query.category || req.body.category || 'uncategorized'
+      let vendorCode = req.query.vendor_code || req.body?.vendor_code
+      let category = req.query.category || req.body?.category || 'products'
 
-      if (!vendorCode) {
-        cb(new Error('vendor_code is required'), '')
-        return
+      if (!vendorCode || typeof vendorCode !== 'string' || !vendorCode.trim()) {
+        vendorCode = 'general'
+      }
+      if (!category || typeof category !== 'string' || !category.trim()) {
+        category = 'products'
       }
 
-      const targetDir = path.join(baseDir, vendorCode, category)
+      const targetDir = path.join(baseDir, String(vendorCode), String(category))
       if (!fs.existsSync(targetDir)) {
         fs.mkdirSync(targetDir, { recursive: true })
       }
@@ -64,7 +66,7 @@ const upload = multer({
  *       - in: query
  *         name: vendor_code
  *         schema: { type: string }
- *         required: true
+ *         required: false
  *         description: Kode unik vendor
  *       - in: query
  *         name: category
@@ -102,8 +104,16 @@ router.post('/', (req: any, res: any) => {
         return res.status(400).json({ error: { message: 'File tidak ditemukan' } })
       }
 
-      const vendorCode = req.query.vendor_code || req.body.vendor_code
-      const category = req.query.category || req.body.category || 'uncategorized'
+      let vendorCode = req.query.vendor_code || req.body?.vendor_code
+      let category = req.query.category || req.body?.category || 'products'
+
+      if (!vendorCode || typeof vendorCode !== 'string' || !vendorCode.trim()) {
+        vendorCode = 'general'
+      }
+      if (!category || typeof category !== 'string' || !category.trim()) {
+        category = 'products'
+      }
+
       const fileUrl = `/uploads/portfolio/${vendorCode}/${category}/${req.file.filename}`
 
       res.json({
