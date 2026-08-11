@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["sigyn"]
 }
 
 model Role {
@@ -20,7 +19,6 @@ model Role {
   user_roles User_Role[]
 
   @@index([status])
-  @@schema("sigyn")
 }
 
 model User {
@@ -46,7 +44,6 @@ model User {
   favorites  UserFavorite[]
 
   @@index([status])
-  @@schema("sigyn")
 }
 
 model User_Role {
@@ -64,7 +61,6 @@ model User_Role {
 
   @@unique([email, role_code])
   @@index([status])
-  @@schema("sigyn")
 }
 
 model Vendor {
@@ -97,7 +93,6 @@ model Vendor {
   reviews      Review[]
 
   @@index([status])
-  @@schema("sigyn")
 }
 
 model Category {
@@ -113,7 +108,6 @@ model Category {
   portfolios Portfolio[]
 
   @@index([status])
-  @@schema("sigyn")
 }
 
 model Portfolio {
@@ -142,7 +136,6 @@ model Portfolio {
   @@index([id_vendor])
   @@index([id_package])
   @@index([id_category])
-  @@schema("sigyn")
 }
 
 model PortfolioImage {
@@ -155,7 +148,6 @@ model PortfolioImage {
 
   portfolio Portfolio @relation(fields: [id_portfolio], references: [id_portfolio], onDelete: Cascade)
 
-  @@schema("sigyn")
 }
 
 model Package {
@@ -184,7 +176,6 @@ model Package {
   @@index([id_vendor])
   @@index([id_category])
   @@index([status])
-  @@schema("sigyn")
 }
 
 model PackageExtra {
@@ -205,7 +196,6 @@ model PackageExtra {
 
   @@index([id_package])
   @@index([status])
-  @@schema("sigyn")
 }
 
 model BookingPackageExtra {
@@ -223,7 +213,6 @@ model BookingPackageExtra {
 
   @@index([id_booking_package])
   @@index([id_extra])
-  @@schema("sigyn")
 }
 
 model VendorAvailability {
@@ -242,7 +231,6 @@ model VendorAvailability {
   vendor Vendor @relation(fields: [id_vendor], references: [id_vendor])
 
   @@index([id_vendor])
-  @@schema("sigyn")
 }
 
 model Booking {
@@ -266,7 +254,6 @@ model Booking {
   review           Review?
 
   @@index([id_user])
-  @@schema("sigyn")
 }
 
 model BookingPackage {
@@ -281,7 +268,6 @@ model BookingPackage {
   extras  BookingPackageExtra[]
 
   @@unique([id_booking, id_package])
-  @@schema("sigyn")
 }
 
 model BookingPayment {
@@ -302,7 +288,6 @@ model BookingPayment {
   booking Booking @relation(fields: [id_booking], references: [id_booking])
   payment_term    PaymentTerm? @relation(fields: [id_term], references: [id_term])
 
-  @@schema("sigyn")
 }
 
 model PaymentTerm {
@@ -325,7 +310,6 @@ model PaymentTerm {
 
   @@unique([id_booking, term_order])
   @@index([id_booking])
-  @@schema("sigyn")
 }
 
 model Review {
@@ -347,7 +331,6 @@ model Review {
 
   @@index([id_user])
   @@index([id_vendor])
-  @@schema("sigyn")
 }
 
 
@@ -362,7 +345,6 @@ model ProductOccasion {
   products Product[]
 
   @@index([status])
-  @@schema("sigyn")
 }
 
 model ProductType {
@@ -374,7 +356,6 @@ model ProductType {
   date_created  DateTime @default(now())
 
   @@index([status])
-  @@schema("sigyn")
 }
 
 model ProductSize {
@@ -386,7 +367,6 @@ model ProductSize {
   date_created  DateTime @default(now())
 
   @@index([status])
-  @@schema("sigyn")
 }
 
 model Product {
@@ -426,7 +406,6 @@ model Product {
   @@index([id_occasion])
   @@index([id_template])
   @@index([status])
-  @@schema("sigyn")
 }
 
 model ProductImage {
@@ -439,7 +418,6 @@ model ProductImage {
 
   product Product @relation(fields: [id_product], references: [id_product], onDelete: Cascade)
 
-  @@schema("sigyn")
 }
 
 model ProductVariant {
@@ -455,7 +433,6 @@ model ProductVariant {
   product Product @relation(fields: [id_product], references: [id_product], onDelete: Cascade)
 
   @@index([id_product])
-  @@schema("sigyn")
 }
 
 model ProductAddon {
@@ -470,7 +447,6 @@ model ProductAddon {
   product Product @relation(fields: [id_product], references: [id_product], onDelete: Cascade)
 
   @@index([id_product])
-  @@schema("sigyn")
 }
 
 model ProductTemplate {
@@ -490,7 +466,6 @@ model ProductTemplate {
   products Product[]
 
   @@index([status])
-  @@schema("sigyn")
 }
 
 model OptionGroup {
@@ -508,7 +483,6 @@ model OptionGroup {
   values  OptionValue[]
 
   @@index([id_product])
-  @@schema("sigyn")
 }
 
 model OptionValue {
@@ -529,7 +503,6 @@ model OptionValue {
   images       ValueImage[]
 
   @@index([id_option_group])
-  @@schema("sigyn")
 }
 
 model ValueImage {
@@ -541,7 +514,6 @@ model ValueImage {
 
   option_value OptionValue @relation(fields: [id_option_value], references: [id_option_value], onDelete: Cascade)
 
-  @@schema("sigyn")
 }
 
 model SizeConfig {
@@ -560,7 +532,6 @@ model SizeConfig {
   images  SizeConfigImage[]
 
   @@index([id_product])
-  @@schema("sigyn")
 }
 
 model SizeConfigImage {
@@ -572,7 +543,6 @@ model SizeConfigImage {
 
   size_config SizeConfig @relation(fields: [id_size_config], references: [id_size_config], onDelete: Cascade)
 
-  @@schema("sigyn")
 }
 
 model OptionalExtra {
@@ -591,7 +561,6 @@ model OptionalExtra {
   product Product @relation(fields: [id_product], references: [id_product], onDelete: Cascade)
 
   @@index([id_product])
-  @@schema("sigyn")
 }
 
 model Order {
@@ -627,7 +596,6 @@ model Order {
 
   @@index([id_user])
   @@index([id_vendor])
-  @@schema("sigyn")
 }
 
 model OrderItem {
@@ -655,7 +623,6 @@ model OrderItem {
 
   @@index([id_order])
   @@index([id_product])
-  @@schema("sigyn")
 }
 
 model Cart {
@@ -668,7 +635,6 @@ model Cart {
   items CartItem[]
 
   @@index([id_user])
-  @@schema("sigyn")
 }
 
 model CartItem {
@@ -697,7 +663,6 @@ model CartItem {
 
   @@unique([id_cart, id_package])
   @@unique([id_cart, id_product])
-  @@schema("sigyn")
 }
 
 model PaymentRequest {
@@ -735,7 +700,6 @@ model PaymentRequest {
   @@index([status])
   @@index([requested_by])
   @@index([receipt_number])
-  @@schema("sigyn")
 }
 
 model PaymentRequestItem {
@@ -752,7 +716,6 @@ model PaymentRequestItem {
   request PaymentRequest @relation(fields: [id_request], references: [id_request], onDelete: Cascade)
 
   @@index([id_request])
-  @@schema("sigyn")
 }
 
 model PaymentTransaction {
@@ -768,7 +731,6 @@ model PaymentTransaction {
   request PaymentRequest @relation(fields: [id_request], references: [id_request], onDelete: Cascade)
 
   @@index([id_request])
-  @@schema("sigyn")
 }
 
 model PaymentRequestTerm {
@@ -788,7 +750,6 @@ model PaymentRequestTerm {
 
   @@unique([id_request, term_order])
   @@index([id_request])
-  @@schema("sigyn")
 }
 
 model RfpPayment {
@@ -812,7 +773,6 @@ model RfpPayment {
 
   @@index([id_request])
   @@index([id_rfp_term])
-  @@schema("sigyn")
 }
 
 model CompanyInfo {
@@ -832,7 +792,6 @@ model CompanyInfo {
   user_created  String?
   user_modified String?
 
-  @@schema("sigyn")
 }
 
 model UserFavorite {
@@ -845,7 +804,6 @@ model UserFavorite {
   package Package @relation(fields: [id_package], references: [id_package], onDelete: Cascade)
 
   @@unique([id_user, id_package])
-  @@schema("sigyn")
 }
 
 model ContactMessage {
@@ -858,5 +816,4 @@ model ContactMessage {
   date_created  DateTime @default(now())
   date_modified DateTime @updatedAt
 
-  @@schema("sigyn")
 }
