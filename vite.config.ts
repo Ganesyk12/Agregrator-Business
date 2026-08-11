@@ -3,6 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_API_URL': 'window.location.protocol + "//" + window.location.hostname + ":3000"'
+  },
   plugins: [
     vue(),
     {
@@ -26,6 +29,7 @@ export default defineConfig({
     }
   },
   server: {
+    host: true,
     // @ts-ignore
     sourcemap: false,
     port: 5173,

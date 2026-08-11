@@ -330,77 +330,79 @@ async function handleSubmit() {
             </svg>
           </button>
 
-          <div v-if="submitted" class="modal-success">
-            <div class="success-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--bs-secondary, #B89C7B)" stroke-width="2">
-                <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z"/><polyline points="9 12 11 14 15 10"/>
-              </svg>
-            </div>
-            <h3 class="success-title">Application Submitted!</h3>
-            <p class="success-desc">Thank you for applying to become a SIGYN Partner. Our team will review your application and contact you within 2–3 business days.</p>
-            <button class="modal-btn" @click="closeModal">Done</button>
-          </div>
-
-          <div v-else class="modal-form">
-            <h3 class="modal-title">Apply to Become a Partner</h3>
-            <p class="modal-desc">Fill in your details and our team will review your application.</p>
-
-            <div v-if="formError" class="form-error">{{ formError }}</div>
-
-            <div class="form-grid">
-              <div class="form-group full">
-                <label>Full Name <span class="required">*</span></label>
-                <input v-model="form.fullName" type="text" placeholder="Your full name" />
+          <div class="modal-scroll-content">
+            <div v-if="submitted" class="modal-success">
+              <div class="success-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--bs-secondary, #B89C7B)" stroke-width="2">
+                  <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z"/><polyline points="9 12 11 14 15 10"/>
+                </svg>
               </div>
-              <div class="form-group full">
-                <label>Business Name <span class="required">*</span></label>
-                <input v-model="form.businessName" type="text" placeholder="Your business name" />
-              </div>
-              <div class="form-group">
-                <label>Email <span class="required">*</span></label>
-                <input v-model="form.email" type="email" placeholder="email@example.com" />
-              </div>
-              <div class="form-group">
-                <label>Phone Number <span class="required">*</span></label>
-                <input v-model="form.phone" type="tel" placeholder="08xxxxxxxxxx" />
-              </div>
-              <div class="form-group">
-                <label>Password <span class="required">*</span></label>
-                <input v-model="form.password" type="password" placeholder="Create a password" />
-              </div>
-              <div class="form-group">
-                <label>Business Category <span class="required">*</span></label>
-                <select v-model="form.category">
-                  <option value="" disabled>Select category</option>
-                  <option v-for="cat in businessCategories" :key="cat" :value="cat">{{ cat }}</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>City</label>
-                <input v-model="form.city" type="text" placeholder="Your city" />
-              </div>
-              <div class="form-group full">
-                <label>Instagram / Portfolio URL</label>
-                <input v-model="form.portfolioUrl" type="url" placeholder="https://instagram.com/yourprofile" />
-              </div>
-              <div class="form-group">
-                <label>Years of Experience</label>
-                <input v-model="form.yearsExp" type="number" min="0" placeholder="0" />
-              </div>
-              <div class="form-group full">
-                <label>Short Description</label>
-                <textarea v-model="form.description" rows="3" placeholder="Tell us about your business..."></textarea>
-              </div>
+              <h3 class="success-title">Application Submitted!</h3>
+              <p class="success-desc">Thank you for applying to become a SIGYN Partner. Our team will review your application and contact you within 2–3 business days.</p>
+              <button class="modal-btn" @click="closeModal">Done</button>
             </div>
 
-            <label class="agree-check">
-              <input v-model="form.agree" type="checkbox" />
-              <span>I confirm that the information provided is accurate and I agree to SIGYN's <a href="#" @click.prevent>Terms & Conditions</a></span>
-            </label>
+            <div v-else class="modal-form">
+              <h3 class="modal-title">Apply to Become a Partner</h3>
+              <p class="modal-desc">Fill in your details and our team will review your application.</p>
 
-            <button class="modal-btn" :disabled="submitting" @click="handleSubmit">
-              {{ submitting ? 'Submitting...' : 'Submit Application' }}
-            </button>
+              <div v-if="formError" class="form-error">{{ formError }}</div>
+
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label>Full Name <span class="required">*</span></label>
+                  <input v-model="form.fullName" type="text" placeholder="Your full name" />
+                </div>
+                <div class="form-group full">
+                  <label>Business Name <span class="required">*</span></label>
+                  <input v-model="form.businessName" type="text" placeholder="Your business name" />
+                </div>
+                <div class="form-group">
+                  <label>Email <span class="required">*</span></label>
+                  <input v-model="form.email" type="email" placeholder="email@example.com" />
+                </div>
+                <div class="form-group">
+                  <label>Phone Number <span class="required">*</span></label>
+                  <input v-model="form.phone" type="tel" placeholder="08xxxxxxxxxx" />
+                </div>
+                <div class="form-group">
+                  <label>Password <span class="required">*</span></label>
+                  <input v-model="form.password" type="password" placeholder="Create a password" />
+                </div>
+                <div class="form-group">
+                  <label>Business Category <span class="required">*</span></label>
+                  <select v-model="form.category">
+                    <option value="" disabled>Select category</option>
+                    <option v-for="cat in businessCategories" :key="cat" :value="cat">{{ cat }}</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>City</label>
+                  <input v-model="form.city" type="text" placeholder="Your city" />
+                </div>
+                <div class="form-group full">
+                  <label>Instagram / Portfolio URL</label>
+                  <input v-model="form.portfolioUrl" type="url" placeholder="https://instagram.com/yourprofile" />
+                </div>
+                <div class="form-group">
+                  <label>Years of Experience</label>
+                  <input v-model="form.yearsExp" type="number" min="0" placeholder="0" />
+                </div>
+                <div class="form-group full">
+                  <label>Short Description</label>
+                  <textarea v-model="form.description" rows="3" placeholder="Tell us about your business..."></textarea>
+                </div>
+              </div>
+
+              <label class="agree-check">
+                <input v-model="form.agree" type="checkbox" />
+                <span>I confirm that the information provided is accurate and I agree to SIGYN's <a href="#" @click.prevent>Terms & Conditions</a></span>
+              </label>
+
+              <button class="modal-btn" :disabled="submitting" @click="handleSubmit">
+                {{ submitting ? 'Submitting...' : 'Submit Application' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -878,10 +880,18 @@ async function handleSubmit() {
   width: 100%;
   max-width: 600px;
   max-height: 90vh;
-  overflow-y: auto;
   background: #fff;
   border-radius: 24px;
-  padding: 48px 40px 40px;
+  padding: 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-scroll-content {
+  overflow-y: auto;
+  padding: 24px 16px 16px;
+  flex-grow: 1;
 }
 
 .modal-close {
@@ -1140,7 +1150,10 @@ async function handleSubmit() {
   }
 
   .modal-container {
-    padding: 32px 24px;
+    padding: 16px;
+  }
+  .modal-scroll-content {
+    padding: 24px 8px 8px;
   }
 
   .form-grid {

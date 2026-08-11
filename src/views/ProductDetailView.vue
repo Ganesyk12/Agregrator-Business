@@ -239,12 +239,17 @@ function buyNow() {
     <template v-else-if="product">
       <div class="product-detail-wrapper">
         <div class="container">
-          <div class="breadcrumb-wrap">
-            <router-link to="/">Home</router-link>
-            <span class="sep">/</span>
-            <router-link to="/bouquet">Bouquet</router-link>
-            <span class="sep">/</span>
-            <span>{{ product.name }}</span>
+          <div class="detail-header-actions">
+            <button @click="router.back()" class="btn-back">
+              <i class="fa fa-arrow-left"></i> Back
+            </button>
+            <div class="breadcrumb-wrap">
+              <router-link to="/">Home</router-link>
+              <span class="sep">/</span>
+              <router-link to="/explore">Explore</router-link>
+              <span class="sep">/</span>
+              <span>{{ product.name }}</span>
+            </div>
           </div>
 
           <div class="product-main">
@@ -268,8 +273,15 @@ function buyNow() {
               <div class="info-header">
                 <h1 class="product-name">{{ product.name }}</h1>
                 <div class="product-meta">
-                  <span class="product-vendor">{{ product.vendor?.business_name }}</span>
-                  <span v-if="product.labels" v-for="lbl in (product.labels || '').split(',').filter(Boolean)" :key="lbl" class="product-occasion" style="margin-right:4px;">{{ lbl.charAt(0).toUpperCase() + lbl.slice(1) }}</span>
+                  <div class="vendor-row">
+                    <span class="vendor-label">By:</span>
+                    <router-link :to="'/vendor/' + product.vendor?.id_vendor" class="product-vendor">
+                      {{ product.vendor?.business_name }}
+                    </router-link>
+                  </div>
+                  <div v-if="product.labels" class="occasions-row">
+                    <span v-for="lbl in (product.labels || '').split(',').filter(Boolean)" :key="lbl" class="product-occasion">{{ lbl.trim().charAt(0).toUpperCase() + lbl.trim().slice(1) }}</span>
+                  </div>
                 </div>
               </div>
 
@@ -374,11 +386,18 @@ function buyNow() {
                 <p v-if="product.delivery_info">{{ product.delivery_info }}</p>
               </div>
 
-              <div class="section">
+              <div class="section stock-qty-wrap">
                 <div class="quantity-selector">
                   <button @click="quantity = Math.max(1, quantity - 1)" :disabled="quantity <= 1">-</button>
                   <span>{{ quantity }}</span>
                   <button @click="quantity = quantity + 1" :disabled="product.stock > 0 && quantity >= product.stock">+</button>
+                </div>
+
+                <div class="stock-pill in-stock" v-if="product.stock > 0">
+                  <i class="fa fa-check-circle"></i> In Stock ({{ product.stock }})
+                </div>
+                <div class="stock-pill out-of-stock" v-else>
+                  <i class="fa fa-times-circle"></i> Out of Stock
                 </div>
               </div>
 
@@ -389,13 +408,6 @@ function buyNow() {
                 </button>
                 <button class="btn-buy-now" @click="buyNow">Buy Now</button>
                 <button class="btn-wishlist"><i class="fa fa-heart-o"></i></button>
-              </div>
-
-              <div class="stock-info" v-if="product.stock > 0">
-                <span class="in-stock"><i class="fa fa-check-circle"></i> In Stock ({{ product.stock }})</span>
-              </div>
-              <div class="stock-info" v-else>
-                <span class="out-of-stock"><i class="fa fa-times-circle"></i> Out of Stock</span>
               </div>
             </div>
           </div>
@@ -409,9 +421,42 @@ function buyNow() {
 
 <style scoped>
 .product-detail-page { background: #fff; min-height: 100vh; }
-.product-detail-wrapper { padding: 40px 0 80px; }
+.product-detail-wrapper { padding: 100px 0 80px; }
 
-.breadcrumb-wrap { margin-bottom: 32px; font-family: 'Jost', sans-serif; font-size: 0.85rem; color: #888; }
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  color: var(--bs-black, #2a2a2a);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  background: #e9ecef;
+  border-color: #dee2e6;
+  transform: translateX(-2px);
+}
+
+.btn-back i {
+  font-size: 0.8rem;
+}
+
+.breadcrumb-wrap { font-family: 'Jost', sans-serif; font-size: 0.85rem; color: #888; }
 .breadcrumb-wrap a { color: #888; text-decoration: none; }
 .breadcrumb-wrap a:hover { color: var(--bs-secondary, #B89C7B); }
 .breadcrumb-wrap .sep { margin: 0 8px; color: #ccc; }
@@ -429,9 +474,31 @@ function buyNow() {
 .product-info { }
 .info-header { margin-bottom: 16px; }
 .product-name { font-family: var(--heading-font, 'Marcellus', serif); font-size: 2rem; color: var(--bs-black, #2a2a2a); margin: 0 0 8px; }
-.product-meta { display: flex; gap: 12px; align-items: center; font-family: 'Jost', sans-serif; font-size: 0.9rem; color: #888; }
-.product-vendor { color: var(--bs-secondary, #B89C7B); font-weight: 600; }
-.product-occasion { background: #f0f0f0; padding: 2px 10px; border-radius: 20px; font-size: 0.78rem; }
+.product-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  color: #888;
+}
+.vendor-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.vendor-label {
+  color: #888;
+}
+.product-vendor { color: var(--bs-secondary, #B89C7B); font-weight: 600; text-decoration: none; }
+.product-vendor:hover { text-decoration: underline; }
+.occasions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.product-occasion { background: #f0f0f0; padding: 2px 10px; border-radius: 20px; font-size: 0.78rem; color: #5a5a5a; }
 
 .product-price { font-family: 'Marcellus', serif; font-size: 2rem; font-weight: 700; color: var(--bs-black, #2a2a2a); margin-bottom: 20px; }
 .price-unit { font-size: 0.85rem; font-weight: 400; color: #888; font-family: 'Jost', sans-serif; margin-left: 8px; }
@@ -474,12 +541,40 @@ function buyNow() {
 .btn-wishlist { width: 48px; height: 48px; border: 2px solid #e0e0e0; border-radius: 50%; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 1.2rem; color: #888; }
 .btn-wishlist:hover { border-color: #e74c3c; color: #e74c3c; }
 
-.stock-info { font-family: 'Jost', sans-serif; font-size: 0.85rem; }
-.in-stock { color: #2ecc71; }
-.out-of-stock { color: #e74c3c; }
+.stock-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stock-pill.in-stock {
+  background: rgba(46, 204, 113, 0.08);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.15);
+}
+
+.stock-pill.out-of-stock {
+  background: rgba(231, 76, 60, 0.08);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.15);
+}
 
 @media (max-width: 992px) {
   .product-main { grid-template-columns: 1fr; gap: 32px; }
   .gallery-main img { height: 350px; }
+  .product-gallery { position: static; }
 }
 </style>

@@ -12,6 +12,7 @@ import '@/assets/kaira/css/normalize.css'
 import '@/assets/kaira/css/vendor.css'
 import '@/assets/kaira/css/swiper-bundle.min.css'
 import '@/assets/kaira/style.css'
+import 'font-awesome/css/font-awesome.min.css'
 
 const app = createApp(App)
 

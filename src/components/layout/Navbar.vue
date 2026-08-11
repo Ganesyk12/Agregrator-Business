@@ -1,5 +1,5 @@
 <template>
-  <nav ref="navRef" class="sigyn-navbar" :class="{ 'nav-scrolled': scrolled, 'nav-transparent': !scrolled }">
+  <nav ref="navRef" class="sigyn-navbar" :class="{ 'nav-scrolled': scrolled, 'nav-transparent': !scrolled, 'nav-dark-hero': isDarkHeroPage }">
     <div class="nav-container">
       <div class="nav-left">
         <router-link class="nav-brand" to="/">
@@ -62,47 +62,52 @@
       </div>
     </div>
 
-    <Transition name="mobile-menu">
-      <div v-if="mobileOpen" class="nav-mobile-overlay">
-        <div class="nav-mobile-panel">
-          <div class="mobile-header">
-            <img :src="mainLogo" alt="Sigyn" class="mobile-logo" />
-            <button class="mobile-close" @click="mobileOpen = false">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
-            </button>
-          </div>
-          <ul class="mobile-menu-list">
-            <li><router-link class="mobile-link" to="/" @click="mobileOpen = false">Home</router-link></li>
-            <li><router-link class="mobile-link" to="/explore" @click="mobileOpen = false">Explore</router-link></li>
-            <li><router-link class="mobile-link" to="/inspiration" @click="mobileOpen = false">Inspiration</router-link></li>
-            <li><router-link class="mobile-link" to="/partner" @click="mobileOpen = false">Become Partner</router-link></li>
-            <li><router-link class="mobile-link" to="/contact" @click="mobileOpen = false">Contact</router-link></li>
-          </ul>
-          <div class="mobile-footer">
-            <router-link v-if="!auth.isLoggedIn" to="/login" class="mobile-btn-primary" @click="mobileOpen = false">Sign In</router-link>
-            <template v-else>
-              <router-link to="/booking-history" class="mobile-btn-secondary" @click="mobileOpen = false">My Bookings</router-link>
-              <a href="#" class="mobile-btn-secondary" @click.prevent="handleLogout">Sign Out</a>
-            </template>
+    <Teleport to="body">
+      <Transition name="mobile-menu">
+        <div v-if="mobileOpen" class="nav-mobile-overlay">
+          <div class="nav-mobile-panel">
+            <div class="mobile-header">
+              <img :src="mainLogo" alt="Sigyn" class="mobile-logo" />
+              <button class="mobile-close" @click="mobileOpen = false">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            <ul class="mobile-menu-list">
+              <li><router-link class="mobile-link" to="/" @click="mobileOpen = false">Home</router-link></li>
+              <li><router-link class="mobile-link" to="/explore" @click="mobileOpen = false">Explore</router-link></li>
+              <li><router-link class="mobile-link" to="/inspiration" @click="mobileOpen = false">Inspiration</router-link></li>
+              <li><router-link class="mobile-link" to="/partner" @click="mobileOpen = false">Become Partner</router-link></li>
+              <li><router-link class="mobile-link" to="/contact" @click="mobileOpen = false">Contact</router-link></li>
+            </ul>
+            <div class="mobile-footer">
+              <router-link v-if="!auth.isLoggedIn" to="/login" class="mobile-btn-primary" @click="mobileOpen = false">Sign In</router-link>
+              <template v-else>
+                <router-link to="/booking-history" class="mobile-btn-secondary" @click="mobileOpen = false">My Bookings</router-link>
+                <a href="#" class="mobile-btn-secondary" @click.prevent="handleLogout">Sign Out</a>
+              </template>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </nav>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import mainLogo from '@/assets/kaira/images/logosigyn.png'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const cart = useCartStore()
+
+const isDarkHeroPage = computed(() => route.path === '/partner')
 
 const scrolled = ref(false)
 const showDropdown = ref(false)
@@ -166,7 +171,7 @@ onUnmounted(() => {
 
 .sigyn-navbar.nav-transparent {
   background: transparent;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .sigyn-navbar.nav-scrolled {
@@ -235,7 +240,7 @@ onUnmounted(() => {
 }
 
 .nav-transparent .nav-link {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--bs-black, #2a2a2a);
 }
 
 .nav-link::after {
@@ -261,7 +266,8 @@ onUnmounted(() => {
 }
 
 .nav-transparent .nav-link:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(184, 156, 123, 0.08);
+  color: var(--bs-secondary, #B89C7B);
 }
 
 .nav-link.active {
@@ -270,7 +276,7 @@ onUnmounted(() => {
 }
 
 .nav-transparent .nav-link.active {
-  color: #fff;
+  color: var(--bs-secondary, #B89C7B);
 }
 
 .nav-right {
@@ -294,7 +300,7 @@ onUnmounted(() => {
 }
 
 .nav-transparent .nav-icon-btn {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--bs-black, #2a2a2a);
 }
 
 .nav-icon-btn:hover {
@@ -303,8 +309,8 @@ onUnmounted(() => {
 }
 
 .nav-transparent .nav-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  background: rgba(184, 156, 123, 0.1);
+  color: var(--bs-secondary, #B89C7B);
 }
 
 .nav-badge {
@@ -346,9 +352,8 @@ onUnmounted(() => {
 }
 
 .nav-transparent .nav-btn-login {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bs-black, #2a2a2a);
+  color: #fff;
 }
 
 .nav-btn-login:hover {
@@ -376,8 +381,8 @@ onUnmounted(() => {
 }
 
 .nav-transparent .nav-user-btn {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(184, 156, 123, 0.1);
+  color: var(--bs-black, #2a2a2a);
 }
 
 .nav-user-btn:hover {
@@ -473,7 +478,7 @@ onUnmounted(() => {
 }
 
 .nav-transparent .hamburger-line {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bs-black, #2a2a2a);
 }
 
 .hamburger-line.open:nth-child(1) {
@@ -681,5 +686,36 @@ onUnmounted(() => {
     width: 36px;
     height: 36px;
   }
+}
+
+/* Dark Hero Page Navbar Overrides */
+.nav-dark-hero.nav-transparent .nav-link {
+  color: #fff;
+}
+
+.nav-dark-hero.nav-transparent .nav-link::after {
+  background: #fff;
+}
+
+.nav-dark-hero.nav-transparent .nav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nav-dark-hero.nav-transparent .nav-icon-btn {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.nav-dark-hero.nav-transparent .nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nav-dark-hero.nav-transparent .nav-username {
+  color: #fff;
+}
+
+.nav-dark-hero.nav-transparent .hamburger-line {
+  background: #fff;
 }
 </style>

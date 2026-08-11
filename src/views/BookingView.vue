@@ -546,7 +546,7 @@ function handleProceedToPayment() {
 .booking-header {
   background: #fff;
   border-bottom: 1px solid #e8e8ed;
-  padding: 32px 0 24px;
+  padding: 104px 0 24px;
   text-align: center;
 }
 
@@ -1125,6 +1125,9 @@ textarea {
 
 /* Responsive */
 @media (max-width: 992px) {
+  .booking-header {
+    padding: 96px 0 20px;
+  }
   .booking-layout {
     grid-template-columns: 1fr;
   }
@@ -1137,6 +1140,9 @@ textarea {
 }
 
 @media (max-width: 600px) {
+  .booking-header {
+    padding: 88px 0 16px;
+  }
   .form-grid {
     grid-template-columns: 1fr;
   }

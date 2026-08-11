@@ -328,7 +328,7 @@ async function submitOrder() {
 
 <style scoped>
 .checkout-page { background: #f8f8f8; min-height: 100vh; }
-.checkout-wrapper { padding: 40px 0 80px; }
+.checkout-wrapper { padding: 112px 0 80px; }
 .checkout-title { font-family: 'Marcellus', serif; font-size: 2rem; margin-bottom: 32px; }
 
 .checkout-content { max-width: 720px; margin: 0 auto; }
@@ -364,7 +364,7 @@ async function submitOrder() {
 .order-success p { color: #666; margin-bottom: 8px; }
 
 @media (max-width: 576px) {
-  .checkout-wrapper { padding: 24px 0 60px; }
+  .checkout-wrapper { padding: 96px 0 60px; }
   .checkout-section { padding: 16px; }
   .form-row { grid-template-columns: 1fr; gap: 0; }
 }

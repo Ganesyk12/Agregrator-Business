@@ -464,9 +464,6 @@ function goToInspiration(id: number | string) {
   background: #fff;
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
   padding: 16px 0;
-  position: sticky;
-  top: 64px;
-  z-index: 20;
 }
 
 .filter-row {
@@ -479,7 +476,17 @@ function goToInspiration(id: number | string) {
 .category-filters {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 4px;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.category-filters::-webkit-scrollbar {
+  display: none;
 }
 
 .category-chip {
@@ -947,16 +954,19 @@ function goToInspiration(id: number | string) {
   }
 
   .filter-row {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .category-filters {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .sort-wrapper {
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 8px 12px;
   }
 }
 

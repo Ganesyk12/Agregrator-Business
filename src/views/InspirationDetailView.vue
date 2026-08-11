@@ -102,9 +102,16 @@ function formatPrice(price: number): string {
     <div v-else class="detail-content">
       <section class="gallery-section">
         <div class="gallery-main">
+          <div class="gallery-actions">
+            <button @click="router.back()" class="btn-back-nav">
+              <i class="fa fa-arrow-left"></i> Back
+            </button>
+          </div>
           <div class="main-image">
             <img :src="inspiration.gallery[activeGalleryImage] || inspiration.image" :alt="inspiration.caption" />
-            <div class="occasion-badge">{{ inspiration.occasion }}</div>
+            <div class="occasion-badge">
+              {{ (inspiration.occasion || '').split(',').map(s => s.trim().charAt(0).toUpperCase() + s.trim().slice(1)).join(', ') }}
+            </div>
           </div>
           <div v-if="inspiration.gallery.length > 1" class="gallery-thumbs">
             <button
@@ -125,7 +132,11 @@ function formatPrice(price: number): string {
           <section class="info-section">
             <div class="info-header">
               <div class="info-tags">
-                <span class="info-tag occasion">{{ inspiration.occasion }}</span>
+                <template v-if="inspiration.occasion">
+                  <span v-for="occ in (inspiration.occasion || '').split(',').filter(Boolean)" :key="occ" class="info-tag occasion">
+                    {{ occ.trim().charAt(0).toUpperCase() + occ.trim().slice(1) }}
+                  </span>
+                </template>
                 <span class="info-tag style">{{ inspiration.style }}</span>
               </div>
               <h1 class="info-title">{{ inspiration.caption }}</h1>
@@ -212,7 +223,7 @@ function formatPrice(price: number): string {
 <style scoped>
 .inspiration-detail {
   min-height: 100vh;
-  background: var(--bs-body-bg, #F7F4EF);
+  background: #fff;
 }
 
 .loading-state,
@@ -265,7 +276,37 @@ function formatPrice(price: number): string {
 /* Gallery */
 .gallery-section {
   background: #fff;
-  padding: 80px 0 40px;
+  padding: 120px 0 40px;
+}
+
+.gallery-actions {
+  margin-bottom: 20px;
+}
+
+.btn-back-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  color: var(--bs-black, #2a2a2a);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back-nav:hover {
+  background: #e9ecef;
+  border-color: #dee2e6;
+  transform: translateX(-2px);
+}
+
+.btn-back-nav i {
+  font-size: 0.8rem;
 }
 
 .gallery-main {
@@ -292,6 +333,7 @@ function formatPrice(price: number): string {
   position: absolute;
   top: 20px;
   left: 20px;
+  max-width: calc(100% - 40px);
   padding: 8px 20px;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(8px);
@@ -301,7 +343,9 @@ function formatPrice(price: number): string {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  border-radius: 999px;
+  border-radius: 20px;
+  white-space: normal;
+  word-break: keep-all;
 }
 
 .gallery-thumbs {
@@ -349,7 +393,7 @@ function formatPrice(price: number): string {
   grid-template-columns: 1fr 380px;
   gap: 48px;
   padding-top: 40px;
-  padding-bottom: 80px;
+  padding-bottom: 120px;
   align-items: start;
 }
 
@@ -364,6 +408,8 @@ function formatPrice(price: number): string {
   background: #fff;
   border-radius: 24px;
   padding: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
 .info-header {
@@ -372,6 +418,7 @@ function formatPrice(price: number): string {
 
 .info-tags {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
 }
@@ -444,6 +491,8 @@ function formatPrice(price: number): string {
   background: #fff;
   border-radius: 24px;
   padding: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
 .section-title {
@@ -632,7 +681,7 @@ function formatPrice(price: number): string {
 
 @media (max-width: 992px) {
   .gallery-section {
-    padding: 72px 0 24px;
+    padding: 110px 0 24px;
   }
 
   .detail-layout {
@@ -655,7 +704,7 @@ function formatPrice(price: number): string {
 
 @media (max-width: 576px) {
   .gallery-section {
-    padding: 64px 0 16px;
+    padding: 100px 0 16px;
   }
 
   .main-image {
