@@ -3,6 +3,7 @@ import * as vendorService from './vendors.service'
 import * as userRoleService from '../user-roles/user-roles.service'
 import { createError } from '../../middleware/error-handler'
 import prisma from '../../db'
+import '../../middleware/auth'
 
 export async function getMe(req: Request, res: Response, next: NextFunction) {
   try {
@@ -24,13 +25,14 @@ export async function updateMe(req: Request, res: Response, next: NextFunction) 
       throw createError(404, 'Vendor profile not found')
     }
 
-    const { business_name, description, location, avatar_url, instagram } = req.body
+    const { business_name, description, location, avatar_url, instagram, status } = req.body
     const updated = await vendorService.update(vendor.id_vendor, {
       business_name,
       description,
       location,
       avatar_url,
       instagram,
+      status,
     })
 
     res.json({ data: updated })

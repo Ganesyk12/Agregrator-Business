@@ -2,7 +2,7 @@ import prisma from '../../db'
 import type { Product } from './products.types'
 
 const includeAll = {
-  vendor: { select: { id_vendor: true, business_name: true, location: true, category: true } },
+  vendor: { select: { id_vendor: true, business_name: true, location: true, category: true, status: true } },
   occasion: { select: { id_occasion: true, name: true, slug: true } },
   template: { select: { id_template: true, name: true, slug: true, icon: true, short_desc: true } },
   images: { orderBy: { sort_order: 'asc' as const } },

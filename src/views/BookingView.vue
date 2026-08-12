@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import Navbar from '@/components/layout/Navbar.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
@@ -8,6 +9,8 @@ import Footer from '@/components/layout/Footer.vue'
 import AddServiceModal from '@/components/booking/AddServiceModal.vue'
 
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 
 interface BookedVendor {
   id_vendor: number
@@ -63,6 +66,40 @@ const specialRequests = ref('')
 const agreeTerms = ref(false)
 const showAddModal = ref(false)
 const editingProduct = ref<any>(null)
+
+const currentStep = ref(1)
+const createdBooking = ref<any>(null)
+const selectedTermId = ref<number | null>(null)
+const selectedPaymentMethod = ref<string>('Bank Transfer')
+const paymentProofFile = ref<File | null>(null)
+const uploadingProof = ref(false)
+
+const currentPaymentAmount = computed(() => {
+  if (!createdBooking.value) return 0
+  if (selectedTermId.value) {
+    const term = createdBooking.value.payment_terms?.find((t: any) => t.id_term === selectedTermId.value)
+    return term ? term.amount : createdBooking.value.total_price
+  }
+  return createdBooking.value.total_price
+})
+
+function getTermNameById(id: number) {
+  if (!createdBooking.value) return ''
+  const term = createdBooking.value.payment_terms?.find((t: any) => t.id_term === id)
+  return term ? term.term_name : ''
+}
+
+function formatDateString(date: string) {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+function handleFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files?.length) {
+    paymentProofFile.value = target.files[0]
+  }
+}
 
 const bookedVendors = ref<BookedVendor[]>([])
 const vendorExtrasCache = ref<Record<number, ExtraItem[]>>({})
@@ -329,8 +366,121 @@ const totalExtrasCount = computed(() => {
   return Object.values(vendorExtrasCache.value).reduce((sum, arr) => sum + arr.filter((e) => e.selected).length, 0)
 })
 
-function handleProceedToPayment() {
-  alert('Proceeding to payment... (Demo)')
+async function handleProceedToPayment() {
+  if (!auth.isLoggedIn) {
+    alert('Please log in first.')
+    router.push('/login')
+    return
+  }
+
+  if (bookedVendors.value.length === 0) {
+    alert('No packages selected.')
+    return
+  }
+
+  try {
+    paymentSubmitting.value = true
+    
+    const packageIds = bookedVendors.value
+      .map(v => v.id_package)
+      .filter((id): id is number => id !== undefined)
+      
+    const payload = {
+      id_user: auth.user!.id_user,
+      package_ids: packageIds,
+      event_date: new Date(event.value.date).toISOString(),
+      event_location: `${location.value.venue || ''}, ${location.value.address || ''}, ${location.value.city || ''}`,
+      total_price: grandTotal.value,
+      dp_amount: Math.round(grandTotal.value * 0.3), // 30% Down Payment
+      notes: specialRequests.value || null
+    }
+
+    const res = await auth.authFetch('/api/bookings', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      alert('Failed to save booking: ' + (err.error?.message || res.statusText))
+      return
+    }
+
+    const json = await res.json()
+    createdBooking.value = json.data
+    
+    if (createdBooking.value.payment_terms?.length > 0) {
+      selectedTermId.value = createdBooking.value.payment_terms[0].id_term
+    }
+    
+    currentStep.value = 2
+  } catch (error) {
+    console.error(error)
+    alert('Error processing payment request.')
+  } finally {
+    paymentSubmitting.value = false
+  }
+}
+
+const paymentSubmitting = ref(false)
+
+async function handleConfirmPayment() {
+  if (!createdBooking.value) return
+
+  try {
+    paymentSubmitting.value = true
+    let proofUrl = ''
+
+    if (selectedPaymentMethod.value === 'Bank Transfer' && paymentProofFile.value) {
+      const formData = new FormData()
+      formData.append('file', paymentProofFile.value)
+      
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+      if (uploadRes.ok) {
+        const uploadJson = await uploadRes.json()
+        proofUrl = uploadJson.url
+      } else {
+        const uploadErr = await uploadRes.json()
+        alert('Failed to upload proof: ' + (uploadErr.error?.message || uploadRes.statusText))
+        paymentSubmitting.value = false
+        return
+      }
+    }
+
+    const activeTerm = createdBooking.value.payment_terms?.find((t: any) => t.id_term === selectedTermId.value)
+    const amountToPay = activeTerm ? activeTerm.amount : createdBooking.value.total_price
+
+    const payload = {
+      id_booking: createdBooking.value.id_booking,
+      id_term: selectedTermId.value || undefined,
+      amount: amountToPay,
+      payment_type: selectedPaymentMethod.value,
+      payment_proof_url: proofUrl || null,
+      status: selectedPaymentMethod.value === 'Bank Transfer' ? 'pending' : 'paid',
+      paid_at: selectedPaymentMethod.value === 'Bank Transfer' ? null : new Date().toISOString()
+    }
+
+    const res = await auth.authFetch('/api/payments', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+
+    if (res.ok) {
+      createdBooking.value.status = selectedPaymentMethod.value === 'Bank Transfer' ? 'Pending Approval' : 'Paid'
+      currentStep.value = 3
+    } else {
+      const err = await res.json()
+      alert('Failed to record payment: ' + (err.error?.message || res.statusText))
+    }
+  } catch (error) {
+    console.error(error)
+    alert('Error recording payment.')
+  } finally {
+    paymentSubmitting.value = false
+  }
 }
 </script>
 
@@ -345,16 +495,17 @@ function handleProceedToPayment() {
         <h1 class="page-title">Booking Checkout</h1>
         <p class="page-subtitle">Complete your event booking details</p>
         <div class="progress-steps">
-          <span class="step active"><span class="step-num">1</span> Details</span>
+          <span class="step" :class="{ active: currentStep >= 1 }"><span class="step-num">1</span> Details</span>
           <span class="step-divider"></span>
-          <span class="step"><span class="step-num">2</span> Payment</span>
+          <span class="step" :class="{ active: currentStep >= 2 }"><span class="step-num">2</span> Payment</span>
           <span class="step-divider"></span>
-          <span class="step"><span class="step-num">3</span> Confirmation</span>
+          <span class="step" :class="{ active: currentStep >= 3 }"><span class="step-num">3</span> Confirmation</span>
         </div>
       </div>
     </div>
 
-    <div class="container booking-layout">
+    <!-- Step 1: Details -->
+    <div class="container booking-layout" v-if="currentStep === 1">
       <div class="booking-main">
 
         <!-- 1. Customer Information -->
@@ -597,6 +748,209 @@ function handleProceedToPayment() {
           </div>
         </div>
       </aside>
+    </div>
+
+    <!-- Step 2: Payment Page -->
+    <div class="container payment-layout" v-else-if="currentStep === 2 && createdBooking">
+      <div class="booking-main">
+        <!-- Billing / Payment Term Options -->
+        <section class="form-section">
+          <h2 class="section-title">Select Payment Type</h2>
+          <p class="section-desc">Choose whether to pay the initial Down Payment (DP) or pay in full.</p>
+          <div class="payment-terms-grid">
+            <div
+              v-for="term in createdBooking.payment_terms"
+              :key="term.id_term"
+              class="term-card"
+              :class="{ active: selectedTermId === term.id_term }"
+              @click="selectedTermId = term.id_term"
+            >
+              <div class="term-radio">
+                <span class="radio-dot"></span>
+              </div>
+              <div class="term-details">
+                <h4 class="term-name">{{ term.term_name }}</h4>
+                <p class="term-amount">{{ formatPrice(term.amount) }}</p>
+                <p class="term-notes">{{ term.notes }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Choose Payment Method -->
+        <section class="form-section">
+          <h2 class="section-title">Payment Method</h2>
+          <p class="section-desc">Select your preferred payment method</p>
+          
+          <div class="payment-methods-tabs">
+            <button
+              class="method-tab"
+              :class="{ active: selectedPaymentMethod === 'Bank Transfer' }"
+              @click="selectedPaymentMethod = 'Bank Transfer'"
+            >
+              🏢 Bank Transfer
+            </button>
+            <button
+              class="method-tab"
+              :class="{ active: selectedPaymentMethod === 'QRIS' }"
+              @click="selectedPaymentMethod = 'QRIS'"
+            >
+              📱 QRIS / E-Wallet
+            </button>
+            <button
+              class="method-tab"
+              :class="{ active: selectedPaymentMethod === 'Credit Card' }"
+              @click="selectedPaymentMethod = 'Credit Card'"
+            >
+              💳 Credit Card
+            </button>
+          </div>
+
+          <!-- Bank Transfer Details & Upload -->
+          <div v-if="selectedPaymentMethod === 'Bank Transfer'" class="method-details-pane">
+            <div class="bank-instruction-card">
+              <h5>Transfer Bank BCA</h5>
+              <div class="instruction-row">
+                <span>Account Number:</span>
+                <strong>123-456-7890</strong>
+              </div>
+              <div class="instruction-row">
+                <span>Account Holder:</span>
+                <strong>PT Agregrator Business</strong>
+              </div>
+              <div class="instruction-row">
+                <span>Total Payment:</span>
+                <strong class="highlight-text">{{ formatPrice(currentPaymentAmount) }}</strong>
+              </div>
+            </div>
+            
+            <div class="upload-proof-section">
+              <label class="form-label">Upload Proof of Payment <span class="required">*</span></label>
+              <div class="file-drop-area">
+                <input type="file" @change="handleFileChange" accept="image/*,application/pdf" id="payment-proof-input" />
+                <div class="drop-text-wrapper" v-if="!paymentProofFile">
+                  <span class="upload-icon">📁</span>
+                  <span>Click to choose or drag photo/file here</span>
+                  <span class="file-hint">JPG, PNG, WEBP, or PDF (Max 10MB)</span>
+                </div>
+                <div class="file-selected-wrapper" v-else>
+                  <span class="file-icon">📄</span>
+                  <span class="file-name">{{ paymentProofFile.name }}</span>
+                  <button class="btn-remove-file" @click.prevent="paymentProofFile = null">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- QRIS Mockup -->
+          <div v-else-if="selectedPaymentMethod === 'QRIS'" class="method-details-pane text-center">
+            <p>Scan this QR code using Gopay, OVO, ShopeePay, Dana, or your mobile banking app to pay.</p>
+            <div class="qris-box">
+              <div class="qris-frame">
+                <div class="qris-header">QRIS GPN</div>
+                <div class="qris-qr-mock">
+                  <div class="qr-pattern"></div>
+                </div>
+                <div class="qris-amount">{{ formatPrice(currentPaymentAmount) }}</div>
+              </div>
+            </div>
+            <p class="small text-muted mt-2">After scanning and completing payment, click "Confirm QRIS Payment" below.</p>
+          </div>
+
+          <!-- Credit Card Input -->
+          <div v-else-if="selectedPaymentMethod === 'Credit Card'" class="method-details-pane">
+            <div class="credit-card-form">
+              <div class="form-group full-width">
+                <label>Card Number</label>
+                <input type="text" placeholder="1234 5678 9101 1121" class="cc-input" />
+              </div>
+              <div class="form-group">
+                <label>Expiry Date</label>
+                <input type="text" placeholder="MM/YY" class="cc-input" />
+              </div>
+              <div class="form-group">
+                <label>CVV / CVC</label>
+                <input type="password" placeholder="123" class="cc-input" />
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Payment Summary Sidebar -->
+      <aside class="booking-sidebar">
+        <div class="summary-card">
+          <h3 class="summary-title">Payment Summary</h3>
+          <div class="summary-items">
+            <div class="summary-row">
+              <span>Event Booking</span>
+              <span>{{ createdBooking.event_location ? createdBooking.event_location.split(',')[0] : 'Event' }}</span>
+            </div>
+            <div class="summary-row">
+              <span>Grand Total</span>
+              <span>{{ formatPrice(createdBooking.total_price) }}</span>
+            </div>
+            <div class="summary-row" v-if="selectedTermId">
+              <span>Payment Step</span>
+              <span>{{ getTermNameById(selectedTermId) }}</span>
+            </div>
+          </div>
+          <div class="summary-divider thick"></div>
+          <div class="summary-total">
+            <span>Amount Due Now</span>
+            <span class="total-price">{{ formatPrice(currentPaymentAmount) }}</span>
+          </div>
+
+          <button
+            class="btn-proceed"
+            :disabled="paymentSubmitting || (selectedPaymentMethod === 'Bank Transfer' && !paymentProofFile)"
+            @click="handleConfirmPayment"
+          >
+            {{ paymentSubmitting ? 'Processing Payment...' : 'Confirm Payment' }}
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Step 3: Confirmation / Success Page -->
+    <div class="container success-layout" v-else-if="currentStep === 3 && createdBooking">
+      <div class="success-card">
+        <div class="success-icon">🎉</div>
+        <h2 class="success-title">Booking Saved & Payment Submitted!</h2>
+        <p class="success-desc">
+          Thank you! Your booking request has been successfully created and your payment is being processed. 
+          We have sent the invoice and booking confirmation details to your registered email.
+        </p>
+
+        <div class="success-details-box">
+          <h4>Booking Invoice Summary</h4>
+          <div class="detail-row">
+            <span>Booking ID:</span>
+            <strong>#{{ createdBooking.id_booking }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Event Date:</span>
+            <strong>{{ formatDateString(createdBooking.event_date) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Location:</span>
+            <strong>{{ createdBooking.event_location || '-' }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Total Price:</span>
+            <strong>{{ formatPrice(createdBooking.total_price) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Status:</span>
+            <span class="status-badge-paid">{{ createdBooking.status }}</span>
+          </div>
+        </div>
+
+        <div class="success-actions">
+          <router-link to="/booking-history" class="btn-primary-success">MyBooking</router-link>
+          <router-link to="/" class="btn-secondary-success">Back to Home</router-link>
+        </div>
+      </div>
     </div>
 
     <Footer />
@@ -1307,6 +1661,430 @@ textarea {
 }
 .btn-edit-details:hover {
   background: #e8e8ed;
+  border-color: #86868b;
+}
+
+/* Step 2 & 3 styles */
+.payment-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 32px;
+  padding-top: 32px;
+  padding-bottom: 60px;
+  align-items: start;
+}
+
+.payment-terms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.term-card {
+  border: 1.5px solid #d2d2d7;
+  border-radius: 14px;
+  padding: 20px;
+  cursor: pointer;
+  display: flex;
+  gap: 14px;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.term-card:hover {
+  border-color: #86868b;
+  transform: translateY(-1px);
+}
+
+.term-card.active {
+  border-color: #1d1d1f;
+  background: #fdfdfd;
+  box-shadow: 0 0 0 1px #1d1d1f;
+}
+
+.term-radio {
+  display: flex;
+  align-items: center;
+}
+
+.radio-dot {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #d2d2d7;
+  border-radius: 50%;
+  position: relative;
+  display: inline-block;
+}
+
+.term-card.active .radio-dot {
+  border-color: #1d1d1f;
+  background: #1d1d1f;
+}
+
+.term-card.active .radio-dot::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.term-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin: 0 0 4px;
+}
+
+.term-amount {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1d1d1f;
+  margin: 0 0 4px;
+}
+
+.term-notes {
+  font-size: 0.8rem;
+  color: #86868b;
+  margin: 0;
+}
+
+.payment-methods-tabs {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  border-bottom: 1.5px solid #e8e8ed;
+  padding-bottom: 14px;
+}
+
+.method-tab {
+  flex: 1;
+  padding: 14px 20px;
+  border: 1.5px solid #d2d2d7;
+  border-radius: 12px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.method-tab:hover {
+  background: #f5f5f7;
+  border-color: #86868b;
+}
+
+.method-tab.active {
+  background: #1d1d1f;
+  color: #fff;
+  border-color: #1d1d1f;
+}
+
+.method-details-pane {
+  padding: 24px 0 0;
+}
+
+.bank-instruction-card {
+  background: #f5f5f7;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.bank-instruction-card h5 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 14px;
+  color: #1d1d1f;
+}
+
+.instruction-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.instruction-row:last-child {
+  margin-bottom: 0;
+  border-top: 1px dashed #d2d2d7;
+  padding-top: 8px;
+}
+
+.highlight-text {
+  font-size: 1.1rem;
+  color: #ff3b30;
+}
+
+.upload-proof-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 8px;
+}
+
+.file-drop-area {
+  border: 2px dashed #d2d2d7;
+  border-radius: 14px;
+  padding: 32px 20px;
+  text-align: center;
+  position: relative;
+  background: #fff;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.file-drop-area:hover {
+  border-color: #86868b;
+  background: #f5f5f7;
+}
+
+.file-drop-area input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.drop-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.upload-icon {
+  font-size: 2rem;
+}
+
+.file-hint {
+  font-size: 0.75rem;
+  color: #86868b;
+  margin-top: 4px;
+}
+
+.file-selected-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-icon {
+  font-size: 2rem;
+}
+
+.file-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.btn-remove-file {
+  padding: 6px 14px;
+  background: #ff3b30;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.qris-box {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.qris-frame {
+  width: 220px;
+  background: #fff;
+  border: 1px solid #d2d2d7;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.qris-header {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #102a43;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #102a43;
+  padding-bottom: 4px;
+}
+
+.qris-qr-mock {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 12px;
+  background: 
+    repeating-conic-gradient(from 45deg, #1d1d1f 0% 25%, #fff 0% 50%) 
+    50% / 20px 20px;
+  border-radius: 8px;
+  position: relative;
+}
+
+.qris-qr-mock::before {
+  content: 'QRIS';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  color: #1d1d1f;
+  font-size: 0.8rem;
+  font-weight: 900;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 2px solid #1d1d1f;
+}
+
+.qris-amount {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1d1d1f;
+}
+
+.credit-card-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  background: #f5f5f7;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.cc-input {
+  background: #fff !important;
+}
+
+/* Success Card styling */
+.success-layout {
+  padding-top: 40px;
+  padding-bottom: 80px;
+  max-width: 600px !important;
+}
+
+.success-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e8e8ed;
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.success-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1d1d1f;
+  margin: 0 0 12px;
+}
+
+.success-desc {
+  color: #86868b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 32px;
+}
+
+.success-details-box {
+  background: #f5f5f7;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: left;
+  margin-bottom: 32px;
+}
+
+.success-details-box h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin: 0 0 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: #1d1d1f;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+  border-top: 1px solid #d2d2d7;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.status-badge-paid {
+  background: #e6f4ea;
+  color: #137333;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.success-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.btn-primary-success {
+  flex: 1;
+  padding: 16px;
+  background: #1d1d1f;
+  color: #fff;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.btn-primary-success:hover {
+  background: #2d2d2f;
+}
+
+.btn-secondary-success {
+  flex: 1;
+  padding: 16px;
+  background: #fff;
+  color: #1d1d1f;
+  border: 1px solid #d2d2d7;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn-secondary-success:hover {
+  background: #f5f5f7;
   border-color: #86868b;
 }
 </style>

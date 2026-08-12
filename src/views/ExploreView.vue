@@ -51,46 +51,52 @@ onMounted(async () => {
     const portfolios = porJson.data || []
     const products = prodJson.data || []
 
-    allVendors.value = vendors.map((v: any) => ({
-      id: v.id_vendor,
-      name: v.business_name,
-      category: v.category,
-      location: v.location || '',
-      rating: 0,
-      reviews: 0,
-      startingPrice: 0,
-      image: v.avatar_url || '',
-      logo: (v.business_name || 'V')[0],
-      verified: v.status === 'verified'
-    }))
+    allVendors.value = vendors
+      .filter((v: any) => v.status !== 'inactive')
+      .map((v: any) => ({
+        id: v.id_vendor,
+        name: v.business_name,
+        category: v.category,
+        location: v.location || '',
+        rating: 0,
+        reviews: 0,
+        startingPrice: 0,
+        image: v.avatar_url || '',
+        logo: (v.business_name || 'V')[0],
+        verified: v.status === 'verified'
+      }))
 
-    const portfolioInspirations = portfolios.map((p: any) => ({
-      id: p.id_portfolio,
-      image: p.cover_url,
-      occasion: p.label || p.title || 'Creative',
-      style: p.vendor?.category || 'Creative',
-      caption: p.title || p.description || '',
-      budget: p.package?.price ? `Rp ${p.package.price.toLocaleString('id-ID')}` : '',
-      saved: false,
-      height: 'medium' as const,
-      vendor: p.vendor?.business_name || '',
-      category: p.vendor?.category || '',
-      source: 'portfolio' as const
-    }))
+    const portfolioInspirations = portfolios
+      .filter((p: any) => p.vendor?.status !== 'inactive')
+      .map((p: any) => ({
+        id: p.id_portfolio,
+        image: p.cover_url,
+        occasion: p.label || p.title || 'Creative',
+        style: p.vendor?.category || 'Creative',
+        caption: p.title || p.description || '',
+        budget: p.package?.price ? `Rp ${p.package.price.toLocaleString('id-ID')}` : '',
+        saved: false,
+        height: 'medium' as const,
+        vendor: p.vendor?.business_name || '',
+        category: p.vendor?.category || '',
+        source: 'portfolio' as const
+      }))
 
-    const productInspirations = products.map((pr: any) => ({
-      id: `product-${pr.id_product}`,
-      image: pr.images?.[0]?.image_url || '',
-      occasion: pr.occasion?.name || pr.labels || 'Bouquet',
-      style: 'Bouquet Flowers',
-      caption: pr.name || '',
-      budget: pr.price ? `Rp ${pr.price.toLocaleString('id-ID')}` : '',
-      saved: false,
-      height: 'medium' as const,
-      vendor: pr.vendor?.business_name || '',
-      category: 'Bouquet Flowers',
-      source: 'product' as const
-    }))
+    const productInspirations = products
+      .filter((pr: any) => pr.vendor?.status !== 'inactive')
+      .map((pr: any) => ({
+        id: `product-${pr.id_product}`,
+        image: pr.images?.[0]?.image_url || '',
+        occasion: pr.occasion?.name || pr.labels || 'Bouquet',
+        style: 'Bouquet Flowers',
+        caption: pr.name || '',
+        budget: pr.price ? `Rp ${pr.price.toLocaleString('id-ID')}` : '',
+        saved: false,
+        height: 'medium' as const,
+        vendor: pr.vendor?.business_name || '',
+        category: 'Bouquet Flowers',
+        source: 'product' as const
+      }))
 
     allInspirations.value = [...portfolioInspirations, ...productInspirations]
   } catch {

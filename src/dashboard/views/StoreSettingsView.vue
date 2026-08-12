@@ -13,6 +13,7 @@ const form = ref({
   location: '',
   instagram: '',
   avatar_url: auth.user?.vendor_avatar || '',
+  status: 'active',
 })
 
 const loading = ref(true)
@@ -29,6 +30,7 @@ onMounted(async () => {
         form.value.location = v.location || ''
         form.value.instagram = v.instagram || ''
         form.value.avatar_url = v.avatar_url || ''
+        form.value.status = v.status || 'pending'
       }
     }
   } catch { /* ignore */ }
@@ -57,6 +59,7 @@ async function save() {
         location: form.value.location,
         instagram: form.value.instagram,
         avatar_url: form.value.avatar_url,
+        status: form.value.status,
       }),
     })
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error?.message || 'Failed to save') }
@@ -115,6 +118,17 @@ async function save() {
         <div class="form-group">
           <label class="control-label col-md-3">Instagram</label>
           <div class="col-md-9"><input type="text" class="form-control" placeholder="https://instagram.com/yourstore" v-model="form.instagram" /></div>
+        </div>
+
+        <div class="form-group">
+          <label class="control-label col-md-3">Store Status</label>
+          <div class="col-md-9">
+            <select class="form-control" v-model="form.status" required>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="pending">Pending</option>
+            </select>
+          </div>
         </div>
 
         <div class="ln_solid"></div>

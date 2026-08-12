@@ -33,13 +33,14 @@ export async function findByUserId(userId: number): Promise<Vendor | null> {
 }
 
 export async function create(
-  data: Pick<Vendor, 'id_user' | 'business_name' | 'category' | 'description' | 'location' | 'years_exp'> &
-    Partial<Pick<Vendor, 'user_created' | 'user_modified'>>
+  data: Pick<Vendor, 'id_user' | 'business_name' | 'category' | 'description' | 'location'> &
+    Partial<Pick<Vendor, 'years_exp' | 'user_created' | 'user_modified'>>
 ): Promise<Vendor> {
   const vendorType = data.category === 'Bouquet Flowers' ? 'PRODUCT' : 'SERVICE'
   const payload = {
     ...data,
     vendor_type: vendorType,
+    years_exp: data.years_exp ?? 0,
     user_created: data.user_created ?? 'SYSTEM',
     user_modified: data.user_modified ?? 'SYSTEM',
   }
