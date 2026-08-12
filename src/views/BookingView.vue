@@ -23,6 +23,7 @@ interface BookedVendor {
   selectedExtras: ExtraItem[]
   expanded: boolean
   quantity?: number
+  rawConfig?: any
 }
 
 interface ExtraItem {
@@ -61,6 +62,7 @@ const location = ref({ venue: '', address: '', city: '', type: '' })
 const specialRequests = ref('')
 const agreeTerms = ref(false)
 const showAddModal = ref(false)
+const editingProduct = ref<any>(null)
 
 const bookedVendors = ref<BookedVendor[]>([])
 const vendorExtrasCache = ref<Record<number, ExtraItem[]>>({})
@@ -212,7 +214,8 @@ function addPackageToBooking(p: PackageItem & { quantity?: number }) {
     rating: 0,
     selectedExtras: extras.filter((e: any) => e.selected),
     expanded: false,
-    quantity: p.quantity || 1
+    quantity: p.quantity || 1,
+    rawConfig: (p as any).rawConfig
   })
   if (extras.length > 0) {
     vendorExtrasCache.value[p.vendor.id_vendor] = extras
@@ -260,6 +263,55 @@ function openAddModal() {
 function handleAddPackage(p: any) {
   addPackageToBooking(p as PackageItem)
   showAddModal.value = false
+}
+
+function openEditModal(vendor: BookedVendor) {
+  if (!vendor.rawConfig) {
+    vendor.rawConfig = {
+      id_product: vendor.id_product,
+      quantity: vendor.quantity || 1,
+      sizeName: null,
+      selectedOptions: {},
+      selectedExtrasNames: [],
+      selectedVariantId: null,
+      selectedAddonIds: []
+    }
+  }
+  editingProduct.value = vendor.rawConfig
+  showAddModal.value = true
+}
+
+function handleCloseModal() {
+  showAddModal.value = false
+  editingProduct.value = null
+}
+
+function handleEditPackage(p: any) {
+  const idx = bookedVendors.value.findIndex(v => v.id_product === p.id_product)
+  if (idx !== -1) {
+    bookedVendors.value[idx] = {
+      ...bookedVendors.value[idx],
+      package_name: p.name,
+      starting_price: p.price,
+      quantity: p.quantity,
+      selectedExtras: p.extras || [],
+      rawConfig: p.rawConfig
+    }
+    
+    if (p.extras && p.extras.length > 0) {
+      vendorExtrasCache.value[p.vendor.id_vendor] = p.extras.map((e: any) => ({
+        id: String(e.id),
+        name: e.name,
+        price: e.price,
+        icon: e.icon || '',
+        selected: true
+      }))
+    } else {
+      delete vendorExtrasCache.value[p.vendor.id_vendor]
+    }
+  }
+  showAddModal.value = false
+  editingProduct.value = null
 }
 
 const subtotal = computed(() => {
@@ -422,6 +474,7 @@ function handleProceedToPayment() {
                   </div>
                 </div>
                 <div class="vendor-actions">
+                  <button v-if="vendor.id_product" class="btn-edit-details" @click.stop="openEditModal(vendor)">Edit Details</button>
                   <button class="btn-remove" @click.stop="removeVendor(vendor.id_vendor, vendor.id_package, vendor.id_product)" title="Remove">✕</button>
                   <span class="expand-icon">{{ vendor.expanded ? '▲' : '▼' }}</span>
                 </div>
@@ -550,8 +603,10 @@ function handleProceedToPayment() {
 
     <AddServiceModal
       :visible="showAddModal"
-      @close="showAddModal = false"
+      :edit-product="editingProduct"
+      @close="handleCloseModal"
       @add="handleAddPackage"
+      @edit="handleEditPackage"
     />
   </div>
 </template>
@@ -1235,5 +1290,23 @@ textarea {
   font-weight: 400;
   color: #86868b;
   margin-left: 4px;
+}
+
+.btn-edit-details {
+  padding: 6px 12px;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 8px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-edit-details:hover {
+  background: #e8e8ed;
+  border-color: #86868b;
 }
 </style>

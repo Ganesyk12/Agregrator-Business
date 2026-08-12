@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 
 interface PackageItem {
   id_package: number
@@ -22,8 +22,46 @@ interface PackageItem {
   category: { category_name: string }
 }
 
-const props = defineProps<{ visible: boolean }>()
-const emit = defineEmits<{ close: []; add: [pkg: PackageItem] }>()
+const props = defineProps<{
+  visible: boolean
+  editProduct?: any
+}>()
+const emit = defineEmits<{
+  close: []
+  add: [pkg: PackageItem]
+  edit: [pkg: any]
+}>()
+
+watch(() => props.visible, async (newVal) => {
+  if (newVal && props.editProduct) {
+    const ep = props.editProduct
+    await openProductCustomizer({ id_product: ep.id_product } as PackageItem)
+    
+    // Pre-populate selections based on props.editProduct
+    customQuantity.value = ep.quantity || 1
+    
+    if (ep.sizeName) {
+      selectedSize.value = ep.sizeName
+    }
+    if (ep.selectedOptions) {
+      selectedOptions.value = { ...ep.selectedOptions }
+    }
+    if (ep.selectedExtrasNames) {
+      selectedExtras.value = [...ep.selectedExtrasNames]
+    }
+    if (ep.selectedVariantId != null) {
+      selectedVariant.value = ep.selectedVariantId
+    }
+    if (ep.selectedAddonIds) {
+      selectedAddons.value = new Set(ep.selectedAddonIds)
+    }
+  } else if (!newVal) {
+    // Reset state
+    step.value = 1
+    selectedCategory.value = ''
+    selectedProductDetails.value = null
+  }
+})
 
 const categories = ref<{ name: string }[]>([])
 const packages = ref<PackageItem[]>([])
@@ -50,7 +88,28 @@ onMounted(async () => {
   try {
     const catRes = await fetch('/api/portfolios/vendors/categories')
     const catJson = await catRes.json()
-    if (catRes.ok) categories.value = catJson.data
+    if (catRes.ok && catJson.data) {
+      const rawCategories = catJson.data || []
+      const mergedNames = new Set<string>()
+      const result: { name: string }[] = []
+      
+      for (const cat of rawCategories) {
+        let normalized = cat.name
+        if (cat.name === 'Make Up Artist' || cat.name.startsWith('MUA')) {
+          normalized = 'MUA'
+        } else if (cat.name === 'Photographer' || cat.name === 'Photography') {
+          normalized = 'Photography'
+        } else if (cat.name === 'Bouquet Flowers' || cat.name === 'Bouquet') {
+          normalized = 'Bouquet'
+        }
+        
+        if (!mergedNames.has(normalized)) {
+          mergedNames.add(normalized)
+          result.push({ name: normalized })
+        }
+      }
+      categories.value = result
+    }
   } catch {
     // fallback
   }
@@ -91,9 +150,26 @@ async function selectCategory(cat: string) {
         packages.value = []
       }
     } else {
-      const res = await fetch(`/api/portfolios/packages/category/${encodeURIComponent(cat)}`)
-      const json = await res.json()
-      if (res.ok) packages.value = json.data
+      let queryCategories: string[] = []
+      if (cat === 'MUA') {
+        queryCategories = ['MUA', 'MUA (Make Up Artis)', 'Make Up Artist']
+      } else if (cat === 'Photography') {
+        queryCategories = ['Photography', 'Photographer']
+      } else {
+        queryCategories = [cat]
+      }
+      
+      const allPkgs: PackageItem[] = []
+      for (const queryCat of queryCategories) {
+        try {
+          const res = await fetch(`/api/portfolios/packages/category/${encodeURIComponent(queryCat)}`)
+          const json = await res.json()
+          if (res.ok && json.data) {
+            allPkgs.push(...json.data)
+          }
+        } catch (_) {}
+      }
+      packages.value = allPkgs
     }
   } catch {
     packages.value = []
@@ -208,6 +284,10 @@ async function openProductCustomizer(p: PackageItem) {
 }
 
 function goBack() {
+  if (props.editProduct) {
+    emit('close')
+    return
+  }
   if (step.value === 3) {
     step.value = 2
     selectedProductDetails.value = null
@@ -250,6 +330,7 @@ function confirmAddProduct() {
   }
   
   const extrasList: any[] = []
+  const selectedExtrasNames: string[] = []
   if (isNewProduct.value) {
     for (const name of selectedExtras.value) {
       const extra = p.optional_extras?.find((e: any) => e.name === name)
@@ -261,6 +342,7 @@ function confirmAddProduct() {
           icon: '💐',
           selected: true
         })
+        selectedExtrasNames.push(extra.name)
       }
     }
   } else {
@@ -298,10 +380,25 @@ function confirmAddProduct() {
     },
     category: { category_name: 'Bouquet Flowers' },
     quantity: customQuantity.value,
-    extras: extrasList
+    extras: extrasList,
+    
+    // Save raw configuration details for editing later
+    rawConfig: {
+      id_product: p.id_product,
+      quantity: customQuantity.value,
+      sizeName: selectedSize.value,
+      selectedOptions: { ...selectedOptions.value },
+      selectedExtrasNames,
+      selectedVariantId: selectedVariant.value,
+      selectedAddonIds: Array.from(selectedAddons.value)
+    }
   }
   
-  emit('add', customizedItem)
+  if (props.editProduct) {
+    emit('edit', customizedItem)
+  } else {
+    emit('add', customizedItem)
+  }
 }
 
 function toggleExtraName(name: string) {
@@ -357,8 +454,8 @@ function groupByVendor(pkgs: PackageItem[]) {
                 class="category-card"
                 @click="selectCategory(cat.name)"
               >
-                <span class="cat-icon">
-                  {{ cat.name === 'Photography' ? '📷' : cat.name === 'MUA' ? '💄' : cat.name === 'Bouquet Flowers' ? '💐' : '🎥' }}
+                 <span class="cat-icon">
+                  {{ cat.name === 'Photography' ? '📷' : cat.name === 'Videography' ? '🎥' : cat.name === 'MUA' ? '💄' : cat.name === 'Bouquet' ? '💐' : cat.name === 'Catering' ? '🍳' : cat.name === 'Decoration' ? '🏰' : '✨' }}
                 </span>
                 <span class="cat-name">{{ cat.name }}</span>
                 <span class="cat-arrow">→</span>
