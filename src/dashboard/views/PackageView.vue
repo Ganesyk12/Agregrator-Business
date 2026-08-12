@@ -288,19 +288,16 @@ function formatCurrency(value: number) {
 
 <template>
   <div class="card">
-    <div class="card-header">
-      <h5>Packages Management</h5>
-      
+    <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
+      <h5 style="margin: 0;">Packages Management</h5>
+      <button class="btn btn-success" @click="openAdd" style="margin: 0;">
+        <i class="fa fa-plus"></i> Add Package
+      </button>
     </div>
 
     <div class="card-body">
       <div class="row" style="margin-bottom: 12px;">
-        <div class="col-md-6 col-sm-6 col-xs-12">
-          <button class="btn btn-success" @click="openAdd">
-            <i class="fa fa-plus"></i> Add Package
-          </button>
-        </div>
-        <div class="col-md-6 col-sm-6 col-xs-12">
+        <div class="col-md-12 col-sm-12 col-xs-12">
           <div class="input-group" style="max-width: 250px; float: right;">
             <span class="input-group-addon"><i class="fa fa-search"></i></span>
             <input

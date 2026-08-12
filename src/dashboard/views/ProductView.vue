@@ -135,11 +135,15 @@ function formatCurrency(value: number) { return new Intl.NumberFormat('id-ID', {
 
 <template>
   <div class="x_panel">
-    <div class="x_title"><h2>Product Management</h2><div class="clearfix"></div></div>
+    <div class="x_title" style="display:flex; align-items:center; justify-content:space-between;">
+      <h2 style="margin: 0; float: none; display: inline-block;">Product Management</h2>
+      <button class="btn btn-success" @click="openAdd" style="margin: 0;">
+        <i class="fa fa-plus"></i> Add Product
+      </button>
+    </div>
     <div class="x_content">
       <div class="row" style="margin-bottom:12px;">
-        <div class="col-md-6"><button class="btn btn-success" @click="openAdd"><i class="fa fa-plus"></i> Add Product</button></div>
-        <div class="col-md-6">
+        <div class="col-md-12">
           <div class="input-group" style="max-width:250px; float:right;">
             <span class="input-group-addon"><i class="fa fa-search"></i></span>
             <input type="text" class="form-control" placeholder="Search products..." v-model="search" @input="currentPage=1" />

@@ -234,7 +234,7 @@ watch(() => route.path, () => {
     <div class="navbar-wrapper">
       
       <!-- Top profile block -->
-      <div class="main-menu-header-wrap">
+      <!-- <div class="main-menu-header-wrap">
         <div class="main-menu-header">
           <div class="user-details" style="margin-top: 10px; text-align: center; width: 100%;">
             <span style="font-size: 16px; font-weight: bold;">{{ userName }}</span>
@@ -252,7 +252,7 @@ watch(() => route.path, () => {
             </li>
           </ul>
         </div>
-      </div>
+      </div> -->
 
       <!-- Navigation links content (Scrollable container) -->
       <div class="navbar-content scroll-div">

@@ -289,9 +289,9 @@ function formatCurrency(value: number) {
     <div class="card-body">
       <div class="row" style="margin-bottom: 12px;">
         <div class="col-md-6 col-sm-6 col-xs-12">
-          <button class="btn btn-success" @click="openAdd">
+          <!-- <button class="btn btn-success" @click="openAdd">
             <i class="fa fa-plus"></i> Create Booking
-          </button>
+          </button> -->
         </div>
         <div class="col-md-6 col-sm-6 col-xs-12">
           <div class="input-group" style="margin: 0;">
