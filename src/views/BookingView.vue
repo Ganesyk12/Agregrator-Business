@@ -12,6 +12,7 @@ const route = useRoute()
 interface BookedVendor {
   id_vendor: number
   id_package?: number
+  id_product?: number
   package_name?: string
   business_name: string
   category: string
@@ -21,6 +22,7 @@ interface BookedVendor {
   rating: number
   selectedExtras: ExtraItem[]
   expanded: boolean
+  quantity?: number
 }
 
 interface ExtraItem {
@@ -184,18 +186,23 @@ onMounted(async () => {
   }
 })
 
-function addPackageToBooking(p: PackageItem) {
-  if (bookedVendors.value.some((b) => b.id_package === p.id_package)) return
+function addPackageToBooking(p: PackageItem & { quantity?: number }) {
+  const isProduct = 'id_product' in p && (p as any).id_product
+  const matchId = isProduct ? (p as any).id_product : p.id_package
+  
+  if (bookedVendors.value.some((b) => isProduct ? b.id_product === matchId : b.id_package === matchId)) return
+  
   const extras = ((p as any).extras || []).map((e: any) => ({
     id: String(e.id_extra || e.id),
     name: e.name,
     price: e.price,
     icon: e.icon || '',
-    selected: false,
+    selected: 'selected' in e ? !!e.selected : false,
   }))
   bookedVendors.value.push({
     id_vendor: p.vendor.id_vendor,
-    id_package: p.id_package,
+    id_package: isProduct ? undefined : p.id_package,
+    id_product: isProduct ? (p as any).id_product : undefined,
     package_name: p.name,
     business_name: p.vendor.business_name,
     category: p.category.category_name,
@@ -205,14 +212,19 @@ function addPackageToBooking(p: PackageItem) {
     rating: 0,
     selectedExtras: extras.filter((e: any) => e.selected),
     expanded: false,
+    quantity: p.quantity || 1
   })
   if (extras.length > 0) {
     vendorExtrasCache.value[p.vendor.id_vendor] = extras
   }
 }
 
-function toggleVendorExpand(id: number, idPackage?: number) {
-  const v = bookedVendors.value.find((b) => idPackage ? b.id_package === idPackage : b.id_vendor === id)
+function toggleVendorExpand(id: number, idPackage?: number, idProduct?: number) {
+  const v = bookedVendors.value.find((b) => {
+    if (idPackage) return b.id_package === idPackage
+    if (idProduct) return b.id_product === idProduct
+    return b.id_vendor === id
+  })
   if (v) v.expanded = !v.expanded
 }
 
@@ -223,9 +235,12 @@ function toggleExtra(vendorId: number, extraId: string) {
   if (ex) ex.selected = !ex.selected
 }
 
-function removeVendor(id: number, idPackage?: number) {
+function removeVendor(id: number, idPackage?: number, idProduct?: number) {
   if (idPackage) {
     const idx = bookedVendors.value.findIndex((b) => b.id_package === idPackage)
+    if (idx !== -1) bookedVendors.value.splice(idx, 1)
+  } else if (idProduct) {
+    const idx = bookedVendors.value.findIndex((b) => b.id_product === idProduct)
     if (idx !== -1) bookedVendors.value.splice(idx, 1)
   } else {
     bookedVendors.value = bookedVendors.value.filter((b) => b.id_vendor !== id)
@@ -251,7 +266,7 @@ const subtotal = computed(() => {
   return bookedVendors.value.reduce((sum, v) => {
     const extras = vendorExtrasCache.value[v.id_vendor] || []
     const extrasTotal = extras.filter((e) => e.selected).reduce((s, e) => s + e.price, 0)
-    return sum + v.starting_price + extrasTotal
+    return sum + (v.starting_price * (v.quantity || 1)) + extrasTotal
   }, 0)
 })
 
@@ -386,21 +401,28 @@ function handleProceedToPayment() {
           </div>
 
           <div v-else class="booking-items">
-            <div v-for="vendor in bookedVendors" :key="vendor.id_package || vendor.id_vendor" class="vendor-card">
-              <div class="vendor-card-header" @click="toggleVendorExpand(vendor.id_vendor, vendor.id_package)">
+            <div v-for="vendor in bookedVendors" :key="vendor.id_package ? 'pkg-' + vendor.id_package : 'prod-' + vendor.id_product" class="vendor-card">
+              <div class="vendor-card-header" @click="toggleVendorExpand(vendor.id_vendor, vendor.id_package, vendor.id_product)">
                 <div class="vendor-cover" v-if="vendor.cover_url">
                   <img :src="vendor.cover_url" :alt="vendor.business_name" />
                 </div>
                 <div class="vendor-info">
                   <h3 class="vendor-name">{{ vendor.business_name }}</h3>
                   <span class="vendor-category">{{ vendor.category }}</span>
-                  <span class="vendor-package" v-if="vendor.package_name">{{ vendor.package_name }}</span>
+                  <span class="vendor-package" v-if="vendor.package_name">
+                    {{ vendor.package_name }}
+                    <span v-if="vendor.quantity && vendor.quantity > 1" class="qty-badge">x{{ vendor.quantity }}</span>
+                    <span v-if="vendor.id_product" class="product-id-badge">Product ID: #{{ vendor.id_product }}</span>
+                  </span>
                   <div class="vendor-meta">
-                    <span class="vendor-price">{{ formatPrice(vendor.starting_price) }}</span>
+                    <span class="vendor-price">
+                      {{ formatPrice(vendor.starting_price * (vendor.quantity || 1)) }}
+                      <span class="price-unit" v-if="vendor.quantity && vendor.quantity > 1">({{ formatPrice(vendor.starting_price) }} / unit)</span>
+                    </span>
                   </div>
                 </div>
                 <div class="vendor-actions">
-                  <button class="btn-remove" @click.stop="removeVendor(vendor.id_vendor, vendor.id_package)" title="Remove">✕</button>
+                  <button class="btn-remove" @click.stop="removeVendor(vendor.id_vendor, vendor.id_package, vendor.id_product)" title="Remove">✕</button>
                   <span class="expand-icon">{{ vendor.expanded ? '▲' : '▼' }}</span>
                 </div>
               </div>
@@ -477,7 +499,7 @@ function handleProceedToPayment() {
           <div class="summary-items">
             <div class="summary-row">
               <span>Vendors ({{ bookedVendors.length }})</span>
-              <span>{{ formatPrice(bookedVendors.reduce((s, v) => s + v.starting_price, 0)) }}</span>
+              <span>{{ formatPrice(bookedVendors.reduce((s, v) => s + (v.starting_price * (v.quantity || 1)), 0)) }}</span>
             </div>
             <div class="summary-row" v-if="totalExtrasCount > 0">
               <span>Extras ({{ totalExtrasCount }})</span>
@@ -507,13 +529,17 @@ function handleProceedToPayment() {
 
           <div v-if="bookedVendors.length > 0" class="summary-vendors">
             <h4>Booked Vendors</h4>
-            <div v-for="v in bookedVendors" :key="v.id_package || v.id_vendor" class="summary-vendor-row">
+            <div v-for="v in bookedVendors" :key="v.id_package ? 'pkg-' + v.id_package : 'prod-' + v.id_product" class="summary-vendor-row">
               <div class="sv-info">
                 <span class="sv-name">{{ v.business_name }}</span>
                 <span class="sv-cat">{{ v.category }}</span>
-                <span class="sv-pkg" v-if="v.package_name">{{ v.package_name }}</span>
+                <span class="sv-pkg" v-if="v.package_name">
+                  {{ v.package_name }}
+                  <span v-if="v.quantity && v.quantity > 1" class="qty-badge-sm">x{{ v.quantity }}</span>
+                  <span v-if="v.id_product" class="product-id-badge-sm">ID: #{{ v.id_product }}</span>
+                </span>
               </div>
-              <span class="sv-price">{{ formatPrice(v.starting_price) }}</span>
+              <span class="sv-price">{{ formatPrice(v.starting_price * (v.quantity || 1)) }}</span>
             </div>
           </div>
         </div>
@@ -1152,5 +1178,62 @@ textarea {
   .page-title {
     font-size: 1.5rem;
   }
+}
+
+.product-id-badge {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.product-id-badge-sm {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+  display: inline-block;
+}
+
+.qty-badge {
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.qty-badge-sm {
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+  display: inline-block;
+}
+
+.price-unit {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #86868b;
+  margin-left: 4px;
 }
 </style>

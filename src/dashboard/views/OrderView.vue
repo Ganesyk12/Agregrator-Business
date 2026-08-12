@@ -255,99 +255,354 @@ function formatDate(d: string) {
       </div>
     </div>
 
-    <!-- Detail Modal -->
-    <div v-if="detail" class="modal" style="display:block;" @click.self="detail = null">
-      <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header" style="align-items:center;">
-            <h5 class="modal-title">Order Detail — {{ detail.order_number || ('#' + detail.id_order) }}</h5>
-            <button type="button" class="close" @click="detail = null" style="background:none;border:none;font-size:1.5rem;line-height:1;">&times;</button>
+    <!-- Detail Modal Redesigned with Teleport -->
+    <Teleport to="body">
+      <div v-if="detail" class="order-detail-modal-overlay" @click.self="detail = null">
+        <div class="order-detail-modal-container">
+          <!-- Header -->
+          <div class="order-detail-modal-header">
+            <div class="header-title-section">
+              <span class="order-number-tag">{{ detail.order_number || ('#' + detail.id_order) }}</span>
+              <h5 class="m-0 font-weight-bold" style="color: #3f4d67;">Order Details</h5>
+            </div>
+            <button type="button" class="order-detail-modal-close-btn" @click="detail = null">&times;</button>
           </div>
-          <div class="modal-body">
-            <!-- Customer -->
-            <h6 class="detail-head">Customer Information</h6>
-            <table class="table table-sm table-bordered">
-              <tbody>
-                <tr><th style="width:200px;">Customer Name</th><td>{{ detail.user?.full_name || 'Not Available' }}</td></tr>
-                <tr><th>Email</th><td>{{ detail.user?.email || 'Not Available' }}</td></tr>
-                <tr><th>Phone</th><td>{{ detail.user?.phone || 'Not Available' }}</td></tr>
-              </tbody>
-            </table>
 
-            <!-- Recipient -->
-            <h6 class="detail-head">Recipient Information</h6>
-            <table class="table table-sm table-bordered">
-              <tbody>
-                <tr><th style="width:200px;">Recipient Name</th><td>{{ na(detail.recipient_name) }}</td></tr>
-                <tr><th>Recipient Phone</th><td>{{ na(detail.recipient_phone) }}</td></tr>
-              </tbody>
-            </table>
-
-            <!-- Delivery -->
-            <h6 class="detail-head">Delivery Information</h6>
-            <table class="table table-sm table-bordered">
-              <tbody>
-                <tr><th style="width:200px;">Full Address</th><td>{{ na(detail.delivery_address) }}</td></tr>
-                <tr><th>City</th><td>{{ na(detail.delivery_city) }}</td></tr>
-                <tr><th>Province</th><td>{{ na(detail.delivery_province) }}</td></tr>
-                <tr><th>Postal Code</th><td>{{ na(detail.delivery_postal_code) }}</td></tr>
-                <tr><th>Delivery Notes</th><td>{{ na(detail.delivery_notes) }}</td></tr>
-                <tr><th>Preferred Delivery Date</th><td>{{ detail.delivery_date ? formatDate(detail.delivery_date) : 'Not Available' }}</td></tr>
-                <tr><th>Preferred Delivery Time</th><td>{{ na(detail.delivery_time) }}</td></tr>
-              </tbody>
-            </table>
-
-            <!-- Products -->
-            <h6 class="detail-head">Product Information</h6>
-            <table class="table table-sm table-bordered">
-              <thead><tr><th>Image</th><th>Product</th><th>Variant</th><th>Size</th><th>Options</th><th>Greeting</th><th>Extras</th><th>Qty</th><th>Subtotal</th></tr></thead>
-              <tbody>
-                <tr v-for="item in detail.items || []" :key="item.id_order_item">
-                  <td><img :src="item.product?.images?.[0]?.image_url" style="width:48px;height:48px;object-fit:cover;border-radius:4px;" /></td>
-                  <td>{{ item.product?.name || 'Not Available' }}</td>
-                  <td>{{ na(item.variant_name) }}</td>
-                  <td>{{ na(item.size_name) }}</td>
-                  <td>{{ item.options?.length ? formatOptions(item) : 'Not Available' }}</td>
-                  <td>
-                    <div>{{ na(item.greeting_card) }}</div>
-                    <div v-if="item.greeting_message" style="color:#888;font-style:italic;">"{{ item.greeting_message }}"</div>
-                  </td>
-                  <td>{{ item.extras?.length ? formatExtras(item) : 'Not Available' }}</td>
-                  <td>{{ item.quantity }}</td>
-                  <td>{{ formatCurrency(itemSubtotal(item)) }}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div class="row" style="justify-content:flex-end;">
+          <!-- Body -->
+          <div class="order-detail-modal-body">
+            
+            <!-- Section 1: Customer, Recipient, and Delivery Grid -->
+            <div class="row g-3 m-b-20">
+              <!-- Customer Info -->
               <div class="col-md-4">
-                <table class="table table-sm table-bordered">
-                  <tbody>
-                    <tr><th>Subtotal</th><td>{{ formatCurrency(detail.total_price - (detail.delivery_fee || 0) - (detail.service_fee || 0)) }}</td></tr>
-                    <tr><th>Delivery Fee</th><td>{{ formatCurrency(detail.delivery_fee || 0) }}</td></tr>
-                    <tr><th>Service Fee</th><td>{{ formatCurrency(detail.service_fee || 0) }}</td></tr>
-                    <tr><th>Grand Total</th><td><strong>{{ formatCurrency(detail.total_price) }}</strong></td></tr>
-                  </tbody>
-                </table>
+                <div class="card h-100 border shadow-sm mb-0">
+                  <div class="card-header bg-light py-2 px-3">
+                    <h6 class="m-0 font-weight-bold text-muted"><i class="fa fa-user text-c-blue m-r-10"></i>Customer Information</h6>
+                  </div>
+                  <div class="card-body p-3">
+                    <div class="info-item mb-2">
+                      <small class="text-muted d-block">Name</small>
+                      <span class="font-weight-bold">{{ detail.user?.full_name || 'Not Available' }}</span>
+                    </div>
+                    <div class="info-item mb-2">
+                      <small class="text-muted d-block">Email</small>
+                      <span>{{ detail.user?.email || 'Not Available' }}</span>
+                    </div>
+                    <div class="info-item">
+                      <small class="text-muted d-block">Phone</small>
+                      <span>{{ detail.user?.phone || 'Not Available' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recipient Info -->
+              <div class="col-md-4">
+                <div class="card h-100 border shadow-sm mb-0">
+                  <div class="card-header bg-light py-2 px-3">
+                    <h6 class="m-0 font-weight-bold text-muted"><i class="fa fa-heart text-c-red m-r-10"></i>Recipient Information</h6>
+                  </div>
+                  <div class="card-body p-3">
+                    <div class="info-item mb-2">
+                      <small class="text-muted d-block">Recipient Name</small>
+                      <span class="font-weight-bold">{{ na(detail.recipient_name) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <small class="text-muted d-block">Recipient Phone</small>
+                      <span>{{ na(detail.recipient_phone) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Delivery Schedule -->
+              <div class="col-md-4">
+                <div class="card h-100 border shadow-sm mb-0">
+                  <div class="card-header bg-light py-2 px-3">
+                    <h6 class="m-0 font-weight-bold text-muted"><i class="fa fa-truck text-c-green m-r-10"></i>Delivery Schedule</h6>
+                  </div>
+                  <div class="card-body p-3">
+                    <div class="info-item mb-2">
+                      <small class="text-muted d-block">Preferred Delivery Date</small>
+                      <span class="font-weight-bold">{{ detail.delivery_date ? formatDate(detail.delivery_date) : 'Not Available' }}</span>
+                    </div>
+                    <div class="info-item mb-2">
+                      <small class="text-muted d-block">Preferred Delivery Time</small>
+                      <span>{{ na(detail.delivery_time) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <small class="text-muted d-block">Delivery Notes</small>
+                      <span class="text-muted" style="font-size: 13px;">{{ na(detail.delivery_notes) }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div class="row" style="margin-top:8px;">
-              <div class="col-md-6">
-                <label class="form-label">Fulfillment Status</label>
-                <select class="form-select" :value="detail.fulfillment_status || 'pending'" @change="detail.fulfillment_status = ($event.target as HTMLSelectElement).value; updateFulfillment(detail.id_order, ($event.target as HTMLSelectElement).value)">
-                  <option v-for="(label, key) in FULFILLMENT_LABELS" :key="key" :value="key">{{ label }}</option>
-                </select>
+            <!-- Section 2: Full Address Card -->
+            <div class="card border shadow-sm m-b-20">
+              <div class="card-header bg-light py-2 px-3">
+                <h6 class="m-0 font-weight-bold text-muted"><i class="fa fa-map-marker text-c-yellow m-r-10"></i>Delivery Address</h6>
+              </div>
+              <div class="card-body p-3">
+                <p class="mb-2"><strong>Address:</strong> {{ na(detail.delivery_address) }}</p>
+                <div class="row g-2" style="font-size: 13px;">
+                  <div class="col-sm-4"><strong>City:</strong> {{ na(detail.delivery_city) }}</div>
+                  <div class="col-sm-4"><strong>Province:</strong> {{ na(detail.delivery_province) }}</div>
+                  <div class="col-sm-4"><strong>Postal Code:</strong> {{ na(detail.delivery_postal_code) }}</div>
+                </div>
               </div>
             </div>
+
+            <!-- Section 3: Product Information (Modern list instead of squished table) -->
+            <div class="card border shadow-sm m-b-20">
+              <div class="card-header bg-light py-2 px-3">
+                <h6 class="m-0 font-weight-bold text-muted"><i class="fa fa-shopping-bag text-c-blue m-r-10"></i>Product Items</h6>
+              </div>
+              <div class="card-body p-0">
+                <div class="order-items-list">
+                  <div v-for="item in detail.items || []" :key="item.id_order_item" class="order-item-row p-3 border-bottom d-flex align-items-start justify-content-between gap-3 flex-wrap flex-sm-nowrap">
+                    <div class="d-flex align-items-start gap-3">
+                      <div class="item-img-container">
+                        <img :src="item.product?.images?.[0]?.image_url || ''" class="item-img" />
+                      </div>
+                      <div class="item-details">
+                        <h6 class="mb-1 font-weight-bold" style="color: #3f4d67; font-size: 14px;">{{ item.product?.name || 'Not Available' }}</h6>
+                        
+                        <!-- Product Meta Badges -->
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                          <span v-if="item.variant_name" class="badge bg-light text-dark border">Variant: {{ item.variant_name }}</span>
+                          <span v-if="item.size_name" class="badge bg-light text-dark border">Size: {{ item.size_name }}</span>
+                          <span v-if="item.options?.length" v-for="opt in item.options" :key="opt.valueName" class="badge bg-light text-dark border">{{ opt.groupName }}: {{ opt.valueName }}</span>
+                        </div>
+
+                        <!-- Extras -->
+                        <div v-if="item.extras?.length" class="mb-2" style="font-size: 12px;">
+                          <span class="text-muted mr-1">Extras:</span>
+                          <span v-for="ex in item.extras" :key="ex.name" class="badge bg-soft-info text-info border border-info border-opacity-25 mr-1" style="font-size: 11px;">{{ ex.name }}</span>
+                        </div>
+
+                        <!-- Greeting Card -->
+                        <div v-if="item.greeting_card || item.greeting_message" class="greeting-card-box p-2 bg-light border rounded mt-2">
+                          <div style="font-size: 12px; font-weight: 600;"><i class="fa fa-envelope-o text-c-blue mr-1"></i> Greeting Card ({{ item.greeting_card || 'Standard' }})</div>
+                          <p v-if="item.greeting_message" class="mb-0 text-muted italic" style="font-size: 12px;">"{{ item.greeting_message }}"</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Price / Qty Column -->
+                    <div class="text-end text-sm-end ms-auto ms-sm-0" style="min-width: 140px;">
+                      <div class="item-price">{{ formatCurrency(item.price) }} <span class="text-muted" style="font-size: 12px;">x{{ item.quantity }}</span></div>
+                      <div class="item-subtotal font-weight-bold text-c-blue mt-1" style="font-size: 14px;">{{ formatCurrency(itemSubtotal(item)) }}</div>
+                    </div>
+                  </div>
+                  <div v-if="!detail.items || detail.items.length === 0" class="p-4 text-center text-muted">
+                    No items in this order.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 4: General Notes (if any) -->
+            <div v-if="detail.notes" class="card border border-warning bg-soft-warning m-b-20">
+              <div class="card-body p-3">
+                <h6 class="m-0 font-weight-bold text-warning mb-1"><i class="fa fa-sticky-note-o m-r-10"></i>Order Notes</h6>
+                <p class="mb-0" style="font-size: 13px; line-height: 1.5; color: #666;">{{ detail.notes }}</p>
+              </div>
+            </div>
+
+            <!-- Section 5: Pricing Breakdown & Fulfillment controls -->
+            <div class="row align-items-end g-3">
+              <!-- Fulfillment controls -->
+              <div class="col-md-7">
+                <div class="card border shadow-sm mb-0">
+                  <div class="card-body p-3">
+                    <label class="form-label font-weight-bold text-muted" style="display:block; margin-bottom:8px;"><i class="fa fa-tasks text-c-green m-r-10"></i>Fulfillment Status</label>
+                    <select class="form-select border" :value="detail.fulfillment_status || 'pending'" @change="detail.fulfillment_status = ($event.target as HTMLSelectElement).value; updateFulfillment(detail.id_order, ($event.target as HTMLSelectElement).value)">
+                      <option v-for="(label, key) in FULFILLMENT_LABELS" :key="key" :value="key">{{ label }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pricing Table -->
+              <div class="col-md-5">
+                <div class="card border shadow-sm mb-0 bg-light">
+                  <div class="card-body p-3" style="font-size: 13px;">
+                    <div class="d-flex justify-content-between mb-2">
+                      <span class="text-muted">Subtotal</span>
+                      <span>{{ formatCurrency(detail.total_price - (detail.delivery_fee || 0) - (detail.service_fee || 0)) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                      <span class="text-muted">Delivery Fee</span>
+                      <span>{{ formatCurrency(detail.delivery_fee || 0) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                      <span class="text-muted">Service Fee</span>
+                      <span>{{ formatCurrency(detail.service_fee || 0) }}</span>
+                    </div>
+                    <hr class="my-2 border-secondary border-opacity-25" style="border: 0; border-top: 1px solid #dee2e6; margin: 8px 0;">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="font-weight-bold" style="color: #3f4d67; font-size: 14px;">Grand Total</span>
+                      <span class="font-weight-bold text-c-blue" style="font-size: 18px;">{{ formatCurrency(detail.total_price) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <style>
 .detail-head { margin-top: 16px; font-weight: 700; }
-.modal { background: rgba(0,0,0,0.5); }
+
+.order-detail-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.order-detail-modal-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.order-detail-modal-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid #eef2f4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.header-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.order-number-tag {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.order-detail-modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.order-detail-modal-close-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.order-detail-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.order-items-list {
+  background: #fff;
+}
+
+.order-item-row:last-child {
+  border-bottom: none !important;
+}
+
+.item-img-container {
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.greeting-card-box {
+  border-left: 3px solid #0ea5e9 !important;
+}
+
+/* Color palettes & helper extensions */
+.bg-soft-warning {
+  background-color: #fffbeb !important;
+}
+.bg-soft-info {
+  background-color: #f0f9ff !important;
+}
+.bg-soft-success {
+  background-color: #f0fdf4 !important;
+}
+
+.mr-1 {
+  margin-right: 4px;
+}
+
+.m-r-10 {
+  margin-right: 10px;
+}
+
+.m-b-20 {
+  margin-bottom: 20px;
+}
+
+.italic {
+  font-style: italic;
+}
 </style>
