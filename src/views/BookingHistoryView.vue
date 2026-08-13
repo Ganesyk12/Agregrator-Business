@@ -107,7 +107,7 @@ onMounted(async () => {
     <SearchPopup />
     <CartOffcanvas />
 
-    <div class="container py-5">
+    <div class="container booking-history-page py-5">
       <h2 class="mb-4 fw-bold">Booking History</h2>
 
       <div v-if="loading" class="text-center py-5">
@@ -337,6 +337,9 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.booking-history-page {
+  padding-top: 120px !important;
+}
 .badge-status {
   display: inline-block;
   padding: 3px 12px;

@@ -61,7 +61,7 @@ onMounted(async () => {
 <style scoped>
 .gallery-header {
   text-align: center;
-  padding: 40px 20px 20px;
+  padding: 120px 20px 20px;
 }
 .gallery-title {
   font-size: 2rem;

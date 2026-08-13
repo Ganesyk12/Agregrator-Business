@@ -341,7 +341,7 @@ onMounted(fetchVendorProfile)
 /* Hero */
 .vendor-hero {
   background: #fff;
-  padding: 60px 0 40px;
+  padding: 120px 0 40px;
   border-bottom: 1px solid #eee;
 }
 

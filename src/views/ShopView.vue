@@ -164,6 +164,10 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.shop-header {
+  padding-top: 120px !important;
+  padding-bottom: 48px !important;
+}
 .card-img-wrapper {
   position: relative;
   height: 220px;

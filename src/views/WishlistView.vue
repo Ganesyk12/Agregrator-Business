@@ -115,7 +115,7 @@ onMounted(async () => {
 <style scoped>
 .page-header {
   text-align: center;
-  padding: 40px 20px 20px;
+  padding: 120px 20px 20px;
 }
 .page-title {
   font-size: 2rem;
