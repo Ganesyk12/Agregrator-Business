@@ -92,6 +92,14 @@ function generateOrderNumber(): string {
   return `ORD-${y}${m}-${stamp}`
 }
 
+function generateBookingNumber(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const stamp = Date.now().toString(36).toUpperCase().slice(-6)
+  return `BK-${y}${m}-${stamp}`
+}
+
 export async function create(
   data: BookingCreateInput & { user_created?: string; user_modified?: string }
 ): Promise<Booking> {
@@ -125,6 +133,7 @@ export async function create(
   const booking = await prisma.booking.create({
     data: {
       ...rest,
+      booking_number: generateBookingNumber(),
       user_created: data.user_created ?? 'SYSTEM',
       user_modified: data.user_modified ?? 'SYSTEM',
       booking_packages: {

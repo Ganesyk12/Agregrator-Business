@@ -236,6 +236,7 @@ model VendorAvailability {
 model Booking {
   id_booking     Int      @id @default(autoincrement())
   id_user        Int
+  booking_number String?
   event_date     DateTime
   event_location String?
   total_price    Float
@@ -255,6 +256,7 @@ model Booking {
   orders           Order[]
 
   @@index([id_user])
+  @@index([booking_number])
 }
 
 model BookingPackage {

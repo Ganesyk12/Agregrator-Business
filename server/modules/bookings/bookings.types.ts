@@ -1,6 +1,7 @@
 export interface Booking {
   id_booking: number
   id_user: number
+  booking_number: string | null
   event_date: Date
   event_location: string | null
   total_price: number

@@ -53,7 +53,7 @@ const historyList = computed(() => {
     isBooking: true,
     keyId: `booking-${b.id_booking}`,
     date: b.date_created,
-    displayId: `#${b.id_booking}`,
+    displayId: b.booking_number ? b.booking_number : `#${b.id_booking}`,
     typeLabel: 'Booking Jasa',
   }))
   
@@ -232,7 +232,7 @@ onMounted(async () => {
     <div v-if="selectedBooking && !showPrintPreview" class="modal-overlay" @click.self="closeDetail">
       <div class="modal-detail">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="fw-bold m-0">{{ selectedBooking.isBooking ? 'Booking #' + selectedBooking.id_booking : 'Order #' + (selectedBooking.order_number || selectedBooking.id_order) }}</h4>
+          <h4 class="fw-bold m-0">{{ selectedBooking.isBooking ? (selectedBooking.booking_number || ('Booking #' + selectedBooking.id_booking)) : ('Order #' + (selectedBooking.order_number || selectedBooking.id_order)) }}</h4>
           <button class="btn-close-modal" @click="closeDetail">&times;</button>
         </div>
         <div class="row g-3">
