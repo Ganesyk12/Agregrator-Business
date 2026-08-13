@@ -79,12 +79,6 @@ onMounted(() => {
   fetchBookings()
 })
 
-function openAdd() {
-  selectedBooking.value = null
-  modalMode.value = 'add'
-  modalVisible.value = true
-}
-
 function openEdit(b: Booking) {
   selectedBooking.value = { ...b }
   modalMode.value = 'edit'

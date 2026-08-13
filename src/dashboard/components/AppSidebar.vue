@@ -2,7 +2,6 @@
 import { ref, computed, inject, watch, onMounted, type Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import Swal from 'sweetalert2'
 
 const router = useRouter()
 const route = useRoute()
@@ -27,7 +26,6 @@ interface MenuSection {
 const userRoles = ref<string[]>([])
 const userName = ref('Undefined')
 const userRoleText = ref('Undefined')
-const showUserMenu = ref(false)
 
 const openSections = ref<Record<string, boolean>>({
   'Vendor Management': false,
@@ -35,24 +33,6 @@ const openSections = ref<Record<string, boolean>>({
   'System': false,
 })
 
-function toggleUserMenu() {
-  showUserMenu.value = !showUserMenu.value
-}
-
-function handleLogout() {
-  localStorage.removeItem('sigyn_token')
-  localStorage.removeItem('sigyn_user')
-  Swal.fire({
-    icon: 'success',
-    title: 'Logout Berhasil',
-    text: 'Sampai jumpa lagi!',
-    timer: 1000,
-    showConfirmButton: false
-  })
-  setTimeout(() => {
-    router.push('/login')
-  }, 1000)
-}
 
 function loadUserRoles() {
   try {

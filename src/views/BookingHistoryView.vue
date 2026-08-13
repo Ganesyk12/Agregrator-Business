@@ -10,6 +10,7 @@ import Footer from '@/components/layout/Footer.vue'
 const auth = useAuthStore()
 const router = useRouter()
 const bookings = ref<any[]>([])
+const orders = ref<any[]>([])
 const loading = ref(true)
 const selectedBooking = ref<any>(null)
 const companyInfo = ref<any>(null)
@@ -29,7 +30,7 @@ const statusColors: Record<string, string> = {
 }
 
 function formatPrice(v: number) {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v)
 }
 
 function formatDate(d: string) {
@@ -46,16 +47,80 @@ function latestPayment(booking: any) {
   return booking.payments?.length ? booking.payments[0] : null
 }
 
+const historyList = computed(() => {
+  const bList = bookings.value.map(b => ({
+    ...b,
+    isBooking: true,
+    keyId: `booking-${b.id_booking}`,
+    date: b.date_created,
+    displayId: `#${b.id_booking}`,
+    typeLabel: 'Booking Jasa',
+  }))
+  
+  const oList = orders.value
+    .filter(o => !o.id_booking)
+    .map(o => ({
+      ...o,
+      isBooking: false,
+      keyId: `order-${o.id_order}`,
+      date: o.date_created,
+      displayId: `#${o.order_number || o.id_order}`,
+      typeLabel: 'Order Produk',
+    }))
+    
+  return [...bList, ...oList].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+})
+
 const services = computed<any[]>(() => {
   const b = selectedBooking.value
   if (!b) return []
-  return b.booking_packages?.map((bp: any) => ({
+  
+  if (b.isBooking === false) {
+    return b.items?.map((item: any) => ({
+      name: `${item.product?.name} (Product x${item.quantity})`,
+      price: item.price * item.quantity,
+      description: [
+        item.size_name ? `Size: ${item.size_name}` : null,
+        item.options && item.options.length ? `Options: ${item.options.map((o: any) => `${o.groupName}: ${o.valueName}`).join(', ')}` : null,
+        item.extras && item.extras.length ? `Extras: ${item.extras.map((e: any) => e.name).join(', ')}` : null,
+        item.greeting_message ? `Card: "${item.greeting_message}"` : null
+      ].filter(Boolean).join(' | ') || '-',
+      duration: '-',
+      vendorName: b.vendor?.business_name || '-',
+    })) || []
+  }
+
+  const packageItems = b.booking_packages?.map((bp: any) => ({
     name: bp.package?.name,
     price: bp.package?.price,
     description: bp.package?.description,
     duration: bp.package?.duration,
     vendorName: bp.package?.vendor?.business_name || '-',
   })) || []
+
+  const productItems: any[] = []
+  if (b.orders && Array.isArray(b.orders)) {
+    for (const order of b.orders) {
+      if (order.items && Array.isArray(order.items)) {
+        for (const item of order.items) {
+          productItems.push({
+            name: `${item.product?.name} (Product x${item.quantity})`,
+            price: item.price * item.quantity,
+            description: [
+              item.size_name ? `Size: ${item.size_name}` : null,
+              item.options && item.options.length ? `Options: ${item.options.map((o: any) => `${o.groupName}: ${o.valueName}`).join(', ')}` : null,
+              item.extras && item.extras.length ? `Extras: ${item.extras.map((e: any) => e.name).join(', ')}` : null,
+              item.greeting_message ? `Card: "${item.greeting_message}"` : null
+            ].filter(Boolean).join(' | ') || '-',
+            duration: '-',
+            vendorName: order.vendor?.business_name || '-',
+          })
+        }
+      }
+    }
+  }
+
+  return [...packageItems, ...productItems]
 })
 
 function openDetail(b: any) {
@@ -87,12 +152,15 @@ onMounted(async () => {
     return
   }
   try {
-    const [bookRes, companyRes] = await Promise.all([
+    const [bookRes, orderRes, companyRes] = await Promise.all([
       auth.authFetch('/api/bookings/user/me'),
+      auth.authFetch('/api/orders'),
       fetch('/api/company-info'),
     ])
     const bookJson = await bookRes.json()
     if (bookRes.ok) bookings.value = bookJson.data || []
+    const orderJson = await orderRes.json()
+    if (orderRes.ok) orders.value = orderJson.data || []
     const companyJson = await companyRes.json()
     if (companyRes.ok) companyInfo.value = companyJson.data
   } catch { /* fallback */ } finally {
@@ -108,14 +176,14 @@ onMounted(async () => {
     <CartOffcanvas />
 
     <div class="container booking-history-page py-5">
-      <h2 class="mb-4 fw-bold">Booking History</h2>
+      <h2 class="mb-4 fw-bold">Transaction History</h2>
 
       <div v-if="loading" class="text-center py-5">
-        <p class="text-muted">Loading bookings...</p>
+        <p class="text-muted">Loading history...</p>
       </div>
 
-      <div v-else-if="bookings.length === 0" class="text-center py-5">
-        <p class="text-muted">No bookings yet.</p>
+      <div v-else-if="historyList.length === 0" class="text-center py-5">
+        <p class="text-muted">No transactions found.</p>
         <a href="/services" class="btn btn-dark mt-2">Browse Services</a>
       </div>
 
@@ -123,29 +191,34 @@ onMounted(async () => {
         <table class="table table-hover align-middle">
           <thead class="table-light">
             <tr>
-              <th>Booking #</th>
-              <th>Invoice</th>
+              <th>Type</th>
+              <th>Transaction #</th>
               <th>Status</th>
-              <th>Event Date</th>
+              <th>Date</th>
               <th>Total</th>
               <th class="text-end">Action</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="b in bookings" :key="b.id_booking">
-              <td class="fw-semibold">#{{ b.id_booking }}</td>
+            <tr v-for="item in historyList" :key="item.keyId">
               <td>
-                <template v-if="latestPayment(b)">{{ invoiceNumber(latestPayment(b)) }}</template>
-                <span v-else class="text-muted">—</span>
+                <span class="badge" :class="item.isBooking ? 'bg-secondary' : 'bg-primary'">
+                  {{ item.typeLabel }}
+                </span>
+              </td>
+              <td class="fw-semibold">{{ item.displayId }}</td>
+              <td>
+                <span class="badge-status" :style="{ background: item.isBooking ? (statusColors[item.status] || '#999') : '#f59e0b' }">
+                  {{ item.isBooking ? (statusLabels[item.status] || item.status) : item.status }}
+                </span>
               </td>
               <td>
-                <span class="badge-status" :style="{ background: statusColors[b.status] || '#999' }">{{ statusLabels[b.status] || b.status }}</span>
+                {{ item.isBooking ? (item.event_date ? formatDate(item.event_date) : '-') : formatDate(item.date) }}
               </td>
-              <td>{{ b.event_date ? formatDate(b.event_date) : '-' }}</td>
-              <td class="fw-semibold">{{ formatPrice(b.total_price) }}</td>
+              <td class="fw-semibold">{{ formatPrice(item.total_price) }}</td>
               <td class="text-end">
-                <button class="btn btn-sm btn-outline-dark me-1" @click="openDetail(b)">Detail</button>
-                <button v-if="latestPayment(b)" class="btn btn-sm btn-dark" @click="openPrintPreview(b)">Print Invoice</button>
+                <button class="btn btn-sm btn-outline-dark me-1" @click="openDetail(item)">Detail</button>
+                <button v-if="item.isBooking && latestPayment(item)" class="btn btn-sm btn-dark" @click="openPrintPreview(item)">Print Invoice</button>
               </td>
             </tr>
           </tbody>
@@ -159,44 +232,126 @@ onMounted(async () => {
     <div v-if="selectedBooking && !showPrintPreview" class="modal-overlay" @click.self="closeDetail">
       <div class="modal-detail">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="fw-bold m-0">Booking #{{ selectedBooking.id_booking }}</h4>
+          <h4 class="fw-bold m-0">{{ selectedBooking.isBooking ? 'Booking #' + selectedBooking.id_booking : 'Order #' + (selectedBooking.order_number || selectedBooking.id_order) }}</h4>
           <button class="btn-close-modal" @click="closeDetail">&times;</button>
         </div>
         <div class="row g-3">
-          <div class="col-md-6">
-            <p class="mb-1 text-muted small">Status</p>
-            <span class="badge-status" :style="{ background: statusColors[selectedBooking.status] || '#999' }">{{ statusLabels[selectedBooking.status] || selectedBooking.status }}</span>
-          </div>
-          <div class="col-md-6">
-            <p class="mb-1 text-muted small">Total Price</p>
-            <p class="fw-bold fs-5 m-0">{{ formatPrice(selectedBooking.total_price) }}</p>
-          </div>
-          <div class="col-md-6">
-            <p class="mb-1 text-muted small">Event Date</p>
-            <p class="m-0">{{ selectedBooking.event_date ? formatDate(selectedBooking.event_date) : '-' }}</p>
-          </div>
-          <div class="col-md-6">
-            <p class="mb-1 text-muted small">Event Location</p>
-            <p class="m-0">{{ selectedBooking.event_location || '-' }}</p>
-          </div>
-          <div v-if="selectedBooking.notes" class="col-12">
-            <p class="mb-1 text-muted small">Notes</p>
-            <p class="m-0">{{ selectedBooking.notes }}</p>
-          </div>
-          <div class="col-12">
-            <p class="mb-1 text-muted small">Customer</p>
-            <p class="m-0">{{ selectedBooking.customer?.full_name }} ({{ selectedBooking.customer?.email }})</p>
-          </div>
-          <div class="col-12">
-            <p class="mb-1 text-muted small">Packages</p>
-            <div v-for="bp in selectedBooking.booking_packages" :key="bp.id_booking_package" class="border rounded p-2 mb-2">
-              <div class="d-flex justify-content-between">
-                <strong>{{ bp.package?.name }}</strong>
-                <span>{{ formatPrice(bp.package?.price) }}</span>
-              </div>
-              <small class="text-muted">{{ bp.package?.vendor?.business_name }} — {{ bp.package?.duration || '-' }}</small>
+          <template v-if="selectedBooking.isBooking">
+            <div class="col-md-6">
+              <p class="mb-1 text-muted small">Status</p>
+              <span class="badge-status" :style="{ background: statusColors[selectedBooking.status] || '#999' }">{{ statusLabels[selectedBooking.status] || selectedBooking.status }}</span>
             </div>
-          </div>
+            <div class="col-md-6">
+              <p class="mb-1 text-muted small">Total Price</p>
+              <p class="fw-bold fs-5 m-0">{{ formatPrice(selectedBooking.total_price) }}</p>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-1 text-muted small">Event Date</p>
+              <p class="m-0">{{ selectedBooking.event_date ? formatDate(selectedBooking.event_date) : '-' }}</p>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-1 text-muted small">Event Location</p>
+              <p class="m-0">{{ selectedBooking.event_location || '-' }}</p>
+            </div>
+            <div v-if="selectedBooking.notes" class="col-12">
+              <p class="mb-1 text-muted small">Notes</p>
+              <p class="m-0">{{ selectedBooking.notes }}</p>
+            </div>
+            <div class="col-12">
+              <p class="mb-1 text-muted small">Customer</p>
+              <p class="m-0">{{ selectedBooking.customer?.full_name }} ({{ selectedBooking.customer?.email }})</p>
+            </div>
+            <div class="col-12">
+              <p class="mb-1 text-muted small">Packages</p>
+              <div v-for="bp in selectedBooking.booking_packages" :key="bp.id_booking_package" class="border rounded p-2 mb-2">
+                <div class="d-flex justify-content-between">
+                  <strong>{{ bp.package?.name }}</strong>
+                  <span>{{ formatPrice(bp.package?.price) }}</span>
+                </div>
+                <small class="text-muted">{{ bp.package?.vendor?.business_name }} — {{ bp.package?.duration || '-' }}</small>
+              </div>
+            </div>
+            <div v-if="selectedBooking.orders && selectedBooking.orders.length > 0" class="col-12">
+              <p class="mb-1 text-muted small">Products (Bouquet / Flowers)</p>
+              <div v-for="order in selectedBooking.orders" :key="order.id_order" class="mb-3">
+                <div v-for="item in order.items" :key="item.id_order_item" class="border rounded p-2 mb-2">
+                  <div class="d-flex justify-content-between">
+                    <strong>{{ item.product?.name }} <span class="text-muted">x{{ item.quantity }}</span></strong>
+                    <span>{{ formatPrice(item.price * item.quantity) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between text-muted small">
+                    <span>{{ order.vendor?.business_name }}</span>
+                    <span v-if="item.size_name">Size: {{ item.size_name }}</span>
+                  </div>
+                  <div v-if="item.options && Array.isArray(item.options) && item.options.length > 0" class="text-muted small mt-1">
+                    <span v-for="opt in item.options" :key="opt.groupName" class="me-2">
+                      • {{ opt.groupName }}: {{ opt.valueName }}
+                    </span>
+                  </div>
+                  <div v-if="item.extras && Array.isArray(item.extras) && item.extras.length > 0" class="text-muted small mt-1">
+                    <span v-for="ex in item.extras" :key="ex.id" class="me-2">
+                      + {{ ex.name }} ({{ formatPrice(ex.price) }})
+                    </span>
+                  </div>
+                  <div v-if="item.greeting_message" class="text-muted small mt-1 border-top pt-1">
+                    <strong>Greeting Card [{{ item.greeting_card || 'Default' }}]:</strong> "{{ item.greeting_message }}"
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="col-md-6">
+              <p class="mb-1 text-muted small">Status</p>
+              <span class="badge-status bg-warning text-dark">{{ selectedBooking.status }}</span>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-1 text-muted small">Total Price</p>
+              <p class="fw-bold fs-5 m-0">{{ formatPrice(selectedBooking.total_price) }}</p>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-1 text-muted small">Order Date</p>
+              <p class="m-0">{{ formatDate(selectedBooking.date_created) }}</p>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-1 text-muted small">Vendor</p>
+              <p class="m-0">{{ selectedBooking.vendor?.business_name || '-' }}</p>
+            </div>
+            <div class="col-12" v-if="selectedBooking.delivery_info">
+              <p class="mb-1 text-muted small">Delivery Info</p>
+              <p class="m-0">{{ selectedBooking.delivery_info }}</p>
+            </div>
+            <div class="col-12" v-if="selectedBooking.notes">
+              <p class="mb-1 text-muted small">Notes</p>
+              <p class="m-0">{{ selectedBooking.notes }}</p>
+            </div>
+            <div class="col-12">
+              <p class="mb-1 text-muted small">Items</p>
+              <div v-for="item in selectedBooking.items" :key="item.id_order_item" class="border rounded p-2 mb-2">
+                <div class="d-flex justify-content-between">
+                  <strong>{{ item.product?.name }} <span class="text-muted">x{{ item.quantity }}</span></strong>
+                  <span>{{ formatPrice(item.price * item.quantity) }}</span>
+                </div>
+                <div class="text-muted small">
+                  <span v-if="item.size_name" class="me-2">Size: {{ item.size_name }}</span>
+                  <span v-if="item.variant_name" class="me-2">Variant: {{ item.variant_name }}</span>
+                </div>
+                <div v-if="item.options && Array.isArray(item.options) && item.options.length > 0" class="text-muted small mt-1">
+                  <span v-for="opt in item.options" :key="opt.groupName" class="me-2">
+                    • {{ opt.groupName }}: {{ opt.valueName }}
+                  </span>
+                </div>
+                <div v-if="item.extras && Array.isArray(item.extras) && item.extras.length > 0" class="text-muted small mt-1">
+                  <span v-for="ex in item.extras" :key="ex.id" class="me-2">
+                    + {{ ex.name }} ({{ formatPrice(ex.price) }})
+                  </span>
+                </div>
+                <div v-if="item.greeting_message" class="text-muted small mt-1 border-top pt-1">
+                  <strong>Greeting Card [{{ item.greeting_card || 'Default' }}]:</strong> "{{ item.greeting_message }}"
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </div>

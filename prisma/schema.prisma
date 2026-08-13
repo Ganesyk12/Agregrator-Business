@@ -252,6 +252,7 @@ model Booking {
   payments         BookingPayment[]
   payment_terms    PaymentTerm[]
   review           Review?
+  orders           Order[]
 
   @@index([id_user])
 }
@@ -589,13 +590,16 @@ model Order {
   date_modified  DateTime @updatedAt
   user_created   String?
   user_modified  String?
+  id_booking     Int?
 
   user   User         @relation(fields: [id_user], references: [id_user])
   vendor Vendor       @relation(fields: [id_vendor], references: [id_vendor])
+  booking Booking?    @relation(fields: [id_booking], references: [id_booking])
   items  OrderItem[]
 
   @@index([id_user])
   @@index([id_vendor])
+  @@index([id_booking])
 }
 
 model OrderItem {

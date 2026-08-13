@@ -72,7 +72,6 @@ const createdBooking = ref<any>(null)
 const selectedTermId = ref<number | null>(null)
 const selectedPaymentMethod = ref<string>('Bank Transfer')
 const paymentProofFile = ref<File | null>(null)
-const uploadingProof = ref(false)
 
 const currentPaymentAmount = computed(() => {
   if (!createdBooking.value) return 0
@@ -384,10 +383,36 @@ async function handleProceedToPayment() {
     const packageIds = bookedVendors.value
       .map(v => v.id_package)
       .filter((id): id is number => id !== undefined)
+
+    const productsPayload = bookedVendors.value
+      .filter(v => v.id_product !== undefined)
+      .map(v => {
+        const optionsList = v.rawConfig?.selectedOptions
+          ? Object.entries(v.rawConfig.selectedOptions).map(([g, val]) => ({
+              groupName: g,
+              valueName: val
+            }))
+          : []
+        const extrasList = v.selectedExtras.map(e => ({
+          id: Number(e.id),
+          name: e.name,
+          price: e.price
+        }))
+
+        return {
+          id_product: v.id_product!,
+          quantity: v.quantity || 1,
+          price: v.starting_price,
+          size_name: v.rawConfig?.sizeName || null,
+          options: optionsList,
+          extras: extrasList
+        }
+      })
       
     const payload = {
       id_user: auth.user!.id_user,
       package_ids: packageIds,
+      products: productsPayload,
       event_date: new Date(event.value.date).toISOString(),
       event_location: `${location.value.venue || ''}, ${location.value.address || ''}, ${location.value.city || ''}`,
       total_price: grandTotal.value,

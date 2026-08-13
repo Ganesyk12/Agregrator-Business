@@ -139,12 +139,6 @@ function formatOptions(item: OrderItem) {
   return ''
 }
 
-function formatExtras(item: OrderItem) {
-  if (item.extras?.length) {
-    return item.extras.map((e: any) => e.name).join(', ')
-  }
-  return ''
-}
 
 function itemSubtotal(item: OrderItem) {
   if (typeof item.subtotal === 'number' && item.subtotal) return item.subtotal

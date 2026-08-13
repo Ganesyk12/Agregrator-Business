@@ -32,9 +32,19 @@ export interface Booking {
   }[]
 }
 
+export interface ProductBookingInput {
+  id_product: number
+  quantity: number
+  price: number
+  size_name?: string | null
+  options?: { groupName: string; valueName: string; priceAdjust?: number }[]
+  extras?: { id: number; name: string; price: number }[]
+}
+
 export interface BookingCreateInput {
   id_user: number
   package_ids: number[]
+  products?: ProductBookingInput[]
   event_date: Date
   event_location?: string | null
   total_price: number

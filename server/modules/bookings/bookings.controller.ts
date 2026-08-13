@@ -19,7 +19,7 @@ export async function getAll(req: Request, res: Response, next: NextFunction) {
 
 export async function getMyBookings(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user!.id_user
+    const userId = (req as any).user!.id_user
     const bookings = await bookingService.findByUser(userId)
     res.json({ data: bookings })
   } catch (err) {
@@ -43,7 +43,7 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_user, package_ids, event_date, event_location, total_price, dp_amount, notes } = req.body
+    const { id_user, package_ids, products, event_date, event_location, total_price, dp_amount, notes } = req.body
     if (!id_user || !package_ids?.length || !event_date || total_price === undefined) {
       throw createError(400, 'id_user, package_ids (array), event_date, and total_price are required')
     }
@@ -51,6 +51,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
     const booking = await bookingService.create({
       id_user: Number(id_user),
       package_ids: (package_ids as number[]).map(Number),
+      products: products ? (products as any[]) : undefined,
       event_date: new Date(event_date),
       event_location: event_location || null,
       total_price: Number(total_price),
