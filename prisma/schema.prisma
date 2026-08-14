@@ -793,6 +793,7 @@ model CompanyInfo {
   bank_holder   String?
   footer_text   String?
   logo_url      String?
+  service_fee_percent Float @default(5.0)
   date_created  DateTime @default(now())
   date_modified DateTime @updatedAt
   user_created  String?

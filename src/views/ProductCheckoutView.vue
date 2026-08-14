@@ -19,12 +19,23 @@ const deliveryInfo = ref({
 const submitting = ref(false)
 const orderResult = ref<any>(null)
 const errorMsg = ref('')
+const serviceFeePercent = ref(5) // default 5%, akan di-fetch dari DB
 
 const DELIVERY_FEE = 25000
 
-onMounted(() => {
+onMounted(async () => {
   if (!auth.isLoggedIn) { router.push('/login'); return }
   loadCheckoutItems()
+  // Fetch service fee rate dari CompanyInfo
+  try {
+    const res = await fetch('/api/company-info')
+    if (res.ok) {
+      const json = await res.json()
+      if (typeof json.data?.service_fee_percent === 'number') {
+        serviceFeePercent.value = json.data.service_fee_percent
+      }
+    }
+  } catch { /* gunakan default 5% */ }
 })
 
 function loadCheckoutItems() {
@@ -132,7 +143,7 @@ function loadCartToNormalized(i: any) {
 }
 
 const subtotal = computed(() => totalItems.value.reduce((s: number, i: any) => s + (i.subtotal || i.unitPrice * i.quantity), 0))
-const serviceFee = computed(() => Math.round(subtotal.value * 0.05))
+const serviceFee = computed(() => Math.round(subtotal.value * (serviceFeePercent.value / 100)))
 const grandTotal = computed(() => subtotal.value + serviceFee.value + DELIVERY_FEE)
 
 function formatPrice(val: number) {
@@ -261,7 +272,7 @@ async function submitOrder() {
             <div class="order-total">
               <div class="total-row"><span>Subtotal</span><span>{{ formatPrice(subtotal) }}</span></div>
               <div class="total-row"><span>Delivery Fee</span><span>{{ formatPrice(DELIVERY_FEE) }}</span></div>
-              <div class="total-row"><span>Service Fee (5%)</span><span>{{ formatPrice(serviceFee) }}</span></div>
+              <div class="total-row"><span>Service Fee ({{ serviceFeePercent }}%)</span><span>{{ formatPrice(serviceFee) }}</span></div>
               <div class="total-row grand"><span>Grand Total</span><strong>{{ formatPrice(grandTotal) }}</strong></div>
             </div>
           </div>

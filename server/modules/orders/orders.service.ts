@@ -181,7 +181,12 @@ export async function createOrder(userId: number, vendorId: number, items: ItemI
   }
 
   const deliveryFee = Number(data?.delivery_fee) || 0
-  const serviceFee = Number(data?.service_fee) || 0
+
+  // Ambil service_fee_percent dari CompanyInfo — tidak trust nilai dari client
+  const companyInfo = await prisma.companyInfo.findFirst({ orderBy: { id_company: 'asc' } })
+  const feePercent = companyInfo?.service_fee_percent ?? 5.0
+  const serviceFee = Math.round(totalPrice * (feePercent / 100))
+
   const grandTotal = totalPrice + deliveryFee + serviceFee
 
   const orderNumber = generateOrderNumber()

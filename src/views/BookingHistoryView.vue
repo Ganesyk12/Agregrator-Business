@@ -171,9 +171,9 @@ onMounted(async () => {
 
 <template>
   <div>
-    <Navbar />
-    <SearchPopup />
-    <CartOffcanvas />
+    <Navbar class="no-print" />
+    <SearchPopup class="no-print" />
+    <CartOffcanvas class="no-print" />
 
     <div class="container booking-history-page py-5">
       <h2 class="mb-4 fw-bold">Transaction History</h2>
@@ -226,7 +226,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <Footer />
+    <Footer class="no-print" />
 
     <!-- Detail Modal -->
     <div v-if="selectedBooking && !showPrintPreview" class="modal-overlay" @click.self="closeDetail">
@@ -634,9 +634,66 @@ onMounted(async () => {
   body * { visibility: hidden; }
   .print-preview-page, .print-preview-page * { visibility: visible; }
   .print-preview-page { position: fixed; left: 0; top: 0; width: 100%; padding: 30px 40px; background: #fff; }
-  .print-preview-overlay { background: none; padding: 0; position: static; }
-  .print-preview-container { box-shadow: none; border-radius: 0; max-width: none; }
-  .print-preview-toolbar { display: none !important; }
-  .no-print { display: none !important; }
+  #print-area, #print-area * { visibility: visible !important; }
+  #print-area {
+    position: fixed !important;
+    inset: 0;
+    width: 100%;
+    padding: 30px 40px;
+    background: #fff;
+    z-index: 99999;
+  }
+
+  /* Hide overlay chrome */
+  .print-preview-overlay {
+    background: none !important;
+    padding: 0 !important;
+    position: static !important;
+  }
+  .print-preview-container {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: none !important;
+  }
+  .print-preview-toolbar {
+    display: none !important;
+  }
+}
+</style>
+
+<!-- Global print styles: non-scoped agar Navbar/Footer bisa di-hide saat print -->
+<style>
+@media print {
+  /* Sembunyikan semua elemen app */
+  body * { visibility: hidden !important; }
+
+  /* Tampilkan hanya konten invoice */
+  #print-area,
+  #print-area * { visibility: visible !important; }
+
+  #print-area {
+    position: fixed !important;
+    inset: 0;
+    width: 100%;
+    padding: 30px 40px;
+    background: #fff !important;
+    z-index: 99999;
+  }
+
+  /* Sembunyikan chrome overlay */
+  .print-preview-overlay {
+    background: none !important;
+    padding: 0 !important;
+  }
+  .print-preview-container {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  .print-preview-toolbar,
+  .no-print,
+  nav, header, footer {
+    display: none !important;
+    visibility: hidden !important;
+  }
 }
 </style>
