@@ -34,6 +34,16 @@ function formatPrice(price: number) {
   return 'Rp ' + price.toLocaleString('id-ID')
 }
 
+function goToBooking(pkg: any) {
+  localStorage.setItem('sigyn_booking_config', JSON.stringify({
+    vendorId: pkg.id_vendor,
+    packageId: pkg.id_package,
+    packageName: pkg.name,
+    packagePrice: pkg.price,
+  }))
+  router.push('/booking')
+}
+
 async function removeFavorite(packageId: number) {
   try {
     const res = await auth.authFetch(`/api/favorites/${packageId}`, { method: 'DELETE' })
@@ -100,7 +110,7 @@ onMounted(async () => {
               <p class="package-price">{{ formatPrice(fav.package.price) }}</p>
               <div class="package-actions">
                 <a :href="'/vendor/' + fav.package.vendor?.id_vendor" class="btn-detail">Lihat Detail</a>
-                <a :href="'/booking?vendorId=' + fav.package.id_vendor + '&packageId=' + fav.package.id_package + '&packageName=' + encodeURIComponent(fav.package.name) + '&packagePrice=' + fav.package.price" class="btn-checkout">Checkout</a>
+                <a href="#" class="btn-checkout" @click.prevent="goToBooking(fav.package)">Checkout</a>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Navbar from '@/components/layout/Navbar.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
@@ -8,7 +8,6 @@ import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
 import AddServiceModal from '@/components/booking/AddServiceModal.vue'
 
-const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
@@ -108,12 +107,16 @@ function formatPrice(v: number) {
 }
 
 onMounted(async () => {
-  const vid = route.query.vendorId as string
-  const name = route.query.businessName as string
-  const price = route.query.startingPrice as string
-  const pkgId = route.query.packageId as string
-  const pkgName = route.query.packageName as string
-  const pkgPrice = route.query.packagePrice as string
+  const stored = localStorage.getItem('sigyn_booking_config')
+  const config = stored ? JSON.parse(stored) : null
+  if (config) localStorage.removeItem('sigyn_booking_config')
+
+  const vid = config?.vendorId ? String(config.vendorId) : null
+  const name = config?.businessName as string
+  const price = config?.startingPrice ? String(config.startingPrice) : null
+  const pkgId = config?.packageId ? String(config.packageId) : null
+  const pkgName = config?.packageName as string
+  const pkgPrice = config?.packagePrice ? String(config.packagePrice) : null
 
   if (vid) {
     try {

@@ -47,9 +47,10 @@ function formatDate(d: string) {
 }
 
 function invoiceNumber(p: any) {
+  if (p.booking?.booking_number) return p.booking.booking_number
   const d = p.paid_at || p.date_created
   const year = new Date(d).getFullYear()
-  return `INV-${year}-${String(p.id_payment).padStart(4, '0')}`
+  return `INV-${year}-${String(p.id_booking_payment).padStart(4, '0')}`
 }
 
 interface ServiceItem {

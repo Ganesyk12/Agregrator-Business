@@ -267,9 +267,9 @@ function save() {
                       </td>
                       <td>
                         <span v-if="term.payments?.length">
-                          <span v-for="(p, pi) in term.payments" :key="p.id_payment">
+                          <span v-for="(p, pi) in term.payments" :key="p.id_booking_payment">
                             <span v-if="Number(pi) > 0">, </span>
-                            #{{ p.id_payment }} ({{ p.status }})
+                            #{{ p.id_booking_payment }} ({{ p.status }})
                           </span>
                         </span>
                         <span v-else class="text-muted">-</span>

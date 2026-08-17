@@ -37,10 +37,15 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-function invoiceNumber(p: any) {
+function invoiceNumber(p: any, bookingNumber?: string) {
+  if (bookingNumber) return bookingNumber
   const d = p.paid_at || p.date_created
   const year = new Date(d).getFullYear()
-  return `INV-${year}-${String(p.id_payment).padStart(4, '0')}`
+  return `INV-${year}-${String(p.id_booking_payment).padStart(4, '0')}`
+}
+
+function orderInvoiceNumber(order: any) {
+  return order.order_number || `INV-${new Date(order.date_created).getFullYear()}-${String(order.id_order).padStart(4, '0')}`
 }
 
 function latestPayment(booking: any) {
@@ -64,7 +69,7 @@ const historyList = computed(() => {
       isBooking: false,
       keyId: `order-${o.id_order}`,
       date: o.date_created,
-      displayId: `#${o.order_number || o.id_order}`,
+      displayId: o.order_number || `#${o.id_order}`,
       typeLabel: 'Order Produk',
     }))
     
@@ -192,7 +197,7 @@ onMounted(async () => {
           <thead class="table-light">
             <tr>
               <th>Type</th>
-              <th>Transaction #</th>
+              <th>Transaction</th>
               <th>Status</th>
               <th>Date</th>
               <th>Total</th>
@@ -219,6 +224,7 @@ onMounted(async () => {
               <td class="text-end">
                 <button class="btn btn-sm btn-outline-dark me-1" @click="openDetail(item)">Detail</button>
                 <button v-if="item.isBooking && latestPayment(item)" class="btn btn-sm btn-dark" @click="openPrintPreview(item)">Print Invoice</button>
+                <button v-if="!item.isBooking" class="btn btn-sm btn-dark" @click="openPrintPreview(item)">Print Invoice</button>
               </td>
             </tr>
           </tbody>
@@ -370,8 +376,8 @@ onMounted(async () => {
               <p>Platform Vendor Management</p>
             </div>
             <div class="print-header-right">
-              <h1>{{ invoiceNumber(latestPayment(selectedBooking)) }}</h1>
-              <p>Date: {{ formatDate(latestPayment(selectedBooking).paid_at || latestPayment(selectedBooking).date_created) }}</p>
+              <h1>{{ selectedBooking.isBooking ? invoiceNumber(latestPayment(selectedBooking), selectedBooking.booking_number) : orderInvoiceNumber(selectedBooking) }}</h1>
+              <p>Date: {{ selectedBooking.isBooking ? formatDate(latestPayment(selectedBooking).paid_at || latestPayment(selectedBooking).date_created) : formatDate(selectedBooking.date_created) }}</p>
             </div>
           </div>
 
@@ -380,7 +386,8 @@ onMounted(async () => {
           <div class="print-info-row">
             <div class="print-info-block">
               <strong>Bill To:</strong>
-              <p>{{ selectedBooking.customer?.full_name || '-' }}<br>{{ selectedBooking.customer?.email || '-' }}</p>
+              <p v-if="selectedBooking.isBooking">{{ selectedBooking.customer?.full_name || '-' }}<br>{{ selectedBooking.customer?.email || '-' }}</p>
+              <p v-else>{{ selectedBooking.recipient_name || '-' }}<br>{{ selectedBooking.recipient_phone || '-' }}<br v-if="selectedBooking.recipient_phone">{{ selectedBooking.delivery_address || '' }}</p>
             </div>
             <div class="print-info-block">
               <strong>From:</strong>
@@ -388,8 +395,9 @@ onMounted(async () => {
             </div>
             <div class="print-info-block print-info-right">
               <p><strong>Status:</strong> {{ selectedBooking.status?.toUpperCase() }}</p>
-              <p><strong>Payment Type:</strong> {{ latestPayment(selectedBooking)?.payment_type?.toUpperCase() || '-' }}</p>
-              <p><strong>Event:</strong> {{ selectedBooking.event_date ? formatDate(selectedBooking.event_date) : '-' }}</p>
+              <p v-if="selectedBooking.isBooking"><strong>Payment Type:</strong> {{ latestPayment(selectedBooking)?.payment_type?.toUpperCase() || '-' }}</p>
+              <p v-if="selectedBooking.isBooking"><strong>Event:</strong> {{ selectedBooking.event_date ? formatDate(selectedBooking.event_date) : '-' }}</p>
+              <p v-else><strong>Vendor:</strong> {{ selectedBooking.vendor?.business_name || '-' }}</p>
             </div>
           </div>
 
@@ -416,8 +424,9 @@ onMounted(async () => {
             </tbody>
           </table>
 
-          <p v-if="selectedBooking.event_location" class="print-location"><strong>Location:</strong> {{ selectedBooking.event_location }}</p>
+          <p v-if="selectedBooking.isBooking && selectedBooking.event_location" class="print-location"><strong>Location:</strong> {{ selectedBooking.event_location }}</p>
           <p v-if="selectedBooking.notes" class="print-location"><strong>Notes:</strong> {{ selectedBooking.notes }}</p>
+          <p v-if="!selectedBooking.isBooking && selectedBooking.delivery_address" class="print-location"><strong>Delivery:</strong> {{ selectedBooking.delivery_address }}{{ selectedBooking.delivery_city ? ', ' + selectedBooking.delivery_city : '' }}</p>
 
           <div class="print-totals-row">
             <div class="print-stamp-wrap">
@@ -436,7 +445,7 @@ onMounted(async () => {
                   <text x="100" y="90" font-size="22" font-weight="bold" fill="#c0392b" text-anchor="middle" letter-spacing="3">INVOICE</text>
                   <text x="100" y="112" font-size="10" font-weight="bold" fill="#c0392b" text-anchor="middle" letter-spacing="1.5">PAID</text>
                   <text font-size="14" font-weight="900" fill="#c0392b" letter-spacing="2" text-anchor="middle">
-                    <textPath href="#stamp-arc-bottom" startOffset="50%">{{ latestPayment(selectedBooking).paid_at ? formatDate(latestPayment(selectedBooking).paid_at) : formatDate(latestPayment(selectedBooking).date_created) }}</textPath>
+                    <textPath href="#stamp-arc-bottom" startOffset="50%">{{ selectedBooking.isBooking ? (latestPayment(selectedBooking).paid_at ? formatDate(latestPayment(selectedBooking).paid_at) : formatDate(latestPayment(selectedBooking).date_created)) : formatDate(selectedBooking.date_created) }}</textPath>
                   </text>
                   <line x1="31" y1="100" x2="169" y2="100" stroke="#c0392b" stroke-width="1" />
                 </svg>
@@ -444,7 +453,7 @@ onMounted(async () => {
             </div>
             <div class="print-totals">
               <table>
-                <tbody>
+                <tbody v-if="selectedBooking.isBooking">
                   <tr>
                     <th>Total Harga Paket:</th>
                     <td>{{ formatPrice(selectedBooking.total_price) }}</td>
@@ -456,6 +465,20 @@ onMounted(async () => {
                   <tr>
                     <th>Sisa Pembayaran:</th>
                     <td>{{ formatPrice(selectedBooking.total_price - (latestPayment(selectedBooking)?.amount || 0)) }}</td>
+                  </tr>
+                </tbody>
+                <tbody v-else>
+                  <tr v-if="selectedBooking.delivery_fee">
+                    <th>Delivery Fee:</th>
+                    <td>{{ formatPrice(selectedBooking.delivery_fee) }}</td>
+                  </tr>
+                  <tr v-if="selectedBooking.service_fee">
+                    <th>Service Fee:</th>
+                    <td>{{ formatPrice(selectedBooking.service_fee) }}</td>
+                  </tr>
+                  <tr>
+                    <th>Total:</th>
+                    <td>{{ formatPrice(selectedBooking.total_price) }}</td>
                   </tr>
                 </tbody>
               </table>

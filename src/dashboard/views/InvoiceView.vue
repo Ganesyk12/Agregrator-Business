@@ -6,7 +6,7 @@ const router = useRouter()
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 interface Invoice {
-  id_payment: number
+  id_booking_payment: number
   id_booking: number
   amount: number
   payment_type: string
@@ -15,6 +15,7 @@ interface Invoice {
   date_created: string
   payment_term?: { id_term: number; term_name: string; term_order: number }
   booking?: {
+    booking_number?: string | null
     total_price: number
     customer?: { full_name: string }
     booking_packages?: { package: { name: string; vendor: { business_name: string } } }[]
@@ -42,9 +43,10 @@ async function fetchData() {
 onMounted(fetchData)
 
 function invoiceNumber(p: Invoice) {
+  if (p.booking?.booking_number) return p.booking.booking_number
   const d = p.paid_at || p.date_created
   const year = new Date(d).getFullYear()
-  return `INV-${year}-${String(p.id_payment).padStart(4, '0')}`
+  return `INV-${year}-${String(p.id_booking_payment).padStart(4, '0')}`
 }
 
 function formatCurrency(v: number) {
@@ -91,7 +93,7 @@ const filtered = computed(() => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in filtered" :key="p.id_payment">
+            <tr v-for="p in filtered" :key="p.id_booking_payment">
               <td>{{ invoiceNumber(p) }}</td>
               <td>{{ formatDate(p.paid_at || p.date_created) }}</td>
               <td>{{ p.booking?.customer?.full_name || '-' }}</td>
@@ -101,7 +103,7 @@ const filtered = computed(() => {
               <td>{{ p.payment_term?.term_name || '-' }}</td>
               <td>{{ formatCurrency(p.amount) }}</td>
               <td><span :class="'label '+(p.status==='paid'||p.status==='released'?'label-success':'label-warning')" style="text-transform:uppercase;">{{ p.status }}</span></td>
-              <td><button class="btn btn-success btn-sm" @click="router.push('/invoices/'+p.id_payment)"><i class="fa fa-file-text-o"></i> View</button></td>
+              <td><button class="btn btn-success btn-sm" @click="router.push('/invoices/'+p.id_booking_payment)"><i class="fa fa-file-text-o"></i> View</button></td>
             </tr>
             <tr v-if="filtered.length===0"><td colspan="10" style="text-align:center;">No invoices found.</td></tr>
           </tbody>

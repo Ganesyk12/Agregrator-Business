@@ -14,6 +14,8 @@ interface CompanyInfo {
   bank_holder: string | null
   footer_text: string | null
   logo_url: string | null
+  service_fee_percent: number
+  delivery_fee: number
 }
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -32,6 +34,8 @@ const form = ref<CompanyInfo>({
   bank_holder: null,
   footer_text: null,
   logo_url: null,
+  service_fee_percent: 5,
+  delivery_fee: 25000,
 })
 
 const Toast = Swal.mixin({
@@ -162,7 +166,25 @@ onMounted(fetchInfo)
         </div>
 
         <div class="row" style="margin-top:20px;">
-          <div class="col-md-12">
+          <div class="col-md-6">
+            <h4 style="border-bottom:1px solid #ddd;padding-bottom:8px;margin-bottom:16px;">Fees</h4>
+
+            <div class="form-group">
+              <label class="control-label col-md-4">Service Fee (%)</label>
+              <div class="col-md-8">
+                <input v-model.number="form.service_fee_percent" class="form-control" type="number" min="0" step="0.5" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-md-4">Delivery Fee (Rp)</label>
+              <div class="col-md-8">
+                <input v-model.number="form.delivery_fee" class="form-control" type="number" min="0" step="1000" />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
             <h4 style="border-bottom:1px solid #ddd;padding-bottom:8px;margin-bottom:16px;">Footer</h4>
 
             <div class="form-group">

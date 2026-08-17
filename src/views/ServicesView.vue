@@ -46,6 +46,16 @@ function formatPrice(price: number) {
   return 'Rp ' + price.toLocaleString('id-ID')
 }
 
+function goToBooking(pkg: any) {
+  localStorage.setItem('sigyn_booking_config', JSON.stringify({
+    vendorId: pkg.id_vendor,
+    packageId: pkg.id_package,
+    packageName: pkg.name,
+    packagePrice: pkg.price,
+  }))
+  router.push('/booking')
+}
+
 async function fetchFavorites() {
   if (!auth.isLoggedIn) return
   try {
@@ -182,7 +192,7 @@ onMounted(async () => {
               <p class="package-price">{{ formatPrice(pkg.price) }}</p>
               <div class="package-actions">
                 <a :href="'/vendor/' + pkg.id_vendor" class="btn-detail">Lihat Detail</a>
-                <a :href="'/booking?vendorId=' + pkg.id_vendor + '&packageId=' + pkg.id_package + '&packageName=' + encodeURIComponent(pkg.name) + '&packagePrice=' + pkg.price" class="btn-checkout">Checkout</a>
+                <a href="#" class="btn-checkout" @click.prevent="goToBooking(pkg)">Checkout</a>
               </div>
             </div>
           </div>

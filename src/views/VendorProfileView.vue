@@ -85,13 +85,13 @@ function formatPrice(value: number) {
 
 function handleBookPackage(pkg: any) {
   if (!vendor.value) return
-  const query = new URLSearchParams({
-    vendorId: String(vendor.value.id_vendor),
-    packageId: String(pkg.id_package),
+  localStorage.setItem('sigyn_booking_config', JSON.stringify({
+    vendorId: vendor.value.id_vendor,
+    packageId: pkg.id_package,
     packageName: pkg.name,
-    packagePrice: String(pkg.price),
-  })
-  router.push(`/booking?${query.toString()}`)
+    packagePrice: pkg.price,
+  }))
+  router.push('/booking')
 }
 
 function goToProduct(id: number) {

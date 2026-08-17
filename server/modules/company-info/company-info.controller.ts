@@ -15,6 +15,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     const allowedFields = [
       'company_name', 'address', 'phone', 'email', 'website',
       'bank_name', 'bank_account', 'bank_holder', 'footer_text', 'logo_url',
+      'service_fee_percent', 'delivery_fee',
     ]
     const data: Record<string, any> = {}
     for (const field of allowedFields) {

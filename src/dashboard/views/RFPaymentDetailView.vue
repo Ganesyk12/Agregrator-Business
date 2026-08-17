@@ -368,7 +368,7 @@ onMounted(fetchData)
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(p, i) in payments" :key="p.id_payment || i">
+              <tr v-for="(p, i) in payments" :key="p.id_rfp_payment || i">
                 <td>{{ i + 1 }}</td>
                 <td><strong>{{ formatCurrency(p.amount) }}</strong></td>
                 <td>{{ p.source_bank || '-' }}</td>

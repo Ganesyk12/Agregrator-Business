@@ -7,7 +7,7 @@ import PaymentModal, { type PaymentForm } from '../components/PaymentModal.vue'
 const router = useRouter()
 
 interface Payment {
-  id_payment: number
+  id_booking_payment: number
   id_booking: number
   amount: number
   payment_type: string
@@ -119,7 +119,7 @@ async function handleSave(data: PaymentForm) {
     }
   } else if (modalMode.value === 'edit' && selectedPayment.value) {
     try {
-      const res = await fetch(`${apiUrl}/api/payments/${selectedPayment.value.id_payment}`, {
+      const res = await fetch(`${apiUrl}/api/payments/${selectedPayment.value.id_booking_payment}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -289,7 +289,7 @@ function formatCurrency(value: number) {
             <tr>
               <th
                 v-for="col in ([
-                  { key: 'id_payment', label: 'ID' },
+                  { key: 'id_booking_payment', label: 'ID' },
                   { key: 'customer_name', label: 'Customer' },
                   { key: 'vendor_name', label: 'Vendor' },
                   { key: 'package_name', label: 'Package' },
@@ -314,8 +314,8 @@ function formatCurrency(value: number) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in paginated" :key="p.id_payment">
-              <td>{{ p.id_payment }}</td>
+            <tr v-for="p in paginated" :key="p.id_booking_payment">
+              <td>{{ p.id_booking_payment }}</td>
               <td>{{ p.booking?.customer?.full_name || '-' }}</td>
               <td>{{ p.booking?.booking_packages?.map(bp => bp.package.vendor?.business_name).join(', ') || '-' }}</td>
               <td>{{ p.booking?.booking_packages?.map(bp => bp.package.name).join(', ') || '-' }}</td>
@@ -345,8 +345,8 @@ function formatCurrency(value: number) {
               <td style="white-space: nowrap;">
                 <button class="btn btn-primary" @click="openDetail(p)"><i class="fa fa-eye"></i></button>
                 <button class="btn btn-info" @click="openEdit(p)"><i class="fa fa-pencil"></i></button>
-                <button class="btn btn-success" @click="router.push('/invoices/' + p.id_payment)"><i class="fa fa-file-text-o"></i></button>
-                <button class="btn btn-danger" @click="handleDelete(p.id_payment)"><i class="fa fa-trash"></i></button>
+                <button class="btn btn-success" @click="router.push('/invoices/' + p.id_booking_payment)"><i class="fa fa-file-text-o"></i></button>
+                <button class="btn btn-danger" @click="handleDelete(p.id_booking_payment)"><i class="fa fa-trash"></i></button>
               </td>
             </tr>
             <tr v-if="paginated.length === 0">

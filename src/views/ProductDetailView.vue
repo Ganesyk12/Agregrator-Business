@@ -218,13 +218,7 @@ async function addToCart() {
 function buyNow() {
   if (!auth.isLoggedIn) { router.push('/login'); return }
   localStorage.setItem('sigyn_checkout_config', JSON.stringify(buildConfig()))
-  const params = new URLSearchParams({
-    productId: String(product.value.id_product),
-    quantity: String(quantity.value),
-    variantId: selectedVariant.value ? String(selectedVariant.value) : '',
-    addonIds: Array.from(selectedAddons.value).join(','),
-  })
-  router.push(`/checkout/product?${params.toString()}`)
+  router.push('/checkout/product')
 }
 </script>
 

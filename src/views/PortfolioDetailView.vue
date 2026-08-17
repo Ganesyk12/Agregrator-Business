@@ -67,12 +67,12 @@ async function fetchPortfolio() {
 function handleBookNow() {
   if (!portfolio.value?.vendor) return
   const vendor = portfolio.value.vendor
-  const query = new URLSearchParams({
-    vendorId: String(vendor.id_vendor),
+  localStorage.setItem('sigyn_booking_config', JSON.stringify({
+    vendorId: vendor.id_vendor,
     businessName: vendor.business_name,
-    startingPrice: String(startingPrice.value),
-  })
-  router.push(`/booking?${query.toString()}`)
+    startingPrice: startingPrice.value,
+  }))
+  router.push('/booking')
 }
 
 async function handleSavePortfolio() {

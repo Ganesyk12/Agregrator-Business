@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 
-const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
@@ -20,13 +19,11 @@ const submitting = ref(false)
 const orderResult = ref<any>(null)
 const errorMsg = ref('')
 const serviceFeePercent = ref(5) // default 5%, akan di-fetch dari DB
-
-const DELIVERY_FEE = 25000
+const DELIVERY_FEE = ref(25000) // default, akan di-fetch dari DB
 
 onMounted(async () => {
   if (!auth.isLoggedIn) { router.push('/login'); return }
   loadCheckoutItems()
-  // Fetch service fee rate dari CompanyInfo
   try {
     const res = await fetch('/api/company-info')
     if (res.ok) {
@@ -34,8 +31,11 @@ onMounted(async () => {
       if (typeof json.data?.service_fee_percent === 'number') {
         serviceFeePercent.value = json.data.service_fee_percent
       }
+      if (typeof json.data?.delivery_fee === 'number') {
+        DELIVERY_FEE.value = json.data.delivery_fee
+      }
     }
-  } catch { /* gunakan default 5% */ }
+  } catch { /* gunakan default */ }
 })
 
 function loadCheckoutItems() {
@@ -74,18 +74,6 @@ function loadCheckoutItems() {
     return
   }
 
-  const productId = route.query.productId
-  if (productId) {
-    checkoutItems.value = [{
-      id_product: Number(productId),
-      id_variant: route.query.variantId ? Number(route.query.variantId) : null,
-      addon_ids: route.query.addonIds || '',
-      quantity: Number(route.query.quantity || 1),
-      product: null,
-      unit_price: 0,
-    }]
-    fetchProduct(Number(productId))
-  }
 }
 
 function loadCartToConfig(i: any) {
@@ -144,7 +132,7 @@ function loadCartToNormalized(i: any) {
 
 const subtotal = computed(() => totalItems.value.reduce((s: number, i: any) => s + (i.subtotal || i.unitPrice * i.quantity), 0))
 const serviceFee = computed(() => Math.round(subtotal.value * (serviceFeePercent.value / 100)))
-const grandTotal = computed(() => subtotal.value + serviceFee.value + DELIVERY_FEE)
+const grandTotal = computed(() => subtotal.value + serviceFee.value + DELIVERY_FEE.value)
 
 function formatPrice(val: number) {
   return 'Rp ' + val.toLocaleString('id-ID')
@@ -196,7 +184,7 @@ async function submitOrder() {
         delivery_notes: deliveryInfo.value.notes,
         delivery_date: deliveryInfo.value.deliveryDate ? new Date(deliveryInfo.value.deliveryDate).toISOString() : null,
         delivery_time: deliveryInfo.value.deliveryTime,
-        delivery_fee: DELIVERY_FEE,
+        delivery_fee: DELIVERY_FEE.value,
         service_fee: serviceFee.value,
         grand_total: grandTotal.value,
         delivery_info: `${deliveryInfo.value.name}, ${deliveryInfo.value.phone}, ${deliveryInfo.value.address}, ${deliveryInfo.value.city}`,
@@ -235,7 +223,10 @@ async function submitOrder() {
           <p>Order Number: <strong>#{{ orderResult.order_number || orderResult.id_order }}</strong></p>
           <p>Status: <span class="badge bg-warning text-dark">{{ orderResult.status }}</span></p>
           <p>Total: <strong>{{ formatPrice(orderResult.total_price) }}</strong></p>
-          <router-link to="/" class="btn btn-dark mt-3">Back to Home</router-link>
+          <div class="mt-3 d-flex justify-content-center gap-2">
+            <router-link to="/" class="btn btn-dark">Home</router-link>
+            <router-link to="/booking-history" class="btn btn-outline-dark">Booking History</router-link>
+          </div>
         </div>
 
         <div v-else class="checkout-content">
