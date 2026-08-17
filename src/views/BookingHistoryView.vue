@@ -128,6 +128,18 @@ const services = computed<any[]>(() => {
   return [...packageItems, ...productItems]
 })
 
+const bookingSubtotal = computed(() => {
+  const b = selectedBooking.value
+  if (!b || !b.isBooking) return 0
+  return services.value.reduce((sum, s) => sum + (s.price || 0), 0)
+})
+
+const bookingServiceFee = computed(() => {
+  const b = selectedBooking.value
+  if (!b || !b.isBooking) return 0
+  return Math.round(bookingSubtotal.value * 0.05)
+})
+
 function openDetail(b: any) {
   selectedBooking.value = b
 }
@@ -223,8 +235,8 @@ onMounted(async () => {
               <td class="fw-semibold">{{ formatPrice(item.total_price) }}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-outline-dark me-1" @click="openDetail(item)">Detail</button>
-                <button v-if="item.isBooking && latestPayment(item)" class="btn btn-sm btn-dark" @click="openPrintPreview(item)">Print Invoice</button>
-                <button v-if="!item.isBooking" class="btn btn-sm btn-dark" @click="openPrintPreview(item)">Print Invoice</button>
+                <button v-if="item.isBooking && latestPayment(item)" class="btn btn-sm btn-dark" @click="openPrintPreview(item)">Print Receipt</button>
+                <button v-if="!item.isBooking" class="btn btn-sm btn-dark" @click="openPrintPreview(item)">Print Receipt</button>
               </td>
             </tr>
           </tbody>
@@ -442,7 +454,7 @@ onMounted(async () => {
                   <text font-size="14" font-weight="900" fill="#c0392b" letter-spacing="2" text-anchor="middle">
                     <textPath href="#stamp-arc" startOffset="50%">{{ companyInfo?.company_name || 'Agregrator Business' }}</textPath>
                   </text>
-                  <text x="100" y="90" font-size="22" font-weight="bold" fill="#c0392b" text-anchor="middle" letter-spacing="3">INVOICE</text>
+                  <text x="100" y="90" font-size="22" font-weight="bold" fill="#c0392b" text-anchor="middle" letter-spacing="3">RECEIPT</text>
                   <text x="100" y="112" font-size="10" font-weight="bold" fill="#c0392b" text-anchor="middle" letter-spacing="1.5">PAID</text>
                   <text font-size="14" font-weight="900" fill="#c0392b" letter-spacing="2" text-anchor="middle">
                     <textPath href="#stamp-arc-bottom" startOffset="50%">{{ selectedBooking.isBooking ? (latestPayment(selectedBooking).paid_at ? formatDate(latestPayment(selectedBooking).paid_at) : formatDate(latestPayment(selectedBooking).date_created)) : formatDate(selectedBooking.date_created) }}</textPath>
@@ -455,16 +467,16 @@ onMounted(async () => {
               <table>
                 <tbody v-if="selectedBooking.isBooking">
                   <tr>
-                    <th>Total Harga Paket:</th>
+                    <th>Subtotal:</th>
+                    <td>{{ formatPrice(bookingSubtotal) }}</td>
+                  </tr>
+                  <tr>
+                    <th>Service Fee (5%):</th>
+                    <td>{{ formatPrice(bookingServiceFee) }}</td>
+                  </tr>
+                  <tr>
+                    <th>Total:</th>
                     <td>{{ formatPrice(selectedBooking.total_price) }}</td>
-                  </tr>
-                  <tr>
-                    <th>Dibayar:</th>
-                    <td>{{ formatPrice(latestPayment(selectedBooking)?.amount || 0) }}</td>
-                  </tr>
-                  <tr>
-                    <th>Sisa Pembayaran:</th>
-                    <td>{{ formatPrice(selectedBooking.total_price - (latestPayment(selectedBooking)?.amount || 0)) }}</td>
                   </tr>
                 </tbody>
                 <tbody v-else>
@@ -690,7 +702,7 @@ onMounted(async () => {
   /* Sembunyikan semua elemen app */
   body * { visibility: hidden !important; }
 
-  /* Tampilkan hanya konten invoice */
+  /* Tampilkan hanya konten receipt */
   #print-area,
   #print-area * { visibility: visible !important; }
 

@@ -419,7 +419,7 @@ async function handleProceedToPayment() {
       event_date: new Date(event.value.date).toISOString(),
       event_location: `${location.value.venue || ''}, ${location.value.address || ''}, ${location.value.city || ''}`,
       total_price: grandTotal.value,
-      dp_amount: Math.round(grandTotal.value * 0.3), // 30% Down Payment
+      dp_amount: 0, // No Down Payment (Pay in Full)
       notes: specialRequests.value || null
     }
 
