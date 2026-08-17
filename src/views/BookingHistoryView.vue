@@ -15,6 +15,11 @@ const loading = ref(true)
 const selectedBooking = ref<any>(null)
 const companyInfo = ref<any>(null)
 const showPrintPreview = ref(false)
+const showPaymentModal = ref(false)
+const paymentBooking = ref<any>(null)
+const payMethod = ref('Bank Transfer')
+const paymentFile = ref<File | null>(null)
+const submittingPayment = ref(false)
 
 const statusLabels: Record<string, string> = {
   pending: 'Pending',
@@ -163,6 +168,93 @@ function printInvoice() {
   window.print()
 }
 
+function openPaymentModal(booking: any) {
+  paymentBooking.value = booking
+  showPaymentModal.value = true
+  payMethod.value = 'Bank Transfer'
+  paymentFile.value = null
+}
+
+function closePaymentModal() {
+  showPaymentModal.value = false
+  paymentBooking.value = null
+  paymentFile.value = null
+}
+
+function onPaymentFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files?.length) {
+    paymentFile.value = target.files[0]
+  }
+}
+
+async function submitPayment() {
+  if (!paymentBooking.value) return
+  try {
+    submittingPayment.value = true
+    let proofUrl = ''
+
+    if (payMethod.value === 'Bank Transfer' && paymentFile.value) {
+      const formData = new FormData()
+      formData.append('file', paymentFile.value)
+      
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+      if (uploadRes.ok) {
+        const uploadJson = await uploadRes.json()
+        proofUrl = uploadJson.url
+      } else {
+        const uploadErr = await uploadRes.json()
+        alert('Failed to upload proof: ' + (uploadErr.error?.message || uploadRes.statusText))
+        return
+      }
+    }
+
+    // Get active term or fallback
+    const firstTerm = paymentBooking.value.payment_terms?.length ? paymentBooking.value.payment_terms[0] : null
+    const termId = firstTerm?.id_term
+
+    const payload = {
+      id_booking: paymentBooking.value.id_booking,
+      id_term: termId || undefined,
+      amount: paymentBooking.value.total_price,
+      payment_type: payMethod.value,
+      payment_proof_url: proofUrl || null,
+      status: payMethod.value === 'Bank Transfer' ? 'pending' : 'paid',
+      paid_at: payMethod.value === 'Bank Transfer' ? null : new Date().toISOString()
+    }
+
+    const res = await auth.authFetch('/api/payments', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+
+    if (res.ok) {
+      alert('Payment confirmed successfully. Waiting for admin approval.')
+      // reload
+      const [bookRes, orderRes] = await Promise.all([
+        auth.authFetch('/api/bookings/user/me'),
+        auth.authFetch('/api/orders')
+      ])
+      const bookJson = await bookRes.json()
+      if (bookRes.ok) bookings.value = bookJson.data || []
+      const orderJson = await orderRes.json()
+      if (orderRes.ok) orders.value = orderJson.data || []
+      closePaymentModal()
+    } else {
+      const err = await res.json()
+      alert('Failed to record payment: ' + (err.error?.message || res.statusText))
+    }
+  } catch (error) {
+    console.error(error)
+    alert('Error submitting payment.')
+  } finally {
+    submittingPayment.value = false
+  }
+}
+
 onMounted(async () => {
   if (!auth.isLoggedIn) {
     router.push('/login')
@@ -235,6 +327,7 @@ onMounted(async () => {
               <td class="fw-semibold">{{ formatPrice(item.total_price) }}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-outline-dark me-1" @click="openDetail(item)">Detail</button>
+                <button v-if="item.isBooking && item.status === 'pending' && !latestPayment(item)" class="btn btn-sm btn-primary me-1" @click="openPaymentModal(item)">Pay Now</button>
                 <button v-if="item.isBooking && latestPayment(item)" class="btn btn-sm btn-dark" @click="openPrintPreview(item)">Print Receipt</button>
                 <button v-if="!item.isBooking" class="btn btn-sm btn-dark" @click="openPrintPreview(item)">Print Receipt</button>
               </td>
@@ -245,6 +338,59 @@ onMounted(async () => {
     </div>
 
     <Footer class="no-print" />
+
+    <!-- Payment Modal -->
+    <div v-if="showPaymentModal && paymentBooking" class="modal-overlay" @click.self="closePaymentModal">
+      <div class="modal-detail" style="max-width: 500px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold m-0">Confirm Payment</h4>
+          <button class="btn-close-modal" @click="closePaymentModal">&times;</button>
+        </div>
+        
+        <div class="mb-4 text-center">
+          <p class="text-muted mb-1">Amount to Pay</p>
+          <h3 class="fw-bold text-dark">{{ formatPrice(paymentBooking.total_price) }}</h3>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Payment Method</label>
+          <div class="d-flex gap-3">
+            <label class="d-flex align-items-center gap-2">
+              <input type="radio" v-model="payMethod" value="Bank Transfer" />
+              <span>Bank Transfer</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Bank Info Box -->
+        <div v-if="payMethod === 'Bank Transfer'" class="alert alert-light border mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted text-start">Bank Name:</span>
+            <strong class="text-end">{{ companyInfo?.bank_name || 'BCA' }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted text-start">Account Number:</span>
+            <strong class="text-end">{{ companyInfo?.bank_account || '1234567890' }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted text-start">Account Holder:</span>
+            <strong class="text-end">{{ companyInfo?.bank_holder || 'Agregrator Business' }}</strong>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Upload Proof of Payment <span class="text-danger">*</span></label>
+          <input type="file" class="form-control" @change="onPaymentFileChange" accept="image/*" />
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <button class="btn btn-outline-dark w-100" @click="closePaymentModal" :disabled="submittingPayment">Cancel</button>
+          <button class="btn btn-dark w-100" @click="submitPayment" :disabled="submittingPayment || !paymentFile">
+            {{ submittingPayment ? 'Submitting...' : 'Confirm Payment' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Detail Modal -->
     <div v-if="selectedBooking && !showPrintPreview" class="modal-overlay" @click.self="closeDetail">

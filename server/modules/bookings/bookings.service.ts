@@ -46,7 +46,28 @@ const include = {
   },
 } as const
 
+async function autoCancelExpiredBookings() {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+  try {
+    await prisma.booking.updateMany({
+      where: {
+        status: 'pending',
+        date_created: { lt: oneHourAgo },
+        payments: {
+          none: {}
+        }
+      },
+      data: {
+        status: 'cancelled'
+      }
+    })
+  } catch (err) {
+    console.error('Failed to auto cancel expired bookings:', err)
+  }
+}
+
 export async function findAll(): Promise<Booking[]> {
+  await autoCancelExpiredBookings()
   return prisma.booking.findMany({
     where: { status: { not: 'deleted' } },
     include,
@@ -55,6 +76,7 @@ export async function findAll(): Promise<Booking[]> {
 }
 
 export async function findById(id: number): Promise<Booking | null> {
+  await autoCancelExpiredBookings()
   return prisma.booking.findFirst({
     where: { id_booking: id, status: { not: 'deleted' } },
     include,
@@ -62,6 +84,7 @@ export async function findById(id: number): Promise<Booking | null> {
 }
 
 export async function findByUser(userId: number): Promise<Booking[]> {
+  await autoCancelExpiredBookings()
   return prisma.booking.findMany({
     where: { id_user: userId, status: { not: 'deleted' } },
     include,
@@ -70,6 +93,7 @@ export async function findByUser(userId: number): Promise<Booking[]> {
 }
 
 export async function findByVendor(vendorId: number): Promise<Booking[]> {
+  await autoCancelExpiredBookings()
   return prisma.booking.findMany({
     where: {
       status: { not: 'deleted' },

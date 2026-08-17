@@ -59,6 +59,13 @@ interface PackageItem {
 const eventTypes = ['Wedding', 'Pre Wedding', 'Graduation', 'Birthday', 'Family', 'Corporate', 'Engagement', 'Product Photoshoot', 'Others']
 
 const customer = ref({ fullName: '', phone: '', email: '' })
+const errors = ref({
+  fullName: '',
+  phone: '',
+  email: '',
+  eventType: '',
+  eventDate: '',
+})
 const event = ref({ type: '', name: '', date: '', startTime: '', endTime: '' })
 const location = ref({ venue: '', address: '', city: '', type: '' })
 const specialRequests = ref('')
@@ -107,6 +114,10 @@ function formatPrice(v: number) {
 }
 
 onMounted(async () => {
+  if (auth.user) {
+    customer.value.fullName = auth.user.full_name || ''
+    customer.value.email = auth.user.email || ''
+  }
   const stored = localStorage.getItem('sigyn_booking_config')
   const config = stored ? JSON.parse(stored) : null
   if (config) localStorage.removeItem('sigyn_booking_config')
@@ -380,6 +391,45 @@ async function handleProceedToPayment() {
     return
   }
 
+  errors.value = {
+    fullName: '',
+    phone: '',
+    email: '',
+    eventType: '',
+    eventDate: '',
+  }
+
+  let hasError = false
+
+  if (!customer.value.fullName || !customer.value.fullName.trim()) {
+    errors.value.fullName = 'Full Name is required.'
+    hasError = true
+  }
+  if (!customer.value.phone || !customer.value.phone.trim()) {
+    errors.value.phone = 'Phone Number is required.'
+    hasError = true
+  }
+  if (!customer.value.email || !customer.value.email.trim()) {
+    errors.value.email = 'Email Address is required.'
+    hasError = true
+  }
+  if (!event.value.type) {
+    errors.value.eventType = 'Event Type is required.'
+    hasError = true
+  }
+  if (!event.value.date) {
+    errors.value.eventDate = 'Event Date is required.'
+    hasError = true
+  }
+
+  if (hasError) {
+    setTimeout(() => {
+      const el = document.querySelector('.error-message')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+    return
+  }
+
   try {
     paymentSubmitting.value = true
     
@@ -540,17 +590,20 @@ async function handleConfirmPayment() {
         <section class="form-section">
           <h2 class="section-title">Customer Information</h2>
           <div class="form-grid">
-            <div class="form-group">
+            <div class="form-group" :class="{ 'has-error': errors.fullName }">
               <label>Full Name <span class="required">*</span></label>
               <input v-model="customer.fullName" type="text" placeholder="e.g. John Doe" />
+              <span v-if="errors.fullName" class="error-message">{{ errors.fullName }}</span>
             </div>
-            <div class="form-group">
+            <div class="form-group" :class="{ 'has-error': errors.phone }">
               <label>Phone Number <span class="required">*</span></label>
               <input v-model="customer.phone" type="tel" placeholder="e.g. 08123456789" />
+              <span v-if="errors.phone" class="error-message">{{ errors.phone }}</span>
             </div>
-            <div class="form-group full-width">
+            <div class="form-group full-width" :class="{ 'has-error': errors.email }">
               <label>Email Address <span class="required">*</span></label>
               <input v-model="customer.email" type="email" placeholder="e.g. john@example.com" />
+              <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
             </div>
           </div>
         </section>
@@ -559,20 +612,22 @@ async function handleConfirmPayment() {
         <section class="form-section">
           <h2 class="section-title">Event Information</h2>
           <div class="form-grid">
-            <div class="form-group">
+            <div class="form-group" :class="{ 'has-error': errors.eventType }">
               <label>Event Type <span class="required">*</span></label>
               <select v-model="event.type">
                 <option value="" disabled>Select event type</option>
                 <option v-for="t in eventTypes" :key="t" :value="t">{{ t }}</option>
               </select>
+              <span v-if="errors.eventType" class="error-message">{{ errors.eventType }}</span>
             </div>
             <div class="form-group">
               <label>Event Name</label>
               <input v-model="event.name" type="text" placeholder="Optional" />
             </div>
-            <div class="form-group">
+            <div class="form-group" :class="{ 'has-error': errors.eventDate }">
               <label>Event Date <span class="required">*</span></label>
               <input v-model="event.date" type="date" />
+              <span v-if="errors.eventDate" class="error-message">{{ errors.eventDate }}</span>
             </div>
             <div class="form-group">
               <label>Start Time</label>
@@ -2114,5 +2169,22 @@ textarea {
 .btn-secondary-success:hover {
   background: #f5f5f7;
   border-color: #86868b;
+}
+
+.has-error input,
+.has-error select,
+.has-error textarea {
+  border-color: #ff3b30 !important;
+}
+.has-error input:focus,
+.has-error select:focus,
+.has-error textarea:focus {
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.1) !important;
+}
+.error-message {
+  color: #ff3b30;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: block;
 }
 </style>
