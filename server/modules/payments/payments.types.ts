@@ -1,6 +1,7 @@
 export interface BookingPayment {
   id_booking_payment: number
   id_booking: number
+  order_id: string | null
   id_term: number | null
   amount: number
   payment_type: string

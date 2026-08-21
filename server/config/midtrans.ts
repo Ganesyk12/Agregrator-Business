@@ -23,3 +23,14 @@ export const coreApi = new midtransClient.CoreApi({
   serverKey,
   clientKey,
 })
+
+const MIDTRANS_TIMEOUT_MS = 15_000
+
+export function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Midtrans API timeout after ${MIDTRANS_TIMEOUT_MS / 1000}s: ${label}`)), MIDTRANS_TIMEOUT_MS),
+    ),
+  ])
+}

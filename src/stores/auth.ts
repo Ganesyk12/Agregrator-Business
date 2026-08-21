@@ -10,6 +10,7 @@ interface AuthUser {
   id_user: number
   email: string
   full_name: string
+  phone?: string
   roles: Role[]
   vendor_category?: string
   vendor_id?: number

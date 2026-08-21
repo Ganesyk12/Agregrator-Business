@@ -275,22 +275,24 @@ model BookingPackage {
 
 model BookingPayment {
   id_booking_payment Int       @id @default(autoincrement())
-  id_booking        Int
-  amount            Float
-  payment_type      String
-  status            String    @default("pending")
-  payment_proof_url String?
-  paid_at           DateTime?
-  released_at       DateTime?
-  date_created      DateTime  @default(now())
-  date_modified     DateTime  @updatedAt
-  user_created      String?
-  user_modified     String?
+  id_booking         Int
+  order_id           String?
+  amount             Float
+  payment_type       String
+  status             String    @default("pending")
+  payment_proof_url  String?
+  paid_at            DateTime?
+  released_at        DateTime?
+  date_created       DateTime  @default(now())
+  date_modified      DateTime  @updatedAt
+  user_created       String?
+  user_modified      String?
 
   id_term       Int?
   booking Booking @relation(fields: [id_booking], references: [id_booking])
   payment_term    PaymentTerm? @relation(fields: [id_term], references: [id_term])
 
+  @@index([order_id])
 }
 
 model PaymentTerm {

@@ -82,6 +82,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         id_user: user.id_user,
         email: user.email,
         full_name: user.full_name,
+        phone: user.phone ?? '',
         roles,
         token,
         ...(vendorInfo && { vendor_info: vendorInfo }),

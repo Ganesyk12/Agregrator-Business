@@ -19,7 +19,6 @@ declare module 'midtrans-client' {
     approve(parameter: any): Promise<any>
     cancel(parameter: any): Promise<any>
     expire(parameter: any): Promise<any>
-    status(parameter: any): Promise<any>
   }
 
   const midtransClient: {

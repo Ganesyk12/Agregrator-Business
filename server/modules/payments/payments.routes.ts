@@ -49,6 +49,11 @@ const router = Router()
  *                 data: { $ref: '#/components/schemas/Payment' }
  */
 router.get('/', paymentCtrl.getAll)
+router.post('/midtrans/va', paymentCtrl.generateMidtransVA)
+router.post('/midtrans/qris', paymentCtrl.generateMidtransQRIS)
+router.post('/midtrans/snap-token', paymentCtrl.generateSnapToken)
+router.get('/midtrans/status/:orderId', paymentCtrl.checkMidtransStatus)
+router.post('/midtrans/simulate/:orderId', paymentCtrl.simulatePayment)
 
 /**
  * @openapi

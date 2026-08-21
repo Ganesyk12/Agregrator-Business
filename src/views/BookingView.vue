@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Navbar from '@/components/layout/Navbar.vue'
+import Swal from 'sweetalert2'
+
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+})
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
@@ -77,7 +86,6 @@ const currentStep = ref(1)
 const createdBooking = ref<any>(null)
 const selectedTermId = ref<number | null>(null)
 const selectedPaymentMethod = ref<string>('Bank Transfer')
-const paymentProofFile = ref<File | null>(null)
 
 const currentPaymentAmount = computed(() => {
   if (!createdBooking.value) return 0
@@ -99,11 +107,8 @@ function formatDateString(date: string) {
   return new Date(date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-function handleFileChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  if (target.files?.length) {
-    paymentProofFile.value = target.files[0]
-  }
+function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text)
 }
 
 const bookedVendors = ref<BookedVendor[]>([])
@@ -113,10 +118,26 @@ function formatPrice(v: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v)
 }
 
+const categoryToEventType: Record<string, string> = {
+  Photography: 'Wedding',
+  Videography: 'Wedding',
+  'Wedding Organizer': 'Wedding',
+  'Pre-wedding': 'Pre Wedding',
+  Makeup: 'Wedding',
+  Catering: 'Wedding',
+  Decoration: 'Wedding',
+  'Photo Booth': 'Birthday',
+  MC: 'Corporate',
+  Entertainment: 'Corporate',
+  Florist: 'Wedding',
+  Booking: 'Wedding',
+}
+
 onMounted(async () => {
   if (auth.user) {
     customer.value.fullName = auth.user.full_name || ''
     customer.value.email = auth.user.email || ''
+    customer.value.phone = auth.user.phone || ''
   }
   const stored = localStorage.getItem('sigyn_booking_config')
   const config = stored ? JSON.parse(stored) : null
@@ -135,6 +156,15 @@ onMounted(async () => {
       const json = await res.json()
       if (res.ok && json.data) {
         const vendorData = json.data
+        const vendorCat = vendorData.vendor?.category
+        if (vendorCat && !event.value.type) {
+          event.value.type = categoryToEventType[vendorCat] || ''
+        }
+        const vendorLoc = vendorData.vendor?.location
+        if (vendorLoc && !location.value.venue) {
+          location.value.venue = vendorData.vendor.business_name || ''
+          location.value.address = vendorLoc
+        }
         if (pkgId) {
           const pkg = vendorData.packages?.find((p: any) => String(p.id_package) === pkgId)
           if (pkg) {
@@ -181,6 +211,9 @@ onMounted(async () => {
         }
       }
     } catch {
+      if (!event.value.type) {
+        event.value.type = categoryToEventType['Photography'] || ''
+      }
       if (pkgId) {
         bookedVendors.value.push({
           id_vendor: Number(vid),
@@ -381,13 +414,13 @@ const totalExtrasCount = computed(() => {
 
 async function handleProceedToPayment() {
   if (!auth.isLoggedIn) {
-    alert('Please log in first.')
+    Toast.fire({ icon: 'warning', title: 'Please log in first.' })
     router.push('/login')
     return
   }
 
   if (bookedVendors.value.length === 0) {
-    alert('No packages selected.')
+    Toast.fire({ icon: 'warning', title: 'No packages selected.' })
     return
   }
 
@@ -480,7 +513,7 @@ async function handleProceedToPayment() {
 
     if (!res.ok) {
       const err = await res.json()
-      alert('Failed to save booking: ' + (err.error?.message || res.statusText))
+      Toast.fire({ icon: 'error', title: 'Failed to save booking: ' + (err.error?.message || res.statusText) })
       return
     }
 
@@ -494,72 +527,268 @@ async function handleProceedToPayment() {
     currentStep.value = 2
   } catch (error) {
     console.error(error)
-    alert('Error processing payment request.')
+    Toast.fire({ icon: 'error', title: 'Error processing payment request.' })
   } finally {
     paymentSubmitting.value = false
   }
 }
 
 const paymentSubmitting = ref(false)
+const selectedBank = ref('')
+const vaData = ref<{ order_id: string; va_number: string; bank: string; amount: number; expiry_time: string } | null>(null)
+const vaLoading = ref(false)
+const vaError = ref('')
+const qrisData = ref<{ order_id: string; qr_code_url: string; amount: number; expiry_time: string } | null>(null)
+const qrisLoading = ref(false)
+const qrisError = ref('')
+const snapData = ref<{ order_id: string; token: string; redirect_url: string } | null>(null)
+const paymentStatus = ref<'idle' | 'polling' | 'paid' | 'expired' | 'failed'>('idle')
+const countdown = ref('')
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let countdownTimer: ReturnType<typeof setInterval> | null = null
 
-async function handleConfirmPayment() {
-  if (!createdBooking.value) return
+const bankOptions = [
+  { id: 'bca', name: 'BCA', icon: '🏦' },
+  { id: 'mandiri', name: 'Mandiri', icon: '🏦' },
+  { id: 'bni', name: 'BNI', icon: '🏦' },
+  { id: 'bri', name: 'BRI', icon: '🏦' },
+  { id: 'permata', name: 'Permata', icon: '🏦' },
+  { id: 'cimb', name: 'CIMB Niaga', icon: '🏦' },
+  { id: 'danamon', name: 'Danamon', icon: '🏦' },
+  { id: 'maybank', name: 'Maybank', icon: '🏦' },
+]
+
+async function handleSelectBank(bankId: string) {
+  if (!createdBooking.value || vaLoading.value) return
+  selectedBank.value = bankId
+  vaData.value = null
+  qrisData.value = null
+  snapData.value = null
+  paymentStatus.value = 'idle'
+  vaError.value = ''
+  stopPolling()
+  vaLoading.value = true
 
   try {
-    paymentSubmitting.value = true
-    let proofUrl = ''
-
-    if (selectedPaymentMethod.value === 'Bank Transfer' && paymentProofFile.value) {
-      const formData = new FormData()
-      formData.append('file', paymentProofFile.value)
-      
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      })
-      if (uploadRes.ok) {
-        const uploadJson = await uploadRes.json()
-        proofUrl = uploadJson.url
-      } else {
-        const uploadErr = await uploadRes.json()
-        alert('Failed to upload proof: ' + (uploadErr.error?.message || uploadRes.statusText))
-        paymentSubmitting.value = false
-        return
-      }
-    }
-
-    const activeTerm = createdBooking.value.payment_terms?.find((t: any) => t.id_term === selectedTermId.value)
-    const amountToPay = activeTerm ? activeTerm.amount : createdBooking.value.total_price
-
-    const payload = {
-      id_booking: createdBooking.value.id_booking,
-      id_term: selectedTermId.value || undefined,
-      amount: amountToPay,
-      payment_type: selectedPaymentMethod.value,
-      payment_proof_url: proofUrl || null,
-      status: selectedPaymentMethod.value === 'Bank Transfer' ? 'pending' : 'paid',
-      paid_at: selectedPaymentMethod.value === 'Bank Transfer' ? null : new Date().toISOString()
-    }
-
-    const res = await auth.authFetch('/api/payments', {
+    const res = await auth.authFetch('/api/payments/midtrans/va', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        id_booking: createdBooking.value.id_booking,
+        id_term: selectedTermId.value || undefined,
+        bank: bankId,
+      }),
     })
 
     if (res.ok) {
-      createdBooking.value.status = selectedPaymentMethod.value === 'Bank Transfer' ? 'Pending Approval' : 'Paid'
-      currentStep.value = 3
+      const json = await res.json()
+      vaData.value = json.data
+      startCountdown(json.data.expiry_time)
+      startPolling(json.data.order_id)
     } else {
       const err = await res.json()
-      alert('Failed to record payment: ' + (err.error?.message || res.statusText))
+      Toast.fire({ icon: 'error', title: 'Gagal generate Virtual Account: ' + (err.error?.message || res.statusText) })
+      vaError.value = err.error?.message || res.statusText
+      selectedBank.value = ''
     }
-  } catch (error) {
-    console.error(error)
-    alert('Error recording payment.')
+  } catch {
+    Toast.fire({ icon: 'error', title: 'Error generating Virtual Account.' })
+    vaError.value = 'Network error or Midtrans API timeout'
+    selectedBank.value = ''
+  } finally {
+    vaLoading.value = false
+  }
+}
+
+async function handleSelectQRIS() {
+  if (!createdBooking.value || qrisLoading.value) return
+  qrisData.value = null
+  vaData.value = null
+  snapData.value = null
+  paymentStatus.value = 'idle'
+  qrisError.value = ''
+  stopPolling()
+  qrisLoading.value = true
+
+  try {
+    const res = await auth.authFetch('/api/payments/midtrans/qris', {
+      method: 'POST',
+      body: JSON.stringify({
+        id_booking: createdBooking.value.id_booking,
+        id_term: selectedTermId.value || undefined,
+      }),
+    })
+
+    if (res.ok) {
+      const json = await res.json()
+      qrisData.value = json.data
+      startCountdown(json.data.expiry_time)
+      startPolling(json.data.order_id)
+    } else {
+      const err = await res.json()
+      Toast.fire({ icon: 'error', title: 'Gagal generate QRIS: ' + (err.error?.message || res.statusText) })
+      qrisError.value = err.error?.message || res.statusText
+    }
+  } catch {
+    Toast.fire({ icon: 'error', title: 'Error generating QRIS.' })
+    qrisError.value = 'Network error or Midtrans API timeout'
+  } finally {
+    qrisLoading.value = false
+  }
+}
+
+async function handlePayCreditCard() {
+  if (!createdBooking.value) return
+  paymentSubmitting.value = true
+
+  try {
+    const res = await auth.authFetch('/api/payments/midtrans/snap-token', {
+      method: 'POST',
+      body: JSON.stringify({
+        id_booking: createdBooking.value.id_booking,
+        id_term: selectedTermId.value || undefined,
+      }),
+    })
+
+    if (res.ok) {
+      const json = await res.json()
+      snapData.value = json.data
+
+      if (json.data.token) {
+        const midtransClientKey = import.meta.env.VITE_MIDTRANS_CLIENT_KEY || ''
+        const script = document.createElement('script')
+        script.src = midtransClientKey.includes('SB-Mid')
+          ? 'https://app.sandbox.midtrans.com/snap/snap.js'
+          : 'https://app.midtrans.com/snap/snap.js'
+        script.setAttribute('data-client-key', midtransClientKey)
+        script.onload = () => {
+          const w = window as any
+          if (w.snap) {
+            w.snap.pay(json.data.token, {
+              onSuccess: (result: any) => {
+                console.log('[Snap] success:', result)
+                paymentStatus.value = 'paid'
+                stopPolling()
+                createdBooking.value.status = 'Paid'
+                currentStep.value = 3
+              },
+              onPending: (result: any) => {
+                console.log('[Snap] pending:', result)
+                paymentStatus.value = 'polling'
+                startPolling(json.data.order_id)
+              },
+              onError: (result: any) => {
+                console.error('[Snap] error:', result)
+                paymentStatus.value = 'failed'
+                Toast.fire({ icon: 'error', title: 'Payment failed: ' + (result.message || 'Unknown error') })
+              },
+              onClose: () => {
+                console.log('[Snap] popup closed')
+              },
+            })
+          }
+          document.head.removeChild(script)
+        }
+        document.head.appendChild(script)
+      }
+    } else {
+      const err = await res.json()
+      Toast.fire({ icon: 'error', title: 'Gagal inisialisasi pembayaran: ' + (err.error?.message || res.statusText) })
+    }
+  } catch {
+    Toast.fire({ icon: 'error', title: 'Error initializing credit card payment.' })
   } finally {
     paymentSubmitting.value = false
   }
 }
+
+function startCountdown(expiryTimeStr: string) {
+  stopCountdown()
+  const expiryTime = new Date(expiryTimeStr.replace(' ', 'T')).getTime()
+
+  function update() {
+    const now = Date.now()
+    const diff = expiryTime - now
+    if (diff <= 0) {
+      countdown.value = 'Expired'
+      stopCountdown()
+      return
+    }
+    const hours = Math.floor(diff / 3600000)
+    const mins = Math.floor((diff % 3600000) / 60000)
+    const secs = Math.floor((diff % 60000) / 1000)
+    countdown.value = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+  }
+
+  update()
+  countdownTimer = setInterval(update, 1000)
+}
+
+function stopCountdown() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+async function handleSimulatePayment(orderId: string) {
+  try {
+    const res = await auth.authFetch(`/api/payments/midtrans/simulate/${orderId}`, { method: 'POST' })
+    const result = await res.json()
+    if (result.error) throw new Error(result.error.message)
+    console.log('[Simulate] Payment marked as paid:', orderId)
+    Toast.fire({ icon: 'success', title: 'Payment confirmed!' })
+    if (createdBooking.value) createdBooking.value.status = 'paid'
+    stopCountdown()
+    stopPolling()
+    paymentStatus.value = 'paid'
+    setTimeout(() => { currentStep.value = 3 }, 1500)
+  } catch (err) {
+    console.error('[Simulate] Failed:', err)
+    Toast.fire({ icon: 'error', title: 'Failed to simulate payment: ' + (err instanceof Error ? err.message : String(err)) })
+  }
+}
+
+function startPolling(orderId: string) {
+  stopPolling()
+  paymentStatus.value = 'polling'
+
+  pollTimer = setInterval(async () => {
+    try {
+      const res = await auth.authFetch(`/api/payments/midtrans/status/${orderId}`)
+      if (res.ok) {
+        const json = await res.json()
+        if (json.data.is_paid) {
+          paymentStatus.value = 'paid'
+          stopPolling()
+          stopCountdown()
+          createdBooking.value.status = 'Paid'
+          currentStep.value = 3
+        } else if (json.data.transaction_status === 'expire') {
+          paymentStatus.value = 'expired'
+          stopPolling()
+          stopCountdown()
+        } else if (json.data.transaction_status === 'cancel') {
+          paymentStatus.value = 'failed'
+          stopPolling()
+          stopCountdown()
+        }
+      }
+    } catch { /* keep polling */ }
+  }, 5000)
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
+onUnmounted(() => {
+  stopPolling()
+  stopCountdown()
+})
+
 </script>
 
 <template>
@@ -876,86 +1105,130 @@ async function handleConfirmPayment() {
             <button
               class="method-tab"
               :class="{ active: selectedPaymentMethod === 'QRIS' }"
-              @click="selectedPaymentMethod = 'QRIS'"
+              @click="selectedPaymentMethod = 'QRIS'; selectedBank = ''; vaData = null"
             >
               📱 QRIS / E-Wallet
             </button>
             <button
               class="method-tab"
               :class="{ active: selectedPaymentMethod === 'Credit Card' }"
-              @click="selectedPaymentMethod = 'Credit Card'"
+              @click="selectedPaymentMethod = 'Credit Card'; selectedBank = ''; vaData = null"
             >
               💳 Credit Card
             </button>
           </div>
 
-          <!-- Bank Transfer Details & Upload -->
+          <!-- Bank Transfer Details -->
           <div v-if="selectedPaymentMethod === 'Bank Transfer'" class="method-details-pane">
-            <div class="bank-instruction-card">
-              <h5>Transfer Bank BCA</h5>
-              <div class="instruction-row">
-                <span>Account Number:</span>
-                <strong>123-456-7890</strong>
-              </div>
-              <div class="instruction-row">
-                <span>Account Holder:</span>
-                <strong>PT Agregrator Business</strong>
-              </div>
-              <div class="instruction-row">
-                <span>Total Payment:</span>
-                <strong class="highlight-text">{{ formatPrice(currentPaymentAmount) }}</strong>
-              </div>
+            <p class="section-desc">Select your bank to generate a Virtual Account number for payment.</p>
+
+            <div class="bank-grid">
+              <button
+                v-for="bank in bankOptions"
+                :key="bank.id"
+                class="bank-btn"
+                :class="{ active: selectedBank === bank.id }"
+                :disabled="vaLoading && selectedBank !== bank.id"
+                @click="handleSelectBank(bank.id)"
+              >
+                <span class="bank-icon">{{ bank.icon }}</span>
+                <span class="bank-name">{{ bank.name }}</span>
+                <span v-if="vaData && selectedBank === bank.id" class="bank-check">✓</span>
+              </button>
             </div>
-            
-            <div class="upload-proof-section">
-              <label class="form-label">Upload Proof of Payment <span class="required">*</span></label>
-              <div class="file-drop-area">
-                <input type="file" @change="handleFileChange" accept="image/*,application/pdf" id="payment-proof-input" />
-                <div class="drop-text-wrapper" v-if="!paymentProofFile">
-                  <span class="upload-icon">📁</span>
-                  <span>Click to choose or drag photo/file here</span>
-                  <span class="file-hint">JPG, PNG, WEBP, or PDF (Max 10MB)</span>
-                </div>
-                <div class="file-selected-wrapper" v-else>
-                  <span class="file-icon">📄</span>
-                  <span class="file-name">{{ paymentProofFile.name }}</span>
-                  <button class="btn-remove-file" @click.prevent="paymentProofFile = null">Remove</button>
+
+            <div v-if="vaLoading" class="va-loading">
+              <div class="spinner-small"></div>
+              <span>Generating Virtual Account...</span>
+            </div>
+
+            <div v-if="vaError && !vaLoading && !vaData" class="error-card">
+              <span class="error-icon">⚠️</span>
+              <span class="error-msg">{{ vaError }}</span>
+              <button class="btn-retry" @click="handleSelectBank(selectedBank)">Try Again</button>
+            </div>
+
+            <div v-if="vaData" class="va-card">
+              <h5>Virtual Account {{ vaData.bank.toUpperCase() }}</h5>
+              <div class="va-row">
+                <span>VA Number:</span>
+                <div class="va-number-group">
+                  <strong class="va-number">{{ vaData.va_number }}</strong>
+                  <button class="btn-copy" @click="copyToClipboard(vaData.va_number)" title="Copy VA Number">📋</button>
                 </div>
               </div>
+              <div class="va-row">
+                <span>Total Payment:</span>
+                <strong class="highlight-text">{{ formatPrice(vaData.amount) }}</strong>
+              </div>
+              <div v-if="countdown && countdown !== 'Expired'" class="va-row countdown-row">
+                <span>Time Remaining:</span>
+                <strong class="countdown-text">{{ countdown }}</strong>
+              </div>
+              <div v-if="countdown === 'Expired'" class="va-row">
+                <span>Status:</span>
+                <strong class="expired-text">Expired</strong>
+              </div>
+              <div v-if="paymentStatus === 'polling'" class="va-status-bar">
+                <div class="spinner-small"></div>
+                <span>Waiting for payment confirmation...</span>
+              </div>
+              <div v-if="paymentStatus === 'paid'" class="va-status-bar paid">
+                <span>✅ Payment confirmed!</span>
+              </div>
+              <p class="va-note">Transfer exactly the amount above to the VA number. Payment will be confirmed automatically.</p>
+              <button v-if="vaData && paymentStatus !== 'paid'" class="btn-simulate" @click="handleSimulatePayment(vaData.order_id)">
+                ⚡ Simulate Payment (Dev Only)
+              </button>
             </div>
           </div>
 
-          <!-- QRIS Mockup -->
+          <!-- QRIS Section -->
           <div v-else-if="selectedPaymentMethod === 'QRIS'" class="method-details-pane text-center">
-            <p>Scan this QR code using Gopay, OVO, ShopeePay, Dana, or your mobile banking app to pay.</p>
-            <div class="qris-box">
+            <p v-if="!qrisData && !qrisLoading">Click the button below to generate a QRIS code.</p>
+
+            <div v-if="qrisLoading" class="va-loading">
+              <div class="spinner-small"></div>
+              <span>Generating QRIS code...</span>
+            </div>
+
+            <div v-if="qrisError && !qrisLoading && !qrisData" class="error-card">
+              <span class="error-icon">⚠️</span>
+              <span class="error-msg">{{ qrisError }}</span>
+              <button class="btn-retry" @click="handleSelectQRIS">Try Again</button>
+            </div>
+
+            <div v-if="qrisData" class="qris-box">
               <div class="qris-frame">
                 <div class="qris-header">QRIS GPN</div>
-                <div class="qris-qr-mock">
+                <img v-if="qrisData.qr_code_url" :src="qrisData.qr_code_url" alt="QRIS Code" class="qris-image" />
+                <div v-else class="qris-qr-mock">
                   <div class="qr-pattern"></div>
                 </div>
-                <div class="qris-amount">{{ formatPrice(currentPaymentAmount) }}</div>
+                <div class="qris-amount">{{ formatPrice(qrisData.amount) }}</div>
               </div>
             </div>
-            <p class="small text-muted mt-2">After scanning and completing payment, click "Confirm QRIS Payment" below.</p>
+
+            <div v-if="qrisData && paymentStatus === 'polling'" class="status-waiting">
+              <div class="spinner-small"></div>
+              <span>Waiting for payment... <strong v-if="countdown">{{ countdown }}</strong></span>
+            </div>
+            <p v-if="qrisData" class="small text-muted mt-2">Scan using Gopay, OVO, ShopeePay, Dana, or mobile banking. Payment detected automatically.</p>
+            <button v-if="qrisData && paymentStatus !== 'paid'" class="btn-simulate" @click="handleSimulatePayment(qrisData.order_id)">
+              ⚡ Simulate Payment (Dev Only)
+            </button>
+
+            <button v-if="!qrisData && !qrisLoading && !qrisError" class="btn-proceed" style="margin-top:16px" @click="handleSelectQRIS">
+              Generate QRIS
+            </button>
           </div>
 
           <!-- Credit Card Input -->
           <div v-else-if="selectedPaymentMethod === 'Credit Card'" class="method-details-pane">
-            <div class="credit-card-form">
-              <div class="form-group full-width">
-                <label>Card Number</label>
-                <input type="text" placeholder="1234 5678 9101 1121" class="cc-input" />
-              </div>
-              <div class="form-group">
-                <label>Expiry Date</label>
-                <input type="text" placeholder="MM/YY" class="cc-input" />
-              </div>
-              <div class="form-group">
-                <label>CVV / CVC</label>
-                <input type="password" placeholder="123" class="cc-input" />
-              </div>
-            </div>
+            <p>Click the button below to open Midtrans secure payment page for credit card.</p>
+            <button class="btn-proceed" style="margin-top:16px" :disabled="paymentSubmitting" @click="handlePayCreditCard">
+              {{ paymentSubmitting ? 'Opening Payment Page...' : 'Pay with Credit Card' }}
+            </button>
           </div>
         </section>
       </div>
@@ -983,14 +1256,6 @@ async function handleConfirmPayment() {
             <span>Amount Due Now</span>
             <span class="total-price">{{ formatPrice(currentPaymentAmount) }}</span>
           </div>
-
-          <button
-            class="btn-proceed"
-            :disabled="paymentSubmitting || (selectedPaymentMethod === 'Bank Transfer' && !paymentProofFile)"
-            @click="handleConfirmPayment"
-          >
-            {{ paymentSubmitting ? 'Processing Payment...' : 'Confirm Payment' }}
-          </button>
         </div>
       </aside>
     </div>
@@ -999,11 +1264,44 @@ async function handleConfirmPayment() {
     <div class="container success-layout" v-else-if="currentStep === 3 && createdBooking">
       <div class="success-card">
         <div class="success-icon">🎉</div>
-        <h2 class="success-title">Booking Saved & Payment Submitted!</h2>
-        <p class="success-desc">
-          Thank you! Your booking request has been successfully created and your payment is being processed. 
-          We have sent the invoice and booking confirmation details to your registered email.
-        </p>
+        <template v-if="paymentStatus === 'paid'">
+          <h2 class="success-title">Payment Confirmed!</h2>
+          <p class="success-desc">
+            Thank you! Your payment has been successfully received and your booking is now confirmed. We have sent the invoice and booking confirmation details to your registered email.
+          </p>
+        </template>
+        <template v-else>
+          <h2 class="success-title">{{ vaData ? 'Virtual Account Generated!' : 'Booking Saved & Payment Submitted!' }}</h2>
+          <p class="success-desc">
+            {{ vaData
+              ? 'Please transfer the exact amount to the Virtual Account below. Payment will be confirmed automatically by Midtrans.'
+              : 'Thank you! Your booking request has been successfully created and your payment is being processed. We have sent the invoice and booking confirmation details to your registered email.'
+            }}
+          </p>
+        </template>
+
+        <div v-if="vaData && paymentStatus !== 'paid'" class="va-confirm-card">
+          <h4>Transfer Details</h4>
+          <div class="va-row">
+            <span>Bank:</span>
+            <strong>{{ vaData.bank.toUpperCase() }}</strong>
+          </div>
+          <div class="va-row">
+            <span>VA Number:</span>
+            <div class="va-number-group">
+              <strong class="va-number">{{ vaData.va_number }}</strong>
+              <button class="btn-copy" @click="copyToClipboard(vaData.va_number)" title="Copy">📋</button>
+            </div>
+          </div>
+          <div class="va-row">
+            <span>Amount:</span>
+            <strong class="highlight-text">{{ formatPrice(vaData.amount) }}</strong>
+          </div>
+          <div class="va-row">
+            <span>Valid Until:</span>
+            <strong>{{ vaData.expiry_time }}</strong>
+          </div>
+        </div>
 
         <div class="success-details-box">
           <h4>Booking Invoice Summary</h4>
@@ -1025,7 +1323,7 @@ async function handleConfirmPayment() {
           </div>
           <div class="detail-row">
             <span>Status:</span>
-            <span class="status-badge-paid">{{ createdBooking.status }}</span>
+            <span class="status-badge-paid">{{ paymentStatus === 'paid' ? 'confirmed' : createdBooking.status }}</span>
           </div>
         </div>
 
@@ -1670,6 +1968,9 @@ textarea {
   .page-title {
     font-size: 1.5rem;
   }
+  .bank-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .product-id-badge {
@@ -1906,87 +2207,254 @@ textarea {
   color: #ff3b30;
 }
 
-.upload-proof-section {
+.bank-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.bank-btn {
   display: flex;
   flex-direction: column;
-}
-
-.form-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin-bottom: 8px;
-}
-
-.file-drop-area {
-  border: 2px dashed #d2d2d7;
-  border-radius: 14px;
-  padding: 32px 20px;
-  text-align: center;
-  position: relative;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
   background: #fff;
-  transition: all 0.2s;
+  border: 2px solid #d2d2d7;
+  border-radius: 12px;
   cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
 }
 
-.file-drop-area:hover {
+.bank-btn:hover:not(:disabled) {
   border-color: #86868b;
   background: #f5f5f7;
 }
 
-.file-drop-area input[type="file"] {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
+.bank-btn.active {
+  border-color: #1d1d1f;
+  background: #f5f5f7;
 }
 
-.drop-text-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+.bank-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.upload-icon {
-  font-size: 2rem;
+.bank-icon {
+  font-size: 1.5rem;
 }
 
-.file-hint {
-  font-size: 0.75rem;
-  color: #86868b;
-  margin-top: 4px;
-}
-
-.file-selected-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.file-icon {
-  font-size: 2rem;
-}
-
-.file-name {
-  font-size: 0.9rem;
+.bank-name {
+  font-size: 0.78rem;
   font-weight: 600;
   color: #1d1d1f;
 }
 
-.btn-remove-file {
-  padding: 6px 14px;
-  background: #ff3b30;
-  color: #fff;
+.bank-check {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.75rem;
+  color: #34c759;
+  font-weight: 700;
+}
+
+.va-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  color: #86868b;
+  font-size: 0.9rem;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid #d2d2d7;
+  border-top-color: #1d1d1f;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.va-card {
+  background: #f5f5f7;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 4px;
+}
+
+.va-card h5 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 14px;
+  color: #1d1d1f;
+}
+
+.va-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.va-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.va-number-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.va-number {
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  color: #1d1d1f;
+}
+
+.btn-copy {
+  background: none;
+  border: 1px solid #d2d2d7;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.btn-copy:hover {
+  background: #e8e8ed;
+}
+
+.va-note {
+  margin-top: 14px;
+  font-size: 0.78rem;
+  color: #86868b;
+  text-align: center;
+  font-style: italic;
+}
+
+.countdown-row {
+  background: #fff3cd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 4px 0;
+}
+
+.countdown-text {
+  font-size: 1.15rem;
+  color: #ff9500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+.expired-text {
+  color: #ff3b30;
+}
+
+.va-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  background: #f5f5f7;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #86868b;
+}
+
+.va-status-bar.paid {
+  background: #e6f9ed;
+  color: #34c759;
+  font-weight: 600;
+}
+
+.status-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: #86868b;
+}
+
+.btn-simulate {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 2px dashed #ff9500;
+  border-radius: 10px;
+  background: #fffbe6;
+  color: #cc7a00;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-simulate:hover {
+  background: #fff3cd;
+  border-color: #cc7a00;
+}
+
+.error-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 16px;
+  background: #fff2f2;
+  border: 1px solid #ffcdd2;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+}
+
+.error-msg {
+  font-size: 0.85rem;
+  color: #c62828;
+}
+
+.btn-retry {
+  margin-top: 4px;
+  padding: 8px 20px;
   border: none;
   border-radius: 8px;
-  font-size: 0.8rem;
+  background: #c62828;
+  color: #fff;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  z-index: 10;
+  transition: background 0.2s;
+}
+
+.btn-retry:hover {
+  background: #b71c1c;
+}
+
+.qris-image {
+  width: 100%;
+  display: block;
+  margin: 0 auto;
 }
 
 .qris-box {
@@ -2091,6 +2559,21 @@ textarea {
   font-size: 0.95rem;
   line-height: 1.5;
   margin: 0 0 32px;
+}
+
+.va-confirm-card {
+  background: #f5f5f7;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.va-confirm-card h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin: 0 0 14px;
 }
 
 .success-details-box {
