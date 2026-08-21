@@ -4,6 +4,30 @@ import { createError } from '../../middleware/error-handler'
 import { coreApi, snap, withTimeout } from '../../config/midtrans'
 import { env } from '../../config/env'
 
+export async function getQrisImage(req: Request, res: Response, next: NextFunction) {
+  try {
+    const orderId = String(req.params.orderId)
+    if (!orderId) throw createError(400, 'orderId is required')
+
+    const payment = await paymentService.findByOrderId(orderId)
+    if (!payment) throw createError(404, 'Payment not found')
+
+    const qrActionUrl = (payment as any).qr_action_url
+    if (!qrActionUrl) throw createError(404, 'QR action URL not available')
+
+    const authHeader = 'Basic ' + Buffer.from(env.midtransServerKey + ':').toString('base64')
+    const qrRes = await fetch(qrActionUrl, { headers: { Authorization: authHeader } })
+    if (!qrRes.ok) throw createError(502, `Midtrans QR API returned ${qrRes.status}`)
+
+    const buf = Buffer.from(await qrRes.arrayBuffer())
+    res.setHeader('Content-Type', 'image/png')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.send(buf)
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function getAll(_req: Request, res: Response, next: NextFunction) {
   try {
     const payments = await paymentService.findAll()
@@ -222,28 +246,15 @@ export async function generateMidtransQRIS(req: Request, res: Response, next: Ne
     console.log('[Midtrans QRIS] chargeResult:', JSON.stringify(chargeResult, null, 2))
 
     if (chargeResult.status_code === '201' || chargeResult.status_code === 201) {
-      let qrCodeUrl = ''
-      if (chargeResult.actions) {
-        const qrAction = chargeResult.actions.find((a: any) => a.name === 'generate-qr-code')
-        const rawUrl = qrAction?.url || ''
-        if (rawUrl) {
-          try {
-            const authHeader = 'Basic ' + Buffer.from(env.midtransServerKey + ':').toString('base64')
-            const qrRes = await withTimeout(
-              fetch(rawUrl, { headers: { Authorization: authHeader } }),
-              'QRIS image fetch',
-            )
-            if (qrRes.ok) {
-              const buf = Buffer.from(await qrRes.arrayBuffer())
-              qrCodeUrl = 'data:image/png;base64,' + buf.toString('base64')
-            }
-          } catch { /* fallback: return raw url */ qrCodeUrl = rawUrl }
-        }
-      }
+      const qrString = chargeResult.qr_string || ''
+      const qrAction = chargeResult.actions?.find((a: any) => a.name === 'generate-qr-code')
+      const qrActionUrl = qrAction?.url || ''
 
       const payment = await paymentService.create({
         id_booking: Number(id_booking),
         order_id: orderId,
+        qr_string: qrString,
+        qr_action_url: qrActionUrl,
         id_term: id_term ? Number(id_term) : undefined,
         amount: amountToPay,
         payment_type: 'qris',
@@ -254,7 +265,7 @@ export async function generateMidtransQRIS(req: Request, res: Response, next: Ne
         data: {
           id_payment: payment.id_booking_payment,
           order_id: orderId,
-          qr_code_url: qrCodeUrl,
+          qr_string: qrString,
           amount: amountToPay,
           expiry_time: chargeResult.expiry_time || '',
           status: chargeResult.transaction_status,

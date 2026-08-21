@@ -39,11 +39,13 @@ export async function findById(id: number): Promise<BookingPayment | null> {
 
 export async function create(
   data: Pick<BookingPayment, 'id_booking' | 'amount' | 'payment_type'> &
-    Partial<Pick<BookingPayment, 'order_id' | 'id_term' | 'payment_proof_url' | 'paid_at' | 'released_at' | 'status' | 'user_created' | 'user_modified'>>
+    Partial<Pick<BookingPayment, 'order_id' | 'qr_string' | 'qr_action_url' | 'id_term' | 'payment_proof_url' | 'paid_at' | 'released_at' | 'status' | 'user_created' | 'user_modified'>>
 ): Promise<BookingPayment> {
   const payload: any = {
     id_booking: data.id_booking,
     order_id: data.order_id ?? null,
+    qr_string: data.qr_string ?? null,
+    qr_action_url: data.qr_action_url ?? null,
     amount: data.amount,
     payment_type: data.payment_type,
     status: data.status ?? 'pending',
@@ -155,7 +157,7 @@ export async function updateByOrderId(
       where: { id_booking: payment.id_booking },
     })
 
-    const allPaid = allPayments.every((p) =>
+    const allPaid = allPayments.every((p: { id_booking_payment: number; status: string }) =>
       p.id_booking_payment === payment.id_booking_payment
         ? true
         : p.status === 'paid'

@@ -277,6 +277,8 @@ model BookingPayment {
   id_booking_payment Int       @id @default(autoincrement())
   id_booking         Int
   order_id           String?
+  qr_string          String?
+  qr_action_url      String?
   amount             Float
   payment_type       String
   status             String    @default("pending")

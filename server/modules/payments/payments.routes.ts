@@ -53,6 +53,7 @@ router.post('/midtrans/va', paymentCtrl.generateMidtransVA)
 router.post('/midtrans/qris', paymentCtrl.generateMidtransQRIS)
 router.post('/midtrans/snap-token', paymentCtrl.generateSnapToken)
 router.get('/midtrans/status/:orderId', paymentCtrl.checkMidtransStatus)
+router.get('/midtrans/qris-image/:orderId', paymentCtrl.getQrisImage)
 router.post('/midtrans/simulate/:orderId', paymentCtrl.simulatePayment)
 
 /**

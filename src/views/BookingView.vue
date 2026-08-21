@@ -538,7 +538,7 @@ const selectedBank = ref('')
 const vaData = ref<{ order_id: string; va_number: string; bank: string; amount: number; expiry_time: string } | null>(null)
 const vaLoading = ref(false)
 const vaError = ref('')
-const qrisData = ref<{ order_id: string; qr_code_url: string; amount: number; expiry_time: string } | null>(null)
+const qrisData = ref<{ order_id: string; qr_string: string; amount: number; expiry_time: string } | null>(null)
 const qrisLoading = ref(false)
 const qrisError = ref('')
 const snapData = ref<{ order_id: string; token: string; redirect_url: string } | null>(null)
@@ -746,6 +746,10 @@ async function handleSimulatePayment(orderId: string) {
     console.error('[Simulate] Failed:', err)
     Toast.fire({ icon: 'error', title: 'Failed to simulate payment: ' + (err instanceof Error ? err.message : String(err)) })
   }
+}
+
+function getQrisImageUrl(orderId: string): string {
+  return `/api/payments/midtrans/qris-image/${orderId}`
 }
 
 function startPolling(orderId: string) {
@@ -1201,10 +1205,7 @@ onUnmounted(() => {
             <div v-if="qrisData" class="qris-box">
               <div class="qris-frame">
                 <div class="qris-header">QRIS GPN</div>
-                <img v-if="qrisData.qr_code_url" :src="qrisData.qr_code_url" alt="QRIS Code" class="qris-image" />
-                <div v-else class="qris-qr-mock">
-                  <div class="qr-pattern"></div>
-                </div>
+                <img :src="getQrisImageUrl(qrisData.order_id)" alt="QRIS Code" class="qris-image" />
                 <div class="qris-amount">{{ formatPrice(qrisData.amount) }}</div>
               </div>
             </div>
@@ -2479,32 +2480,6 @@ textarea {
   margin-bottom: 12px;
   border-bottom: 2px solid #102a43;
   padding-bottom: 4px;
-}
-
-.qris-qr-mock {
-  width: 180px;
-  height: 180px;
-  margin: 0 auto 12px;
-  background: 
-    repeating-conic-gradient(from 45deg, #1d1d1f 0% 25%, #fff 0% 50%) 
-    50% / 20px 20px;
-  border-radius: 8px;
-  position: relative;
-}
-
-.qris-qr-mock::before {
-  content: 'QRIS';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #fff;
-  color: #1d1d1f;
-  font-size: 0.8rem;
-  font-weight: 900;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 2px solid #1d1d1f;
 }
 
 .qris-amount {
