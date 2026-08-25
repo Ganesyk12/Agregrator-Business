@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 interface VendorItem {
   id_vendor: number
@@ -57,7 +58,14 @@ function getCategoryEmoji(cat: string): string {
 }
 
 function getCoverImage(vendor: VendorItem): string {
-  return vendor.cover_url || ''
+  return vendor.cover_url || defaultImage
+}
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.dataset.fallbackApplied) return
+  img.dataset.fallbackApplied = '1'
+  img.src = defaultImage
 }
 
 function formatPrice(price?: number): string {
@@ -174,7 +182,7 @@ onMounted(async () => {
                 class="vendor-card"
               >
                 <div class="vendor-card-image">
-                  <img :src="getCoverImage(vendor)" :alt="vendor.business_name" loading="lazy" />
+                  <img :src="getCoverImage(vendor)" :alt="vendor.business_name" loading="lazy" @error="onImgError" />
                   <div class="vendor-card-overlay"></div>
                   <div v-if="vendor.verified" class="vendor-badge">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>

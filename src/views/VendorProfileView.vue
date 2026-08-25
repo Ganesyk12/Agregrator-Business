@@ -6,9 +6,17 @@ import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
 import ReviewCard from '@/components/portfolio/ReviewCard.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 const route = useRoute()
 const router = useRouter()
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.dataset.fallbackApplied) return
+  img.dataset.fallbackApplied = '1'
+  img.src = defaultImage
+}
 const vendor = ref<any>(null)
 const vendorPackages = ref<any[]>([])
 const vendorPortfolios = ref<any[]>([])
@@ -234,7 +242,7 @@ onMounted(fetchVendorProfile)
           <div v-else class="products-grid">
             <div v-for="product in vendorProducts" :key="product.id_product" class="product-card" @click="goToProduct(product.id_product)">
               <div class="product-image">
-                <img :src="product.images?.[0]?.image_url || ''" :alt="product.name" loading="lazy" />
+                <img :src="product.images?.[0]?.image_url || defaultImage" :alt="product.name" loading="lazy" @error="onImgError" />
                 <span class="product-occasion-badge" v-if="product.labels">{{ (product.labels.split(',')[0]).charAt(0).toUpperCase() + (product.labels.split(',')[0]).slice(1) }}</span>
               </div>
               <div class="product-info">
@@ -268,7 +276,7 @@ onMounted(fetchVendorProfile)
               @click="goToPortfolio(item.id_portfolio)"
             >
               <div class="portfolio-image">
-                <img :src="item.cover_url" :alt="item.title" loading="lazy" />
+                <img :src="item.cover_url || defaultImage" :alt="item.title" loading="lazy" @error="onImgError" />
                 <span class="portfolio-label" v-if="item.label">{{ item.label }}</span>
               </div>
               <div class="portfolio-info">

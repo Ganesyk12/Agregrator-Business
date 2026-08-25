@@ -5,6 +5,7 @@ import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
 import PinterestGallery from '@/components/layout/PinterestGallery.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 interface GalleryItem {
   url: string
@@ -24,7 +25,7 @@ onMounted(async () => {
       images.value = allPortfolios
         .filter((p: any) => p.vendor?.category === 'Makeup Artist')
         .map((p: any) => ({
-          url: p.cover_url,
+          url: p.cover_url || defaultImage,
           id_portfolio: p.id_portfolio,
           alt: p.title,
         }))

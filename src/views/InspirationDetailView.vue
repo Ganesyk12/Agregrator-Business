@@ -5,6 +5,7 @@ import Navbar from '@/components/layout/Navbar.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,8 +44,8 @@ onMounted(async () => {
       const price = p.package?.price || 0
       inspiration.value = {
         id: p.id_portfolio,
-        image: p.cover_url,
-        gallery: (p.images || []).map((i: any) => i.image_url),
+        image: p.cover_url || defaultImage,
+        gallery: (p.images || []).map((i: any) => i.image_url).filter(Boolean),
         occasion: p.label || p.title || 'Creative',
         style: p.vendor?.category || 'Creative',
         caption: p.title || '',
@@ -55,9 +56,9 @@ onMounted(async () => {
         saved: false,
         height: 'medium',
         vendorRefs: {
-          photography: p.vendor?.category === 'Photography' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: '' } : undefined,
-          mua: p.vendor?.category === 'Makeup Artist' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: '' } : undefined,
-          bouquet: p.vendor?.category === 'Bouquet Flowers' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: '' } : undefined,
+          photography: p.vendor?.category === 'Photography' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: defaultImage } : undefined,
+          mua: p.vendor?.category === 'Makeup Artist' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: defaultImage } : undefined,
+          bouquet: p.vendor?.category === 'Bouquet Flowers' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: defaultImage } : undefined,
         }
       }
     }
@@ -70,6 +71,13 @@ onMounted(async () => {
 
 function goToVendor(id: number) {
   router.push(`/vendor/${id}`)
+}
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.dataset.fallbackApplied) return
+  img.dataset.fallbackApplied = '1'
+  img.src = defaultImage
 }
 
 function goToExplore() {
@@ -108,7 +116,7 @@ function formatPrice(price: number): string {
             </button>
           </div>
           <div class="main-image">
-            <img :src="inspiration.gallery[activeGalleryImage] || inspiration.image" :alt="inspiration.caption" />
+            <img :src="inspiration.gallery[activeGalleryImage] || inspiration.image" :alt="inspiration.caption" @error="onImgError" />
             <div class="occasion-badge">
               {{ (inspiration.occasion || '').split(',').map(s => s.trim().charAt(0).toUpperCase() + s.trim().slice(1)).join(', ') }}
             </div>
@@ -121,7 +129,7 @@ function formatPrice(price: number): string {
               :class="{ active: activeGalleryImage === i }"
               @click="activeGalleryImage = i"
             >
-              <img :src="img" :alt="`Gallery ${i + 1}`" />
+              <img :src="img" :alt="`Gallery ${i + 1}`" @error="onImgError" />
             </button>
           </div>
         </div>

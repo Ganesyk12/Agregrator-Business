@@ -5,6 +5,7 @@ import Navbar from '@/components/layout/Navbar.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 const router = useRouter()
 
@@ -70,7 +71,7 @@ onMounted(async () => {
       .filter((p: any) => p.vendor?.status !== 'inactive')
       .map((p: any) => ({
         id: p.id_portfolio,
-        image: p.cover_url,
+        image: p.cover_url || defaultImage,
         occasion: p.label || p.title || 'Creative',
         style: p.vendor?.category || 'Creative',
         caption: p.title || p.description || '',
@@ -86,7 +87,7 @@ onMounted(async () => {
       .filter((pr: any) => pr.vendor?.status !== 'inactive')
       .map((pr: any) => ({
         id: `product-${pr.id_product}`,
-        image: pr.images?.[0]?.image_url || '',
+        image: pr.images?.[0]?.image_url || defaultImage,
         occasion: pr.occasion?.name || pr.labels || 'Bouquet',
         style: 'Bouquet Flowers',
         caption: pr.name || '',
@@ -153,6 +154,13 @@ function getGridClass(height: string) {
   if (height === 'tall') return 'grid-tall'
   if (height === 'short') return 'grid-short'
   return 'grid-medium'
+}
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.dataset.fallbackApplied) return
+  img.dataset.fallbackApplied = '1'
+  img.src = defaultImage
 }
 
 function formatPrice(price: number): string {
@@ -314,7 +322,7 @@ function goToInspiration(id: number | string) {
             @click="goToInspiration(item.id)"
           >
             <div class="card-image">
-              <img :src="item.image" :alt="item.caption" loading="lazy" />
+              <img :src="item.image" :alt="item.caption" loading="lazy" @error="onImgError" />
               <div class="card-image-overlay"></div>
               <div class="card-tags">
                 <span class="tag occasion-tag">{{ item.occasion }}</span>

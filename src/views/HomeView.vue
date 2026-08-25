@@ -14,6 +14,7 @@ import VendorCategoryShowcase from '@/components/home/VendorCategoryShowcase.vue
 import WhyChooseUs from '@/components/home/WhyChooseUs.vue'
 import HowItWorks from '@/components/home/HowItWorks.vue'
 import PartnerSection from '@/components/home/PartnerSection.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -45,6 +46,13 @@ onMounted(async () => {
 
 function formatPrice(val: number) {
   return 'Rp ' + val.toLocaleString('id-ID')
+}
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.dataset.fallbackApplied) return
+  img.dataset.fallbackApplied = '1'
+  img.src = defaultImage
 }
 
 async function addToCart(product: any) {
@@ -107,8 +115,9 @@ function onCelebrationSelect(celebration: string | null) {
               <div class="product-image-wrap">
                 <router-link :to="'/product/' + product.id_product">
                   <img
-                    :src="product.images?.[0]?.image_url || 'https://placehold.co/400x400?text=Flower'"
+                    :src="product.images?.[0]?.image_url || defaultImage"
                     :alt="product.name"
+                    @error="onImgError"
                   />
                 </router-link>
                 <span v-if="product.labels" class="product-badge">{{ (product.labels.split(',')[0]).charAt(0).toUpperCase() + (product.labels.split(',')[0]).slice(1) }}</span>
@@ -149,6 +158,14 @@ function onCelebrationSelect(celebration: string | null) {
 /* Bouquet Product Section */
 .bouquet-section {
   background: var(--bs-body-bg, #F7F4EF);
+}
+
+.bouquet-section p {
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
+}
+
+.bouquet-section .section-title {
+  font-family: var(--heading-font, 'Marcellus', serif);
 }
 
 .product-card {
@@ -236,8 +253,9 @@ function onCelebrationSelect(celebration: string | null) {
 }
 
 .product-name {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: var(--heading-font, 'Marcellus', serif);
+  font-size: 1rem;
+  font-weight: 400;
   color: var(--bs-black, #2a2a2a);
   text-decoration: none;
   line-height: 1.3;
@@ -248,6 +266,7 @@ function onCelebrationSelect(celebration: string | null) {
 }
 
 .product-vendor {
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 0.8rem;
   color: #888;
 }
@@ -260,6 +279,7 @@ function onCelebrationSelect(celebration: string | null) {
 
 .product-type-tag,
 .product-size-tag {
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 0.65rem;
   padding: 2px 8px;
   background: #f0f0f0;
@@ -269,6 +289,7 @@ function onCelebrationSelect(celebration: string | null) {
 }
 
 .product-price {
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 1rem;
   font-weight: 700;
   color: var(--bs-black, #2a2a2a);

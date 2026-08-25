@@ -4,6 +4,7 @@ import Navbar from '@/components/layout/Navbar.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 interface PortfolioItem {
   id_portfolio: number
@@ -135,7 +136,7 @@ onMounted(async () => {
             <div class="card border-0 h-100 shadow-sm">
               <div class="card-img-wrapper">
                 <img
-                  :src="item.cover_url"
+                  :src="item.cover_url || defaultImage"
                   :alt="item.title"
                   class="card-img-top"
                 >

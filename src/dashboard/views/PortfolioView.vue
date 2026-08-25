@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import PortfolioModal, { type PortfolioForm } from '../components/PortfolioModal.vue'
 import Swal from 'sweetalert2'
+import defaultImage from '@/assets/default/nothing.png'
 
 const Toast = Swal.mixin({
   toast: true,
@@ -325,6 +326,13 @@ function getMediaUrl(url: string) {
   if (!url) return ''
   return url.startsWith('http') ? url : `${apiUrl}${url}`
 }
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.dataset.fallbackApplied) return
+  img.dataset.fallbackApplied = '1'
+  img.src = defaultImage
+}
 </script>
 
 <template>
@@ -378,7 +386,7 @@ function getMediaUrl(url: string) {
           >
             <!-- Image Wrapper -->
             <div class="portfolio-card-img-wrapper">
-              <img :src="getMediaUrl(p.cover_url) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60'" class="portfolio-card-img" alt="Portfolio Media" />
+              <img :src="getMediaUrl(p.cover_url) || defaultImage" class="portfolio-card-img" alt="Portfolio Media" @error="onImgError" />
               <div class="portfolio-card-drag-handle">
                 <i class="fa fa-arrows"></i>
               </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 interface Inspiration {
   id: number
@@ -33,7 +34,7 @@ async function fetchInspirations() {
     const items = json.data || []
     inspirations.value = items.map((p: any) => ({
       id: p.id_portfolio,
-      image: p.cover_url,
+      image: p.cover_url || defaultImage,
       occasion: p.label || p.title || 'Creative',
       style: p.vendor?.category || 'Creative',
       caption: p.title || p.description || '',
@@ -61,6 +62,13 @@ function getGridClass(height: string) {
   if (height === 'tall') return 'grid-tall'
   if (height === 'short') return 'grid-short'
   return 'grid-medium'
+}
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.dataset.fallbackApplied) return
+  img.dataset.fallbackApplied = '1'
+  img.src = defaultImage
 }
 
 import { useRouter } from 'vue-router'
@@ -103,7 +111,7 @@ function goToInspiration(id: number) {
           @click="goToInspiration(item.id)"
         >
           <div class="card-image">
-            <img :src="item.image" :alt="item.caption" loading="lazy" />
+            <img :src="item.image" :alt="item.caption" loading="lazy" @error="onImgError" />
             <div class="card-image-overlay"></div>
 
             <div class="card-tags">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 interface PackageItem {
   id_package: number
@@ -531,7 +532,7 @@ function groupByVendor(pkgs: PackageItem[]) {
               <div v-else-if="selectedProductDetails" class="customizer-layout">
                 <!-- Left side: image / gallery -->
                 <div class="customizer-gallery">
-                  <img :src="selectedProductDetails.images?.[0]?.image_url || '/placeholder.png'" :alt="selectedProductDetails.name" class="main-image" />
+                  <img :src="selectedProductDetails.images?.[0]?.image_url || defaultImage" :alt="selectedProductDetails.name" class="main-image" />
                 </div>
                 
                 <!-- Right side: customization controls -->

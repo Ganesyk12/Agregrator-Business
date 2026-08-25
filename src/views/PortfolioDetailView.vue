@@ -9,6 +9,7 @@ import Footer from '@/components/layout/Footer.vue'
 import PortfolioGallery from '@/components/portfolio/PortfolioGallery.vue'
 import ReviewCard from '@/components/portfolio/ReviewCard.vue'
 import BookingCard from '@/components/portfolio/BookingCard.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -156,7 +157,7 @@ onMounted(fetchPortfolio)
       <!-- 1. Hero Section -->
       <section class="section hero-section">
         <div class="hero-image">
-          <img :src="portfolio.cover_url" :alt="portfolio.title" />
+          <img :src="portfolio.cover_url || defaultImage" :alt="portfolio.title" />
         </div>
       </section>
 
@@ -239,7 +240,7 @@ onMounted(fetchPortfolio)
                 @click="goToPortfolio(item.id_portfolio)"
               >
                 <div class="related-image">
-                  <img :src="item.cover_url" :alt="item.title" loading="lazy" />
+                  <img :src="item.cover_url || defaultImage" :alt="item.title" loading="lazy" />
                 </div>
                 <div class="related-info">
                   <h4 class="related-title">{{ item.title }}</h4>

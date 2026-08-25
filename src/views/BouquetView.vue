@@ -5,6 +5,7 @@ import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
 import PinterestGallery from '@/components/layout/PinterestGallery.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 interface GalleryItem {
   url: string
@@ -26,7 +27,7 @@ onMounted(async () => {
           p.status === 'active' && p.vendor?.category === 'Bouquet Flowers'
       )
       images.value = products.value.map((p: any) => ({
-        url: p.images?.[0]?.image_url || 'https://placehold.co/400x400?text=Flower',
+        url: p.images?.[0]?.image_url || defaultImage,
         alt: p.name,
         to: '/product/' + p.id_product,
       }))

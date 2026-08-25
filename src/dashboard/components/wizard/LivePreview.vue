@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -23,7 +24,7 @@ const coverImage = computed(() => {
     const cover = props.form.images.find((img: any) => img.sort_order === -1 || img.sort_order === 0)
     return imageUrl(cover?.image_url || props.form.images[0]?.image_url)
   }
-  return 'https://placehold.co/600x600?text=Product'
+  return defaultImage
 })
 
 const displayImages = computed(() => {

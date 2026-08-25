@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -236,7 +237,7 @@ async function submitOrder() {
             <div class="order-items">
               <div v-for="(item, idx) in totalItems" :key="idx" class="order-item">
                 <div class="item-info">
-                  <img class="item-thumb" :src="item.thumbnail || 'https://placehold.co/80x80?text=Flower'" :alt="item.productName" />
+                  <img class="item-thumb" :src="item.thumbnail || defaultImage" :alt="item.productName" />
                   <div>
                     <div class="item-name">{{ item.productName || item.product?.name || 'Product' }}</div>
                     <div class="item-vendor">{{ item.vendorName }}</div>

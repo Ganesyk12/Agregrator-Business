@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import defaultImage from '@/assets/default/nothing.png'
 
 const router = useRouter()
 
@@ -145,6 +146,13 @@ function handleMouseMove(e: MouseEvent) {
   mouseX.value = ((e.clientX - rect.left) / rect.width - 0.5) * 8
   mouseY.value = ((e.clientY - rect.top) / rect.height - 0.5) * 8
 }
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.dataset.fallbackApplied) return
+  img.dataset.fallbackApplied = '1'
+  img.src = defaultImage
+}
 </script>
 
 <template>
@@ -212,11 +220,12 @@ function handleMouseMove(e: MouseEvent) {
               <div class="portfolio-card">
               <div class="card-image-wrap">
                 <img
-                  :src="card.cover_url"
+                  :src="card.cover_url || defaultImage"
                   :alt="card.vendor?.business_name || card.title"
                   class="card-img"
                   :style="card.offset === 0 ? { transform: `translate(${mouseX}px, ${mouseY}px) scale(1.1)` } : {}"
                   loading="lazy"
+                  @error="onImgError"
                 />
                 <div class="card-price-badge" v-if="card.offset === 0 && card.package?.price">
                   <span>Mulai</span>
@@ -318,6 +327,7 @@ function handleMouseMove(e: MouseEvent) {
 
 .hero-tagline {
   display: inline-block;
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.25em;
@@ -327,6 +337,7 @@ function handleMouseMove(e: MouseEvent) {
 }
 
 .hero-headline {
+  font-family: var(--heading-font, 'Marcellus', serif);
   font-size: 3.5rem;
   font-weight: 700;
   line-height: 1.1;
@@ -343,6 +354,7 @@ function handleMouseMove(e: MouseEvent) {
 }
 
 .hero-description {
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 1.1rem;
   line-height: 1.7;
   color: #6b7280;
@@ -396,6 +408,7 @@ function handleMouseMove(e: MouseEvent) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 0.85rem;
   font-weight: 500;
   color: #374151;
@@ -473,6 +486,7 @@ function handleMouseMove(e: MouseEvent) {
   color: #fff;
   padding: 6px 12px;
   border-radius: 10px;
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 0.7rem;
   text-align: center;
   line-height: 1.3;
@@ -490,6 +504,7 @@ function handleMouseMove(e: MouseEvent) {
 
 .card-category-tag {
   display: inline-block;
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.15em;
@@ -499,8 +514,9 @@ function handleMouseMove(e: MouseEvent) {
 }
 
 .vendor-name {
+  font-family: var(--heading-font, 'Marcellus', serif);
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #0f0f0f;
   margin: 0 0 4px;
 }
@@ -520,6 +536,7 @@ function handleMouseMove(e: MouseEvent) {
 }
 
 .rating-text {
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 0.75rem;
   color: #6b7280;
   font-weight: 600;
@@ -528,6 +545,7 @@ function handleMouseMove(e: MouseEvent) {
 .btn-book {
   display: inline-block;
   padding: 8px 24px;
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 0.8rem;
   font-weight: 600;
   color: #fff;

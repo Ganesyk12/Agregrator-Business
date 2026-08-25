@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+import defaultImage from '@/assets/default/nothing.png'
 
 const auth = useAuthStore()
 const cart = useCartStore()
@@ -87,7 +88,7 @@ onMounted(() => {
                     <div class="cart-prod">
                       <img
                         class="cart-thumb"
-                        :src="item.thumbnail || item.product?.images?.[0]?.image_url || 'https://placehold.co/60x60?text=Flower'"
+                        :src="item.thumbnail || item.product?.images?.[0]?.image_url || defaultImage"
                         :alt="item.product?.name"
                       />
                       <div>

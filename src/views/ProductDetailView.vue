@@ -7,6 +7,7 @@ import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 const route = useRoute()
 const router = useRouter()
@@ -78,8 +79,15 @@ const images = computed(() => {
 
 const mainImage = computed(() => {
   const imgs = images.value
-  return imgs[selectedImage.value]?.image_url || imgs[0]?.image_url || ''
+  return imgs[selectedImage.value]?.image_url || imgs[0]?.image_url || defaultImage
 })
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.dataset.fallbackApplied) return
+  img.dataset.fallbackApplied = '1'
+  img.src = defaultImage
+}
 
 const basePrice = computed(() => product.value?.price || 0)
 
@@ -249,7 +257,7 @@ function buyNow() {
           <div class="product-main">
             <div class="product-gallery">
               <div class="gallery-main">
-                <img :src="mainImage" :alt="product.name" />
+                <img :src="mainImage" :alt="product.name" @error="onImgError" />
               </div>
               <div v-if="images.length > 1" class="gallery-thumbs">
                 <button
@@ -258,7 +266,7 @@ function buyNow() {
                   :class="['thumb-btn', { active: selectedImage === idx }]"
                   @click="selectedImage = idx as number"
                 >
-                  <img :src="img.image_url" :alt="'Thumb ' + idx" />
+                  <img :src="img.image_url || defaultImage" :alt="'Thumb ' + idx" @error="onImgError" />
                 </button>
               </div>
             </div>
