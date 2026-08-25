@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { inject, ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
 
-const router = useRouter()
 const toggleSidebar = inject('toggleSidebar', () => {})
 const userName = ref('Undefined')
 const userRoleText = ref('Undefined')
@@ -54,7 +52,7 @@ const handleLogout = () => {
     showConfirmButton: false
   })
   setTimeout(() => {
-    router.push('/login')
+    window.location.href = '/login'
   }, 1000)
 }
 </script>

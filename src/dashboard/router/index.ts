@@ -4,11 +4,6 @@ const router = createRouter({
   history: createWebHistory('/dashboard/'),
   routes: [
     {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/dashboard/views/LoginView.vue'),
-    },
-    {
       path: '/',
       component: () => import('@/dashboard/layouts/AppLayout.vue'),
       children: [
@@ -183,11 +178,9 @@ router.beforeEach((to, _, next) => {
   const isVendor = parsedUser ? (parsedUser.roles || []).some((r: any) => r.role_code === 'eUser-Vendor') : false
   const isAdmin = parsedUser ? (parsedUser.roles || []).some((r: any) => ['eUser-Admin', 'eUser-SuperAdmin'].includes(r.role_code)) : false
 
-  if (to.name !== 'login' && !isAuthenticated) {
-    next({ name: 'login' })
-  } else if (to.name === 'login' && isAuthenticated) {
-    next({ name: 'dashboard' })
-  } else if (isCustomer && to.name !== 'login') {
+  if (!isAuthenticated) {
+    window.location.href = '/login'
+  } else if (isCustomer) {
     window.location.href = '/'
   } else if (isVendor && !isAdmin && to.name && adminRoutes.has(to.name as string)) {
     next({ name: 'dashboard' })
