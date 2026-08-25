@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
@@ -8,12 +7,11 @@ import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
 import defaultImage from '@/assets/default/nothing.png'
 
-const router = useRouter()
 const auth = useAuthStore()
 
 const checkoutItems = ref<any[]>([])
 const deliveryInfo = ref({
-  name: '', phone: '', address: '', city: '', province: '', postalCode: '',
+  name: '', phone: '', email: '', address: '', city: '', province: '', postalCode: '',
   notes: '', deliveryDate: '', deliveryTime: '',
 })
 const submitting = ref(false)
@@ -23,7 +21,11 @@ const serviceFeePercent = ref(5) // default 5%, akan di-fetch dari DB
 const DELIVERY_FEE = ref(25000) // default, akan di-fetch dari DB
 
 onMounted(async () => {
-  if (!auth.isLoggedIn) { router.push('/login'); return }
+  if (auth.isLoggedIn && auth.user) {
+    deliveryInfo.value.name = auth.user.full_name || ''
+    deliveryInfo.value.phone = auth.user.phone || ''
+    deliveryInfo.value.email = auth.user.email || ''
+  }
   loadCheckoutItems()
   try {
     const res = await fetch('/api/company-info')
@@ -144,8 +146,8 @@ function formatExtras(extras: any[]) {
 }
 
 async function submitOrder() {
-  if (!deliveryInfo.value.name || !deliveryInfo.value.phone || !deliveryInfo.value.address) {
-    errorMsg.value = 'Please fill in recipient name, phone, and address'
+  if (!deliveryInfo.value.name || !deliveryInfo.value.phone || !deliveryInfo.value.address || (!auth.isLoggedIn && !deliveryInfo.value.email)) {
+    errorMsg.value = 'Please fill in recipient name, phone, address, and email'
     return
   }
   submitting.value = true
@@ -160,6 +162,11 @@ async function submitOrder() {
       method: 'POST',
       body: JSON.stringify({
         id_vendor: vendorId,
+        guest_info: !auth.isLoggedIn ? {
+          email: deliveryInfo.value.email,
+          name: deliveryInfo.value.name,
+          phone: deliveryInfo.value.phone,
+        } : undefined,
         items: checkoutItems.value.map(i => ({
           id_product: i.id_product,
           id_variant: i.id_variant || null,
@@ -281,6 +288,10 @@ async function submitOrder() {
                 <label>Recipient Phone *</label>
                 <input v-model="deliveryInfo.phone" type="tel" class="form-control" placeholder="Phone number" />
               </div>
+            </div>
+            <div v-if="!auth.isLoggedIn" class="form-group">
+              <label>Email Address *</label>
+              <input v-model="deliveryInfo.email" type="email" class="form-control" placeholder="Email address (for checking booking history)" />
             </div>
             <div class="form-group">
               <label>Delivery Address *</label>

@@ -1,15 +1,48 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as orderService from './orders.service'
 import { createError } from '../../middleware/error-handler'
+import * as userService from '../users/users.service'
+import prisma from '../../db'
 
 const ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'packed', 'ready_for_delivery', 'shipped', 'delivered', 'completed', 'cancelled']
 const FULFILLMENT_STATUSES = ['pending', 'packed', 'ready_for_delivery', 'shipped', 'delivered', 'completed']
 
 export async function createOrder(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_vendor, items, delivery_info, notes, ...data } = req.body
+    const { id_vendor, items, delivery_info, notes, guest_info, ...data } = req.body
     if (!id_vendor || !items?.length) throw createError(400, 'id_vendor and items are required')
-    const order = await orderService.createOrder(req.user!.id_user, Number(id_vendor), items, delivery_info, notes, data)
+
+    let userId = req.user?.id_user
+
+    if (!userId && guest_info && guest_info.email) {
+      const email = guest_info.email.toLowerCase().trim()
+      const fullName = guest_info.fullName || guest_info.full_name || guest_info.name || 'Customer'
+      const phone = guest_info.phone || null
+
+      let user = await userService.findByEmail(email)
+      if (!user) {
+        user = await userService.create({
+          email,
+          password: '123456',
+          full_name: fullName,
+          phone,
+        })
+        await prisma.user_Role.create({
+          data: {
+            email,
+            role_code: 'eUser-Customer',
+            user_created: 'SYSTEM',
+          }
+        })
+      }
+      userId = user.id_user
+    }
+
+    if (!userId) {
+      throw createError(401, 'Authentication required or guest_info.email must be provided')
+    }
+
+    const order = await orderService.createOrder(userId, Number(id_vendor), items, delivery_info, notes, data)
     res.status(201).json({ data: order })
   } catch (err) {
     next(err)

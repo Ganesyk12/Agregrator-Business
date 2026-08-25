@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as bookingService from './bookings.service'
 import { createError } from '../../middleware/error-handler'
+import * as userService from '../users/users.service'
+import prisma from '../../db'
 
 export async function getAll(req: Request, res: Response, next: NextFunction) {
   try {
@@ -43,13 +45,40 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_user, package_ids, products, event_date, event_location, total_price, dp_amount, notes } = req.body
-    if (!id_user || !package_ids?.length || !event_date || total_price === undefined) {
-      throw createError(400, 'id_user, package_ids (array), event_date, and total_price are required')
+    const { id_user, guest_info, package_ids, products, event_date, event_location, total_price, dp_amount, notes } = req.body
+    
+    let userId = req.user?.id_user || (id_user ? Number(id_user) : null)
+
+    if (!userId && guest_info && guest_info.email) {
+      const email = guest_info.email.toLowerCase().trim()
+      const fullName = guest_info.fullName || guest_info.full_name || 'Customer'
+      const phone = guest_info.phone || null
+
+      let user = await userService.findByEmail(email)
+      if (!user) {
+        user = await userService.create({
+          email,
+          password: '123456',
+          full_name: fullName,
+          phone,
+        })
+        await prisma.user_Role.create({
+          data: {
+            email,
+            role_code: 'eUser-Customer',
+            user_created: 'SYSTEM',
+          }
+        })
+      }
+      userId = user.id_user
+    }
+
+    if (!userId || !package_ids?.length || !event_date || total_price === undefined) {
+      throw createError(400, 'id_user (or guest_info), package_ids (array), event_date, and total_price are required')
     }
 
     const booking = await bookingService.create({
-      id_user: Number(id_user),
+      id_user: Number(userId),
       package_ids: (package_ids as number[]).map(Number),
       products: products ? (products as any[]) : undefined,
       event_date: new Date(event_date),

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Navbar from '@/components/layout/Navbar.vue'
 import Swal from 'sweetalert2'
@@ -17,7 +16,6 @@ import SearchPopup from '@/components/layout/SearchPopup.vue'
 import Footer from '@/components/layout/Footer.vue'
 import AddServiceModal from '@/components/booking/AddServiceModal.vue'
 
-const router = useRouter()
 const auth = useAuthStore()
 
 interface BookedVendor {
@@ -413,12 +411,6 @@ const totalExtrasCount = computed(() => {
 })
 
 async function handleProceedToPayment() {
-  if (!auth.isLoggedIn) {
-    Toast.fire({ icon: 'warning', title: 'Please log in first.' })
-    router.push('/login')
-    return
-  }
-
   if (bookedVendors.value.length === 0) {
     Toast.fire({ icon: 'warning', title: 'No packages selected.' })
     return
@@ -496,7 +488,12 @@ async function handleProceedToPayment() {
       })
       
     const payload = {
-      id_user: auth.user!.id_user,
+      id_user: auth.user?.id_user,
+      guest_info: !auth.isLoggedIn ? {
+        email: customer.value.email,
+        fullName: customer.value.fullName,
+        phone: customer.value.phone
+      } : undefined,
       package_ids: packageIds,
       products: productsPayload,
       event_date: new Date(event.value.date).toISOString(),

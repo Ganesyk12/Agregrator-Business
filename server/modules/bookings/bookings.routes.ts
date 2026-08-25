@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authenticate } from '../../middleware/auth'
+import { authenticate, optionalAuthenticate } from '../../middleware/auth'
 import * as bookingCtrl from './bookings.controller'
 
 const router = Router()
@@ -124,7 +124,7 @@ router.get('/user/me', authenticate, bookingCtrl.getMyBookings)
  *         description: Booking tidak ditemukan
  */
 router.get('/:id', bookingCtrl.getById)
-router.post('/', bookingCtrl.create)
+router.post('/', optionalAuthenticate, bookingCtrl.create)
 router.put('/:id', bookingCtrl.update)
 router.delete('/:id', bookingCtrl.remove)
 
