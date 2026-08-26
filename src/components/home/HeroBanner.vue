@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import defaultImage from '@/assets/default/nothing.png'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const router = useRouter()
 
@@ -48,6 +52,7 @@ const mouseY = ref(0)
 const heroRef = ref<HTMLElement | null>(null)
 let intervalId: ReturnType<typeof setInterval> | null = null
 let pollId: ReturnType<typeof setInterval> | null = null
+let ctx: gsap.Context | null = null
 async function fetchPortfolios() {
   try {
     const res = await fetch('/api/portfolios')
@@ -122,14 +127,96 @@ function displayCategory(cat: { category_name?: string } | null | undefined, ven
 }
 
 onMounted(async () => {
+  // GSAP intro animation for text and gradient spheres
+  ctx = gsap.context(() => {
+    gsap.from('.hero-tagline', {
+      opacity: 0,
+      x: -30,
+      duration: 0.8,
+      ease: 'power3.out',
+    })
+
+    gsap.from('.hero-headline', {
+      opacity: 0,
+      y: 40,
+      duration: 1,
+      delay: 0.2,
+      ease: 'power3.out',
+    })
+
+    gsap.from('.hero-description', {
+      opacity: 0,
+      y: 30,
+      duration: 1,
+      delay: 0.4,
+      ease: 'power3.out',
+    })
+
+    gsap.from('.hero-actions', {
+      opacity: 0,
+      y: 20,
+      duration: 0.8,
+      delay: 0.6,
+      ease: 'power3.out',
+    })
+
+    gsap.from('.trust-badge', {
+      opacity: 0,
+      y: 15,
+      stagger: 0.15,
+      duration: 0.8,
+      delay: 0.8,
+      ease: 'power3.out',
+    })
+
+    // Float animation for background gradient spheres
+    gsap.to('.sphere-1', {
+      x: 30,
+      y: -20,
+      duration: 6,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut',
+    })
+
+    gsap.to('.sphere-2', {
+      x: -40,
+      y: 30,
+      duration: 8,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut',
+    })
+  }, heroRef.value || undefined)
+
   await fetchPortfolios()
   intervalId = setInterval(advanceSlide, 4000)
   pollId = setInterval(fetchPortfolios, 30000)
+
+  // Wait for Vue to render the cards
+  await nextTick()
+
+  if (portfolios.value.length > 0 && ctx) {
+    ctx.add(() => {
+      gsap.from('.card-wrapper', {
+        opacity: 0,
+        scale: 0.8,
+        x: 100,
+        stagger: 0.1,
+        duration: 1.2,
+        ease: 'back.out(1.2)',
+      })
+    })
+  }
+
+  // Recalculate ScrollTrigger positions for all elements on the page
+  ScrollTrigger.refresh()
 })
 
 onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
   if (pollId) clearInterval(pollId)
+  if (ctx) ctx.revert()
 })
 
 function goToPortfolio(id: number) {

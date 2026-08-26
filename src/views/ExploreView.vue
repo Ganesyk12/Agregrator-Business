@@ -40,32 +40,42 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const [venRes, porRes, prodRes] = await Promise.all([
+    const [venRes, porRes, prodRes, pkgRes] = await Promise.all([
       fetch('/api/vendors'),
       fetch('/api/portfolios'),
-      fetch('/api/products')
+      fetch('/api/products'),
+      fetch('/api/packages')
     ])
     const venJson = await venRes.json()
     const porJson = await porRes.json()
     const prodJson = await prodRes.json()
+    const pkgJson = await pkgRes.json()
     const vendors = venJson.data || []
     const portfolios = porJson.data || []
     const products = prodJson.data || []
+    const packages = pkgJson.data || []
 
     allVendors.value = vendors
       .filter((v: any) => v.status !== 'inactive')
-      .map((v: any) => ({
-        id: v.id_vendor,
-        name: v.business_name,
-        category: v.category,
-        location: v.location || '',
-        rating: 0,
-        reviews: 0,
-        startingPrice: 0,
-        image: v.avatar_url || '',
-        logo: (v.business_name || 'V')[0],
-        verified: v.status === 'verified'
-      }))
+      .map((v: any) => {
+        const vendorPkgs = packages.filter((pkg: any) => pkg.id_vendor === v.id_vendor && pkg.status === 'active')
+        const vendorProds = products.filter((prod: any) => prod.id_vendor === v.id_vendor && prod.status === 'active')
+        const prices = [...vendorPkgs.map((p: any) => p.price), ...vendorProds.map((p: any) => p.price)]
+        const minPrice = prices.length > 0 ? Math.min(...prices) : 0
+
+        return {
+          id: v.id_vendor,
+          name: v.business_name,
+          category: v.category,
+          location: v.location || '',
+          rating: 0,
+          reviews: 0,
+          startingPrice: minPrice,
+          image: v.avatar_url || '',
+          logo: (v.business_name || 'V')[0],
+          verified: v.status === 'verified'
+        }
+      })
 
     const portfolioInspirations = portfolios
       .filter((p: any) => p.vendor?.status !== 'inactive')

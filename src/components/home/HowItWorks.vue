@@ -1,4 +1,13 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted, ref } from 'vue'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
+const sectionRef = ref<HTMLElement | null>(null)
+let ctx: gsap.Context | null = null
+
 interface Step {
   number: string
   title: string
@@ -32,12 +41,43 @@ const steps: Step[] = [
     illustration: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=300&h=300&fit=crop'
   }
 ]
+
+onMounted(() => {
+  ctx = gsap.context(() => {
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.value,
+        start: 'top bottom-=100px',
+        toggleActions: 'play none none none',
+      }
+    })
+
+    tl.from('.section-header', {
+      y: 40,
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power2.out'
+    })
+    .from('.step-item', {
+      x: -40,
+      opacity: 0,
+      stagger: 0.15,
+      duration: 0.8,
+      ease: 'power2.out'
+    }, '-=0.4')
+  }, sectionRef.value || undefined)
+  ScrollTrigger.refresh()
+})
+
+onUnmounted(() => {
+  if (ctx) ctx.revert()
+})
 </script>
 
 <template>
-  <section class="how-sigyn-works">
+  <section ref="sectionRef" class="how-sigyn-works">
     <div class="container">
-      <div class="section-header text-center" data-aos="fade-up">
+      <div class="section-header text-center">
         <span class="section-label">How It Works</span>
         <h2 class="section-title">How SIGYN Works</h2>
         <p class="section-desc">Empat langkah mudah mewujudkan momen impian Anda</p>
@@ -48,8 +88,6 @@ const steps: Step[] = [
           v-for="(step, i) in steps"
           :key="i"
           class="step-item"
-          data-aos="fade-up"
-          :data-aos-delay="i * 150"
         >
           <div class="step-illustration">
             <div class="step-img-wrapper">
