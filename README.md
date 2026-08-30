@@ -71,3 +71,22 @@ pnpm test:e2e --debug
 ```sh
 pnpm lint
 ```
+
+## Guard Init
+
+Generate with initial activation data:
+
+```sh
+pnpm guard:init
+```
+
+Resulting file:
+
+```json
+{
+  "deploy_at": "2026-08-01T00:00:00.000Z",
+  "activate_period": 30,
+  "activated_at": "2026-08-01T00:00:00.000Z",
+  "user_activate": null
+}
+```
