@@ -1,42 +1,13 @@
 import { Router } from 'express'
 import multer from 'multer'
-import path from 'path'
-import fs from 'fs'
+import { saveUpload } from './r2.service'
+
 const router = Router()
 
-const baseDir = path.join(process.cwd(), 'public', 'uploads', 'portfolio')
-
-if (!fs.existsSync(baseDir)) {
-  fs.mkdirSync(baseDir, { recursive: true })
-}
-
-const storage = multer.diskStorage({
-  destination: async (req, _file, cb) => {
-    try {
-      let vendorCode = req.query.vendor_code || req.body?.vendor_code
-      let category = req.query.category || req.body?.category || 'products'
-
-      if (!vendorCode || typeof vendorCode !== 'string' || !vendorCode.trim()) {
-        vendorCode = 'general'
-      }
-      if (!category || typeof category !== 'string' || !category.trim()) {
-        category = 'products'
-      }
-
-      const targetDir = path.join(baseDir, String(vendorCode), String(category))
-      if (!fs.existsSync(targetDir)) {
-        fs.mkdirSync(targetDir, { recursive: true })
-      }
-      cb(null, targetDir)
-    } catch (err: any) {
-      cb(err, '')
-    }
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, uniqueSuffix + path.extname(file.originalname))
-  },
-})
+/**
+ * In-memory storage: files are buffered then streamed to Cloudflare R2.
+ */
+const storage = multer.memoryStorage()
 
 const fileFilter = (_req: any, file: any, cb: any) => {
   const allowedMimeTypes = [
@@ -50,10 +21,15 @@ const fileFilter = (_req: any, file: any, cb: any) => {
   }
 }
 
+// Per-file max 10MB. Total upload body per request max 50MB (fieldSize),
+// so accumulation across multiple files in a single request stays bounded.
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 50 * 1024 * 1024 },
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+    fieldSize: 50 * 1024 * 1024,
+  },
 })
 
 /**
@@ -61,7 +37,7 @@ const upload = multer({
  * /api/upload:
  *   post:
  *     tags: [Upload]
- *     summary: Upload media (gambar/video)
+ *     summary: Upload media (gambar/video) ke Cloudflare R2
  *     parameters:
  *       - in: query
  *         name: vendor_code
@@ -94,9 +70,14 @@ const upload = multer({
  *                 filename: { type: string }
  */
 router.post('/', (req: any, res: any) => {
-  upload.single('file')(req, res, (err: any) => {
+  upload.single('file')(req, res, async (err: any) => {
     if (err) {
-      return res.status(400).json({ error: { message: err.message } })
+      const code = (err as any)?.code
+      const message =
+        code === 'LIMIT_FILE_SIZE'
+          ? 'Ukuran file melebihi batas maksimal 10 MB.'
+          : err.message
+      return res.status(400).json({ error: { message } })
     }
 
     try {
@@ -114,11 +95,19 @@ router.post('/', (req: any, res: any) => {
         category = 'products'
       }
 
-      const fileUrl = `/uploads/portfolio/${vendorCode}/${category}/${req.file.filename}`
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+      const ext = sanitizeExt(req.file.originalname)
+      const filename = `${uniqueSuffix}${ext}`
+
+      const url = await saveUpload('portfolio', `${vendorCode}/${category}`, {
+        body: req.file.buffer,
+        contentType: req.file.mimetype,
+        key: filename,
+      })
 
       res.json({
-        url: fileUrl,
-        filename: req.file.filename,
+        url,
+        filename,
         mimetype: req.file.mimetype,
         size: req.file.size,
       })
@@ -130,17 +119,9 @@ router.post('/', (req: any, res: any) => {
 
 router.post('/payment-proof', (req: any, res: any) => {
   const requestNumber = req.query.request_number || req.body.request_number || 'unknown'
-  const targetDir = path.join(process.cwd(), 'public', 'uploads', 'payments', requestNumber)
-  if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true })
 
   const paymentUpload = multer({
-    storage: multer.diskStorage({
-      destination: (_req: any, _file: any, cb: any) => cb(null, targetDir),
-      filename: (_req: any, file: any, cb: any) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        cb(null, uniqueSuffix + path.extname(file.originalname))
-      },
-    }),
+    storage,
     fileFilter: (_req: any, file: any, cb: any) => {
       const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
       cb(null, allowed.includes(file.mimetype))
@@ -148,16 +129,46 @@ router.post('/payment-proof', (req: any, res: any) => {
     limits: { fileSize: 10 * 1024 * 1024 },
   })
 
-  paymentUpload.single('file')(req, res, (err: any) => {
-    if (err) return res.status(400).json({ error: { message: err.message } })
+  paymentUpload.single('file')(req, res, async (err: any) => {
+    if (err) {
+      const code = (err as any)?.code
+      const message =
+        code === 'LIMIT_FILE_SIZE'
+          ? 'Ukuran file melebihi batas maksimal 10 MB.'
+          : err.message
+      return res.status(400).json({ error: { message } })
+    }
     if (!req.file) return res.status(400).json({ error: { message: 'File tidak ditemukan' } })
-    res.json({
-      url: `/uploads/payments/${requestNumber}/${req.file.filename}`,
-      filename: req.file.filename,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-    })
+
+    try {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+      const ext = sanitizeExt(req.file.originalname)
+      const filename = `${uniqueSuffix}${ext}`
+
+      const url = await saveUpload('payment', `${requestNumber}`, {
+        body: req.file.buffer,
+        contentType: req.file.mimetype,
+        key: filename,
+      })
+
+      res.json({
+        url,
+        filename,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+      })
+    } catch (error: any) {
+      res.status(500).json({ error: { message: error.message } })
+    }
   })
 })
+
+/**
+ * Extract a safe lowercase file extension from the original filename.
+ */
+function sanitizeExt(originalname: string): string {
+  const ext = originalname.split('.').pop() || ''
+  return /^[a-z0-9]+$/i.test(ext) ? `.${ext.toLowerCase()}` : ''
+}
 
 export default router
