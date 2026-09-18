@@ -131,6 +131,30 @@ export async function updateByOrderId(
   data: { status?: string; paid_at?: Date }
 ): Promise<void> {
   console.log('[updateByOrderId] Looking for order_id:', orderId)
+
+  if (orderId.startsWith('ORDER-')) {
+    const orderPk = Number(orderId.split('-')[1])
+    if (orderPk) {
+      const updateData: any = {}
+      if (data.status === 'paid') {
+        updateData.payment_status = 'paid'
+        updateData.status = 'confirmed'
+      } else if (data.status) {
+        updateData.payment_status = data.status
+      }
+      try {
+        await prisma.order.update({
+          where: { id_order: orderPk },
+          data: updateData,
+        })
+        console.log('[updateByOrderId] Updated product Order', orderPk, '→', updateData)
+      } catch (err) {
+        console.error('[updateByOrderId] Failed to update product Order', orderPk, err)
+      }
+    }
+    return
+  }
+
   const payment = await prisma.bookingPayment.findFirst({
     where: { order_id: orderId },
   })

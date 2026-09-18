@@ -163,47 +163,4 @@ const values = [
   </div>
 </template>
 
-<style scoped>
-.about-hero {
-  height: 50vh;
-  min-height: 350px;
-  background-size: cover;
-  background-position: center;
-}
-.hero-overlay {
-  background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%);
-}
-.letter-spacing {
-  letter-spacing: 0.15em;
-}
-.logo-section img {
-  filter: brightness(0.9);
-}
-.value-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: var(--bs-light);
-  color: var(--bs-secondary);
-}
-.value-card {
-  border-radius: 16px;
-  transition: all 0.3s ease;
-}
-.value-card:hover {
-  background: var(--bs-light);
-  transform: translateY(-4px);
-}
-.service-item {
-  border-radius: 16px;
-  background: #fff;
-  transition: all 0.3s ease;
-}
-.service-item:hover {
-  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-  transform: translateY(-4px);
-}
-.service-icon {
-  font-size: 2.5rem;
-}
-</style>
+

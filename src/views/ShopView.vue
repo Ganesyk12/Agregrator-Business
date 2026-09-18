@@ -164,44 +164,4 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
-.shop-header {
-  padding-top: 120px !important;
-  padding-bottom: 48px !important;
-}
-.card-img-wrapper {
-  position: relative;
-  height: 220px;
-  overflow: hidden;
-}
-.card-img-wrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-.portfolio-card:hover .card-img-wrapper img {
-  transform: scale(1.1);
-}
-.category-badge {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  background: rgba(0,0,0,0.7);
-  color: #fff;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.card {
-  border-radius: 12px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.portfolio-card:hover .card {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.12) !important;
-}
-</style>
+

@@ -60,25 +60,3 @@ onMounted(async () => {
     <Footer />
   </div>
 </template>
-
-<style scoped>
-.gallery-header {
-  text-align: center;
-  padding: 120px 20px 20px;
-}
-.gallery-title {
-  font-size: 2rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 8px;
-}
-.gallery-subtitle {
-  color: #666;
-  font-size: 1rem;
-}
-.loading-state {
-  text-align: center;
-  padding: 60px;
-  color: #888;
-}
-</style>
