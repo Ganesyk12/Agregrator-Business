@@ -15,9 +15,19 @@ function or(...keys: string[]): string {
   return ''
 }
 
+function parseEmailList(val?: string): string[] {
+  if (!val) return []
+  return val
+    .split(',')
+    .map(e => e.trim())
+    .filter(e => e.length > 0)
+}
+
 export const env = {
   port: Number(req('PORT')),
-  nodeEnv: req('NODE_ENV'),
+  nodeEnv: process.env.NODE_ENV || 'development',
+  isDevelopment: (process.env.NODE_ENV || 'development').trim().toLowerCase() === 'development',
+  isProduction: (process.env.NODE_ENV || '').trim().toLowerCase() === 'production',
   jwtSecret: req('JWT_SECRET'),
   corsOrigin: req('CORS_ORIGIN'),
   databaseUrl: req('DATABASE_URL'),
@@ -29,5 +39,7 @@ export const env = {
   r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
   r2Bucket: or('R2_BUCKET_NAME', 'R2_BUCKET'),
   r2PublicUrl: or('R2_PUBLIC_DOMAIN', 'R2_PUBLIC_URL'),
+  mailDevTargetEmails: parseEmailList(process.env.MAIL_DEV_TARGET_EMAILS || process.env.DEV_MAIL_RECIPIENTS || ''),
 }
+
 

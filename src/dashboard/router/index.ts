@@ -129,6 +129,11 @@ const router = createRouter({
           component: () => import('@/dashboard/views/CompanyInfoView.vue'),
         },
         {
+          path: 'smtp-settings',
+          name: 'smtp-settings',
+          component: () => import('@/dashboard/views/SmtpSettingsView.vue'),
+        },
+        {
           path: 'vendor-profile',
           name: 'vendor-profile',
           component: () => import('@/dashboard/views/VendorProfileEditView.vue'),
@@ -166,7 +171,7 @@ const router = createRouter({
 
 const adminRoutes = new Set([
   'payments', 'rfp-payments', 'invoices', 'invoice-detail',
-  'vendors', 'categories', 'users', 'roles', 'user-roles', 'company-info',
+  'vendors', 'categories', 'users', 'roles', 'user-roles', 'company-info', 'smtp-settings',
 ])
 
 router.beforeEach((to, _, next) => {

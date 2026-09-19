@@ -827,5 +827,20 @@ model ContactMessage {
   is_read       Boolean  @default(false)
   date_created  DateTime @default(now())
   date_modified DateTime @updatedAt
+}
 
+model SmtpSetting {
+  id_smtp       Int      @id @default(autoincrement())
+  host          String   @default("smtp.gmail.com")
+  port          Int      @default(587)
+  secure        Boolean  @default(false)
+  username      String   @default("")
+  password      String   @default("")
+  from_name     String?  @default("SIGYN")
+  from_email    String?  @default("")
+  is_active     Boolean  @default(true)
+  date_created  DateTime @default(now())
+  date_modified DateTime @updatedAt
+  user_created  String?
+  user_modified String?
 }

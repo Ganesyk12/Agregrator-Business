@@ -31,6 +31,7 @@ import productRoutes from './modules/products/products.routes'
 import orderRoutes from './modules/orders/orders.routes'
 import paymentTermRoutes from './modules/payment-terms/payment-terms.routes'
 import reviewsRoutes from './modules/reviews/reviews.routes'
+import smtpRoutes from './modules/smtp/smtp.routes'
 
 const app = express()
 
@@ -76,6 +77,7 @@ app.use('/api/products', productRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/payment-terms', paymentTermRoutes)
 app.use('/api/reviews', reviewsRoutes)
+app.use('/api/smtp', smtpRoutes)
 
 app.use(errorHandler)
 

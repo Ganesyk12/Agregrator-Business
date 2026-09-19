@@ -159,7 +159,8 @@ const menuSections = computed(() => {
         { label: 'Users', icon: 'fa-users', to: '/users' },
         { label: 'Roles', icon: 'fa-lock', to: '/roles' },
         { label: 'User Access', icon: 'fa-tag', to: '/user-roles' },
-        { label: 'Company Info', icon: 'fa-building-o', to: '/company-info' }
+        { label: 'Company Info', icon: 'fa-building-o', to: '/company-info' },
+        { label: 'SMTP Settings', icon: 'fa-envelope-o', to: '/smtp-settings' }
       ]
     })
   }
