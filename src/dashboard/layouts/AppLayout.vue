@@ -68,29 +68,3 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
-
-<style>
-/* Custom style fixes for SPA page header under Flat Able */
-.pcoded-main-container {
-  min-height: 100vh;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.pcoded-content {
-  flex: 1 0 auto !important;
-}
-
-.dashboard-footer {
-  flex-shrink: 0 !important;
-  background-color: #fff;
-  padding: 15px 30px !important;
-  z-index: 1;
-}
-
-/* Make all modals scrollable if content exceeds screen height */
-.modal-body {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-</style>

@@ -356,12 +356,3 @@ const pageNumbers = computed(() => {
     @save="handleSave"
   />
 </template>
-
-<style scoped>
-.table-wrap th {
-  background: #f5f7fa;
-}
-.table-wrap td {
-  vertical-align: middle;
-}
-</style>

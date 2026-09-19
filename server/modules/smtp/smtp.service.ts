@@ -1,7 +1,25 @@
 import nodemailer from 'nodemailer'
 import prisma from '../../db'
 import { env } from '../../config/env'
-import type { SmtpSetting, SmtpSettingResponse, UpdateSmtpInput, TestSmtpInput, SendMailOptions } from './smtp.types'
+import type {
+  SmtpSetting,
+  SmtpSettingResponse,
+  UpdateSmtpInput,
+  TestSmtpInput,
+  SendMailOptions,
+  BookingEmailPayload,
+  OrderEmailPayload,
+  PaymentRequestEmailPayload,
+  ReceiptEmailPayload,
+  NotificationEmailPayload
+} from './smtp.types'
+import {
+  renderBookingEmail,
+  renderOrderEmail,
+  renderPaymentRequestEmail,
+  renderReceiptEmail,
+  renderNotificationEmail
+} from './email-templates'
 
 /**
  * Get raw SMTP config from database or create default if not exists
@@ -288,5 +306,55 @@ export async function sendEmail(options: SendMailOptions): Promise<{ success: bo
       reason: error.message || 'Failed to send email'
     }
   }
+}
+
+
+//  Modular: Kirim Bukti / Konfirmasi Booking
+ 
+export async function sendBookingConfirmationEmail(
+  to: string | string[],
+  payload: BookingEmailPayload
+) {
+  const { subject, html, text } = renderBookingEmail(payload)
+  return sendEmail({ to, subject, html, text })
+}
+
+
+//  Modular: Kirim Invoice / Konfirmasi Pesanan (Order)
+export async function sendOrderInvoiceEmail(
+  to: string | string[],
+  payload: OrderEmailPayload
+) {
+  const { subject, html, text } = renderOrderEmail(payload)
+  return sendEmail({ to, subject, html, text })
+}
+
+//  Modular: Kirim Permintaan Pembayaran / RFP (Request For Payment)
+export async function sendPaymentRequestEmail(
+  to: string | string[],
+  payload: PaymentRequestEmailPayload
+) {
+  const { subject, html, text } = renderPaymentRequestEmail(payload)
+  return sendEmail({ to, subject, html, text })
+}
+
+
+//  Modular: Kirim Kuitansi / Bukti Pembayaran (Receipt)
+export async function sendReceiptEmail(
+  to: string | string[],
+  payload: ReceiptEmailPayload
+) {
+  const { subject, html, text } = renderReceiptEmail(payload)
+  return sendEmail({ to, subject, html, text })
+}
+
+
+//  Modular: Kirim Notifikasi Umum (Alert / Info)
+export async function sendNotificationEmail(
+  to: string | string[],
+  payload: NotificationEmailPayload
+) {
+  const { subject, html, text } = renderNotificationEmail(payload)
+  return sendEmail({ to, subject, html, text })
 }
 

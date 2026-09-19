@@ -401,20 +401,3 @@ function formatCurrency(value: number) {
     @save="handleSave"
   />
 </template>
-
-<style scoped>
-.input-group-addon {
-  background: #fff;
-  border-right: none;
-}
-.input-group-addon + .form-control {
-  border-left: none;
-}
-.table > thead > tr > th {
-  white-space: nowrap;
-}
-.table-wrap {
-  overflow-x: auto;
-  width: 100%;
-}
-</style>

@@ -634,11 +634,3 @@ onMounted(fetchRequest)
     @save="handleSave"
   />
 </template>
-
-<style scoped>
-@media (max-width: 767px) {
-  .btn { margin-bottom: 4px; }
-  .table td, .table th { font-size: 12px; padding: 6px 4px; }
-  .table-responsive { font-size: 12px; }
-}
-</style>

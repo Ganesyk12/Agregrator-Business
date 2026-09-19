@@ -391,20 +391,3 @@ onMounted(fetchData)
     </div>
   </div>
 </template>
-
-<style scoped>
-@media (max-width: 767px) {
-  .form-horizontal .control-label {
-    text-align: left !important;
-    margin-bottom: 4px;
-    padding-top: 0;
-  }
-  .form-horizontal .col-md-3,
-  .form-horizontal .col-md-9 {
-    width: 100%;
-    float: none;
-  }
-  .btn { margin-bottom: 4px; }
-  .table td, .table th { font-size: 12px; padding: 6px 4px; }
-}
-</style>

@@ -452,13 +452,3 @@ onMounted(fetchSmtpConfig)
     </div>
   </div>
 </template>
-
-<style scoped>
-.smtp-settings-view .card {
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-}
-.form-check-input {
-  cursor: pointer;
-}
-</style>

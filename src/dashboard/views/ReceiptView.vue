@@ -136,24 +136,3 @@ const filtered = computed(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.m-b-20 {
-  margin-bottom: 20px;
-}
-.p-40 {
-  padding: 40px;
-}
-.m-t-10 {
-  margin-top: 10px;
-}
-.font-weight-bold {
-  font-weight: bold;
-}
-.text-c-blue {
-  color: #4099ff;
-}
-@media (max-width: 767px) {
-  .table td, .table th { font-size: 12px; padding: 8px 6px; }
-}
-</style>

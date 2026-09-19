@@ -195,15 +195,3 @@ function outstandingClass(r: PaymentRequest) {
     </div>
   </div>
 </template>
-
-<style scoped>
-.input-group-addon { background: #fff; border-right: none; }
-.input-group-addon + .form-control { border-left: none; }
-.table > thead > tr > th { white-space: nowrap; }
-.table-wrap { overflow-x: auto; width: 100%; }
-
-@media (max-width: 767px) {
-  .table td, .table th { font-size: 12px; padding: 6px 4px; }
-  .btn-xs { padding: 2px 6px; font-size: 11px; }
-}
-</style>

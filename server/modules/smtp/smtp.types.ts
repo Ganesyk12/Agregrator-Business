@@ -60,3 +60,77 @@ export interface SendMailOptions {
   text?: string
   from?: string
 }
+
+export interface BookingEmailPayload {
+  customerName: string
+  bookingCode?: string | number
+  packageName: string
+  vendorName?: string
+  eventDate?: string | Date
+  location?: string
+  totalAmount: number
+  status?: string
+  notes?: string
+  viewUrl?: string
+}
+
+export interface OrderItemEmailPayload {
+  name: string
+  quantity: number
+  price: number
+  total: number
+}
+
+export interface OrderEmailPayload {
+  customerName: string
+  orderNumber: string
+  items: OrderItemEmailPayload[]
+  subtotal: number
+  discountAmount?: number
+  shippingCost?: number
+  grandTotal: number
+  paymentMethod?: string
+  shippingAddress?: string
+  recipientName?: string
+  recipientPhone?: string
+  greetingCardMessage?: string
+  viewUrl?: string
+}
+
+export interface PaymentRequestEmailPayload {
+  recipientName: string
+  invoiceNumber: string
+  requestNumber?: string
+  termName?: string
+  amount: number
+  dueDate?: string | Date
+  paymentStatus?: string
+  bankName?: string
+  bankAccountNumber?: string
+  bankAccountHolder?: string
+  paymentUrl?: string
+  notes?: string
+}
+
+export interface ReceiptEmailPayload {
+  customerName: string
+  receiptNumber: string
+  referenceInvoiceNumber?: string
+  paidAmount: number
+  paymentMethod?: string
+  paymentDate?: string | Date
+  remainingAmount?: number
+  receiptUrl?: string
+}
+
+export interface NotificationEmailPayload {
+  recipientName?: string
+  title: string
+  message: string
+  badgeText?: string
+  badgeColor?: 'blue' | 'green' | 'yellow' | 'red'
+  keyDetails?: Array<{ label: string; value: string }>
+  actionUrl?: string
+  actionText?: string
+}
+
