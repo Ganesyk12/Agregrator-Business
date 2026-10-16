@@ -4,7 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   define: {
-    'import.meta.env.VITE_API_URL': 'window.location.protocol + "//" + window.location.hostname + ":3000"'
+    'import.meta.env.VITE_API_URL': 'window.location.origin'
   },
   plugins: [
     vue(),

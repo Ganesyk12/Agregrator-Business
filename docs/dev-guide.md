@@ -140,3 +140,26 @@ pnpm db:migrate dev --name nama_perubahan
 - Error response selalu: `{ error: { message: "..." } }`
 - Success response (list): `{ data: [...] }`
 - Success response (single): `{ data: { ... } }`
+
+## Deploy
+
+Arsitektur: nginx central (container) → serve static build Vue + proxy `/api/` ke BE container.
+
+### Frontend (static)
+
+```bash
+pnpm build
+# lalu copy dist/* ke path yang di-serve nginx di server
+rsync -a --delete dist/ user@server:/home/debian/git-project/published-app/
+```
+
+### Backend (container)
+
+```bash
+docker compose up -d --build
+```
+
+- BE listen di port container `5050` (di-set via `environment.PORT` di compose; `.env` lokal tetap `PORT=3000` untuk dev).
+- Backend join network external `tunnel` (sama dengan central nginx), jadi `sigyn-srv` saling resolve antar container.
+- Config nginx: copy `config/nginx/sigyn-nginx.conf` ke path conf.d central nginx.
+- Path static di config nginx mengasumsikan host dir FE di-mount ke path yang sama di container nginx.

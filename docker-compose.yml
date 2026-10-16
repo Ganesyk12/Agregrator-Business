@@ -2,12 +2,19 @@ services:
   backend:
     build: .
     container_name: sigyn-srv
+    restart: unless-stopped
     env_file:
       - .env
-    ports:
-      - "3000:3000"
+    environment:
+      PORT: "5050"
     volumes:
       - sigyn-bucket:/app/public/uploads
+    networks:
+      - tunnel
+
+networks:
+  tunnel:
+    external: true
 
 volumes:
   sigyn-bucket:
