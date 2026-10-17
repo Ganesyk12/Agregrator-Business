@@ -7,7 +7,12 @@
         class="masonry-item"
         @click="handleClick(item)"
       >
-        <img :src="item.url" :alt="item.alt || 'Gallery image ' + (index + 1)" loading="lazy" />
+        <img
+          :src="item.url"
+          :alt="item.alt || 'Gallery image ' + (index + 1)"
+          loading="lazy"
+          @error="handleImageError"
+        />
       </div>
     </div>
   </div>
@@ -16,6 +21,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
+import defaultImage from '@/assets/default/nothing.png'
 
 interface GalleryItem {
   url: string
@@ -42,6 +48,13 @@ function handleClick(item: GalleryItem) {
     router.push(item.to)
   } else if (item.id_portfolio) {
     router.push(`/portfolio/${item.id_portfolio}`)
+  }
+}
+
+function handleImageError(event: Event) {
+  const img = event.target as HTMLImageElement
+  if (img.src !== defaultImage) {
+    img.src = defaultImage
   }
 }
 </script>

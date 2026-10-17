@@ -2098,6 +2098,12 @@ textarea.form-control {
   gap: 12px;
 }
 
+.faq-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .faq-item,
 .faq-mini-item {
   background: var(--bs-body-bg, #F7F4EF);
@@ -3045,9 +3051,12 @@ textarea.form-control {
 .contact-hero { background: #fff; padding: 120px 0 60px; border-bottom: 1px solid rgba(0, 0, 0, 0.04); }
 .contact-main { padding: 60px 0 100px; }
 .contact-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: start; }
-.contact-info-side { display: flex; flex-direction: column; gap: 20px; }
+.contact-info-side,
+.contact-form-side { display: flex; flex-direction: column; gap: 20px; }
 .info-card, .hours-card, .social-card, .map-card, .form-card, .faq-mini-card { background: #fff; border-radius: 20px; padding: 28px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04); }
 .info-title { font-family: var(--heading-font, 'Marcellus', serif); font-size: 1.1rem; color: var(--bs-black, #2a2a2a); margin: 0 0 20px; }
+.form-title { font-family: var(--heading-font, 'Marcellus', serif); font-size: 1.1rem; color: var(--bs-black, #2a2a2a); margin: 0 0 4px; }
+.form-desc { font-family: 'Jost', sans-serif; font-size: 0.85rem; color: var(--bs-body-color, #5a5a5a); margin: 0 0 20px; }
 .info-items { display: flex; flex-direction: column; gap: 20px; }
 .info-item { display: flex; gap: 14px; align-items: flex-start; }
 .info-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(184, 156, 123, 0.1); display: flex; align-items: center; justify-content: center; color: var(--bs-secondary, #B89C7B); flex-shrink: 0; }
@@ -3224,4 +3233,397 @@ textarea.form-control {
   font-size: 1rem;
   color: var(--bs-body-color, #5a5a5a);
   margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   22. CATEGORY GALLERY FEED (Photography / MUA / Bouquet)
+   -------------------------------------------------------------------------- */
+.gallery-page .pinterest-gallery,
+.gallery-page .empty-state,
+.gallery-page .loading-state {
+  margin-bottom: 80px;
+}
+
+/* --------------------------------------------------------------------------
+   23. PORTFOLIO DETAIL VIEW (Project Info + Vendor Info Cards)
+   -------------------------------------------------------------------------- */
+.portfolio-detail .detail-content,
+.portfolio-detail .loading-state,
+.portfolio-detail .error-state {
+  margin-bottom: 80px;
+}
+
+.portfolio-detail .project-meta {
+  background: #fff;
+  border: 1.5px solid #e8e8ed;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.portfolio-detail .project-title {
+  font-family: var(--heading-font, 'Marcellus', serif);
+  font-size: 1.75rem;
+  line-height: 1.25;
+  color: var(--bs-black, #2a2a2a);
+  margin: 0;
+}
+
+.portfolio-detail .meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.portfolio-detail .meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 18px;
+  background: #faf9f7;
+  border: 1px solid #eee;
+  border-radius: 12px;
+}
+
+.portfolio-detail .meta-label {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a9a9a;
+}
+
+.portfolio-detail .meta-value {
+  font-family: 'Jost', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--bs-black, #2a2a2a);
+}
+
+.portfolio-detail .category-badge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(184, 156, 123, 0.14);
+  color: #8c7350;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.portfolio-detail .project-description {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--bs-body-color, #5a5a5a);
+  margin: 0;
+}
+
+.portfolio-detail .vendor-card {
+  background: #fff;
+  border: 1.5px solid #e8e8ed;
+  border-radius: 16px;
+  padding: 28px;
+  cursor: default;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease;
+}
+
+.portfolio-detail .vendor-card:hover {
+  transform: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+}
+
+.portfolio-detail .vendor-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.portfolio-detail .vendor-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #b89c7b, #8c7350);
+  box-shadow: 0 4px 14px rgba(184, 156, 123, 0.35);
+}
+
+.portfolio-detail .vendor-avatar-text {
+  color: #fff;
+  font-family: var(--heading-font, 'Marcellus', serif);
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.portfolio-detail .vendor-info {
+  padding: 0;
+  min-width: 0;
+}
+
+.portfolio-detail .vendor-name {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  line-height: 1.3;
+}
+
+.portfolio-detail .vendor-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  color: var(--bs-body-color, #5a5a5a);
+}
+
+.portfolio-detail .stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.portfolio-detail .stat strong {
+  color: #f5b342;
+}
+
+.portfolio-detail .stat-divider {
+  color: #d9d9d9;
+}
+
+.portfolio-detail .vendor-description {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--bs-body-color, #5a5a5a);
+  margin: 0;
+}
+
+.portfolio-detail .vendor-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  color: var(--bs-body-color, #5a5a5a);
+  margin: 0;
+}
+
+.portfolio-detail .location-icon {
+  color: var(--bs-secondary, #B89C7B);
+}
+
+.portfolio-detail .btn-vendor-profile {
+  margin-top: 4px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--bs-black, #2a2a2a);
+  color: #fff;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.portfolio-detail .btn-vendor-profile:hover {
+  background: var(--bs-secondary, #B89C7B);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(184, 156, 123, 0.35);
+}
+
+.portfolio-detail .btn-vendor-profile:active {
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   24. VENDOR PROFILE VIEW (Tabs, Product Actions & Cart Button)
+   -------------------------------------------------------------------------- */
+.vendor-profile .tabs-section {
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.vendor-profile .tabs-nav {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.vendor-profile .tabs-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.vendor-profile .tab-btn {
+  position: relative;
+  padding: 16px 22px;
+  border: none;
+  background: transparent;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #8a8a8a;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.vendor-profile .tab-btn::after {
+  content: '';
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--bs-secondary, #B89C7B);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.3s ease;
+}
+
+.vendor-profile .tab-btn:hover {
+  color: var(--bs-black, #2a2a2a);
+}
+
+.vendor-profile .tab-btn.active {
+  color: var(--bs-black, #2a2a2a);
+}
+
+.vendor-profile .tab-btn.active::after {
+  transform: scaleX(1);
+}
+
+.vendor-profile .product-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.vendor-profile .product-actions .btn-view {
+  flex: 1;
+  width: auto;
+}
+
+.vendor-profile .btn-add-cart {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1.5px solid var(--bs-black, #2a2a2a);
+  border-radius: 999px;
+  background: var(--bs-black, #2a2a2a);
+  color: #fff;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.vendor-profile .btn-add-cart:hover {
+  background: var(--bs-secondary, #B89C7B);
+  border-color: var(--bs-secondary, #B89C7B);
+  color: #fff;
+}
+
+/* Vendor hero: verified badge & meta row */
+.vendor-profile .vendor-badge {
+  display: inline-block;
+  padding: 0;
+  margin: 0 0 12px;
+  background: transparent;
+  backdrop-filter: none;
+  border-radius: 0;
+  font-size: inherit;
+  letter-spacing: normal;
+}
+
+.vendor-profile .verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+}
+
+.vendor-profile .verified-badge::before {
+  content: '✓';
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.vendor-profile .vendor-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 0 0 16px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  color: var(--bs-body-color, #5a5a5a);
+}
+
+.vendor-profile .meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vendor-profile .meta-item strong {
+  color: #f5b342;
+}
+
+.vendor-profile .meta-sep {
+  color: #d5d5d5;
+}
+
+/* --------------------------------------------------------------------------
+   25. RESPONSIVE — DETAIL CARDS
+   -------------------------------------------------------------------------- */
+@media (max-width: 576px) {
+  .portfolio-detail .project-meta,
+  .portfolio-detail .vendor-card {
+    padding: 20px;
+  }
+
+  .portfolio-detail .project-title {
+    font-size: 1.4rem;
+  }
+
+  .portfolio-detail .vendor-avatar {
+    width: 54px;
+    height: 54px;
+  }
+
+  .portfolio-detail .vendor-name {
+    font-size: 1.15rem;
+  }
 }

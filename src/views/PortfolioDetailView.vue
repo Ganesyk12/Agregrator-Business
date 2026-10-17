@@ -133,6 +133,13 @@ function goToVendorProfile() {
   }
 }
 
+function handleImageError(event: Event) {
+  const img = event.target as HTMLImageElement
+  if (img.src !== defaultImage) {
+    img.src = defaultImage
+  }
+}
+
 onMounted(fetchPortfolio)
 </script>
 
@@ -157,7 +164,7 @@ onMounted(fetchPortfolio)
       <!-- 1. Hero Section -->
       <section class="section hero-section">
         <div class="hero-image">
-          <img :src="portfolio.cover_url || defaultImage" :alt="portfolio.title" />
+          <img :src="portfolio.cover_url || defaultImage" :alt="portfolio.title" @error="handleImageError" />
         </div>
       </section>
 
@@ -211,7 +218,7 @@ onMounted(fetchPortfolio)
                   </div>
                 </div>
               </div>
-              <p class="vendor-description">{{ portfolio.vendor?.description }}</p>
+              <p v-if="portfolio.vendor?.description" class="vendor-description">{{ portfolio.vendor.description }}</p>
               <p class="vendor-location" v-if="portfolio.vendor?.location">
                 <span class="location-icon">📍</span> {{ portfolio.vendor.location }}
               </p>
@@ -240,7 +247,7 @@ onMounted(fetchPortfolio)
                 @click="goToPortfolio(item.id_portfolio)"
               >
                 <div class="related-image">
-                  <img :src="item.cover_url || defaultImage" :alt="item.title" loading="lazy" />
+                  <img :src="item.cover_url || defaultImage" :alt="item.title" loading="lazy" @error="handleImageError" />
                 </div>
                 <div class="related-info">
                   <h4 class="related-title">{{ item.title }}</h4>

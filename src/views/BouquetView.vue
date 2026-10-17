@@ -41,7 +41,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
+  <div class="gallery-page">
     <Navbar />
     <SearchPopup />
     <CartOffcanvas />

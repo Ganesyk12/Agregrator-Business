@@ -35,6 +35,13 @@ function prevImage() {
     previewIndex.value--
   }
 }
+
+function handleImageError(event: Event) {
+  const img = event.target as HTMLImageElement
+  if (img.src !== defaultImage) {
+    img.src = defaultImage
+  }
+}
 </script>
 
 <template>
@@ -46,7 +53,12 @@ function prevImage() {
         class="gallery-item"
         @click="openPreview(index)"
       >
-        <img :src="image.image_url || defaultImage" :alt="image.caption || 'Gallery image'" loading="lazy" />
+        <img
+          :src="image.image_url || defaultImage"
+          :alt="image.caption || 'Gallery image'"
+          loading="lazy"
+          @error="handleImageError"
+        />
         <div class="gallery-overlay">
           <span class="overlay-icon">+</span>
         </div>
@@ -59,7 +71,7 @@ function prevImage() {
         <button v-if="previewIndex > 0" class="preview-nav prev" @click="prevImage">&lsaquo;</button>
         <button v-if="previewIndex < images.length - 1" class="preview-nav next" @click="nextImage">&rsaquo;</button>
         <div class="preview-content">
-          <img :src="images[previewIndex].image_url || defaultImage" alt="Preview" />
+          <img :src="images[previewIndex].image_url || defaultImage" alt="Preview" @error="handleImageError" />
           <p v-if="images[previewIndex].caption" class="preview-caption">{{ images[previewIndex].caption }}</p>
         </div>
       </div>
