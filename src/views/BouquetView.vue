@@ -55,6 +55,11 @@ onMounted(async () => {
       <p>Loading products...</p>
     </div>
 
+        <div v-else-if="images.length === 0" class="empty-state">
+      <img :src="defaultImage" alt="No photos" class="empty-image" />
+      <p class="empty-text">Belum ada produk untuk kategori Bouquet Flowers</p>
+    </div>
+
     <PinterestGallery v-else :images="images" />
 
     <Footer />

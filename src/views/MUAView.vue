@@ -53,6 +53,11 @@ onMounted(async () => {
       <p>Loading portfolios...</p>
     </div>
 
+        <div v-else-if="images.length === 0" class="empty-state">
+      <img :src="defaultImage" alt="No photos" class="empty-image" />
+      <p class="empty-text">Belum ada foto untuk kategori Makeup Artist</p>
+    </div>
+
     <PinterestGallery v-else :images="images" />
 
     <Footer />

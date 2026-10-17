@@ -3210,3 +3210,18 @@ textarea.form-control {
   .modal-container { padding: 16px; }
   .modal-scroll-content { padding: 24px 8px 8px; }
 }
+
+.empty-image {
+  max-width: 200px;
+  width: 60%;
+  height: auto;
+  margin-bottom: 16px;
+  opacity: 0.8;
+  filter: grayscale(20%);
+}
+
+.empty-text {
+  font-size: 1rem;
+  color: var(--bs-body-color, #5a5a5a);
+  margin: 0;
+}
