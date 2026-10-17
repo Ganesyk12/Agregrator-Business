@@ -43,3 +43,15 @@ Always preserve the existing architecture and business logic.
 Do not assume.
 
 Ask questions before implementing.
+
+## Git Rules
+
+**CRITICAL - DO NOT COMMIT OR PUSH WITHOUT EXPLICIT USER APPROVAL**
+
+- NEVER commit changes without explicit user request/approval (e.g., "commit", "buat commit", "push", etc.)
+- NEVER push to remote without explicit user request/approval
+- NEVER force push without explicit user request/approval
+- ALWAYS ask permission before running `git commit`, `git push`, `git reset --hard`, `git rebase`, or any history-changing command
+- Show the diff/staged changes and ask for confirmation before committing
+- You may stage (`git add`) files if needed for review, but DO NOT commit/push until explicitly approved
+- This rule is non-negotiable.
