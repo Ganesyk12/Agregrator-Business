@@ -48,3 +48,6 @@ playwright-report/
 # Uploaded assets (dynamic)
 public/uploads/
 
+
+# Local artifacts
+.archify/
