@@ -40,12 +40,14 @@ export async function testConnection(req: Request, res: Response, _next: NextFun
     const result = await smtpService.testConnection(req.body)
     res.json({
       message: result.message,
+      provider: result.provider,
+      warning: result.warning,
       data: result.info
     })
   } catch (err: any) {
     res.status(400).json({
       error: {
-        message: err.message || 'Koneksi SMTP gagal. Periksa kembali host, port, username, dan password Anda.'
+        message: err.message || 'Test email gagal. Periksa kembali konfigurasi email Anda.'
       }
     })
   }

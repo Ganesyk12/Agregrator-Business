@@ -173,22 +173,29 @@ async function handleTestConnection() {
       throw new Error(json.error?.message || 'Koneksi SMTP gagal')
     }
 
+    const provider = json.provider === 'resend' ? 'Resend' : 'SMTP'
+    const warning = json.warning
+      ? `<p style="color: #b45309;"><strong>Catatan:</strong> ${json.warning}</p>`
+      : ''
+
     Swal.fire({
       icon: 'success',
-      title: 'Koneksi SMTP Berhasil!',
+      title: `Email Berhasil Dikirim via ${provider}!`,
       html: `
         <div style="text-align: left; font-size: 14px; margin-top: 10px;">
+          <p><strong>Provider:</strong> ${provider}</p>
           <p><strong>Status:</strong> ${json.message}</p>
+          ${warning}
           <p>Silakan periksa kotak masuk (inbox / spam) pada email <strong>${testTargetEmail.value}</strong>.</p>
         </div>
       `
     })
   } catch (err: any) {
-    console.error('SMTP test error:', err)
+    console.error('Email test error:', err)
     Swal.fire({
       icon: 'error',
-      title: 'Koneksi SMTP Gagal',
-      text: err.message || 'Gagal terhubung ke mail server. Periksa kembali host, port, dan kredensial SMTP Anda.'
+      title: 'Test Email Gagal',
+      text: err.message || 'Gagal mengirim email. Periksa konfigurasi Resend dan SMTP Anda.'
     })
   } finally {
     testing.value = false

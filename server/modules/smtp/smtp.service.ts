@@ -21,6 +21,8 @@ import {
   renderNotificationEmail
 } from './email-templates'
 
+type MailProvider = 'resend' | 'smtp'
+
 /**
  * Get raw SMTP config from database or create default if not exists
  */
@@ -140,66 +142,52 @@ function createTransporter(config: {
   })
 }
 
-/**
- * Test SMTP connection and send a test verification email
- */
-export async function testConnection(input: TestSmtpInput): Promise<{ success: boolean; message: string; info?: any }> {
-  const current = await getRawConfig()
+interface TestEmailResult {
+  success: boolean
+  provider: MailProvider
+  message: string
+  info?: any
+  warning?: string
+}
 
-  const host = input.host || current.host
-  const port = input.port !== undefined ? Number(input.port) : current.port
-  const secure = input.secure !== undefined ? Boolean(input.secure) : current.secure
-  const username = input.username !== undefined ? input.username : current.username
-  const password = input.password && input.password.trim() !== '' ? input.password : current.password
-  const fromName = input.from_name || current.from_name || 'SIGYN'
-  const fromEmail = input.from_email || current.from_email || username
+function buildTestEmail(params: {
+  provider: MailProvider
+  fromName: string
+  fromEmail: string
+  details: Array<{ label: string; value: string }>
+}): { html: string; text: string } {
+  const providerLabel = params.provider === 'resend' ? 'Resend API' : 'SMTP'
+  const detailRows = params.details
+    .map(
+      detail => `
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; width: 160px;"><strong>${detail.label}:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${detail.value}</td>
+          </tr>`
+    )
+    .join('')
 
-  if (!host || !port || !username || !password) {
-    throw new Error('SMTP Host, Port, Username, dan Password wajib diisi untuk melakukan test koneksi.')
-  }
-
-  if (!input.target_email) {
-    throw new Error('Target email tujuan untuk test wajib diisi.')
-  }
-
-  const transporter = createTransporter({ host, port, secure, username, password })
-
-  // 1. Verify connection handshake
-  await transporter.verify()
-
-  // 2. Send test email
-  const info = await transporter.sendMail({
-    from: `"${fromName}" <${fromEmail}>`,
-    to: input.target_email,
-    subject: `[TEST] SIGYN SMTP Configuration Test - ${new Date().toLocaleString('id-ID')}`,
+  return {
     html: `
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eaeaea; border-radius: 12px; background: #ffffff;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h2 style="color: #2a2a2a; margin: 0 0 6px; font-size: 24px;">SIGYN SMTP Mailer</h2>
+          <h2 style="color: #2a2a2a; margin: 0 0 6px; font-size: 24px;">SIGYN Email Mailer</h2>
           <p style="color: #777; margin: 0; font-size: 14px;">System Notification Test</p>
         </div>
         <div style="background: #f8f9fa; border-left: 4px solid #b89c7b; padding: 16px; border-radius: 4px; margin-bottom: 20px;">
           <p style="margin: 0; color: #2a2a2a; font-size: 15px; line-height: 1.5;">
-            <strong>Koneksi SMTP Berhasil!</strong><br/>
-            Email ini dikirim secara otomatis sebagai verifikasi bahwa konfigurasi SMTP Administrator pada platform SIGYN telah terhubung dengan benar.
+            <strong>Koneksi ${providerLabel} Berhasil!</strong><br/>
+            Email ini dikirim secara otomatis sebagai verifikasi bahwa konfigurasi email Administrator pada platform SIGYN telah terhubung dengan benar.
           </p>
         </div>
         <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #555; margin-bottom: 24px;">
           <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #eee; width: 140px;"><strong>SMTP Host:</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${host}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Port:</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${port} (${secure ? 'SSL/TLS' : 'STARTTLS/Plain'})</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Username / Email:</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${username}</td>
-          </tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; width: 160px;"><strong>Provider:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${providerLabel}</td>
+          </tr>${detailRows}
           <tr>
             <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Sender:</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">"${fromName}" &lt;${fromEmail}&gt;</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">"${params.fromName}" &lt;${params.fromEmail}&gt;</td>
           </tr>
           <tr>
             <td style="padding: 8px 0;"><strong>Waktu Kirim:</strong></td>
@@ -212,47 +200,176 @@ export async function testConnection(input: TestSmtpInput): Promise<{ success: b
         </p>
       </div>
     `,
-    text: `SIGYN SMTP Test. Koneksi SMTP Berhasil! Email ini dikirim ke ${input.target_email} dari ${fromEmail}.`
-  })
-
-  return {
-    success: true,
-    message: `Test email berhasil dikirim ke ${input.target_email}`,
-    info: {
-      messageId: info.messageId,
-      accepted: info.accepted,
-      response: info.response
-    }
+    text: `SIGYN ${providerLabel} Test. Koneksi ${providerLabel} berhasil. Email ini dikirim dari ${params.fromEmail}.`
   }
 }
 
 /**
- * Universal mailer function for sending transactional emails anywhere in SIGYN
+ * Test the email pipeline: Resend API first, then SMTP fallback.
  */
-export async function sendEmail(options: SendMailOptions): Promise<{ success: boolean; messageId?: string; reason?: string }> {
+export async function testConnection(input: TestSmtpInput): Promise<TestEmailResult> {
+  const current = await getRawConfig()
+
+  if (!input.target_email) {
+    throw new Error('Target email tujuan untuk test wajib diisi.')
+  }
+
+  const subject = `[TEST] SIGYN Email Configuration Test - ${new Date().toLocaleString('id-ID')}`
+  const failures: string[] = []
+
+  // 1. Primary provider: Resend API
+  if (env.resendApiKey) {
+    const fromName = env.resendFromName || input.from_name || current.from_name || 'SIGYN'
+    const fromEmail = env.resendFromEmail || input.from_email || current.from_email || current.username
+
+    if (fromEmail) {
+      try {
+        const { html, text } = buildTestEmail({
+          provider: 'resend',
+          fromName,
+          fromEmail,
+          details: [{ label: 'From Email', value: fromEmail }]
+        })
+
+        const messageId = await sendViaResend({
+          from: `"${fromName}" <${fromEmail}>`,
+          to: input.target_email,
+          subject,
+          html,
+          text
+        })
+
+        return {
+          success: true,
+          provider: 'resend',
+          message: `Test email berhasil dikirim via Resend ke ${input.target_email}`,
+          info: { messageId, from: fromEmail }
+        }
+      } catch (error: any) {
+        const reason = error.message || String(error)
+        failures.push(`Resend: ${reason}`)
+        console.warn('[Mailer] Test Resend gagal, fallback ke SMTP:', reason)
+      }
+    } else {
+      failures.push('Resend: alamat pengirim belum diset (RESEND_FROM_EMAIL)')
+    }
+  }
+
+  // 2. Fallback provider: SMTP
+  const host = input.host || current.host
+  const port = input.port !== undefined ? Number(input.port) : current.port
+  const secure = input.secure !== undefined ? Boolean(input.secure) : current.secure
+  const username = input.username !== undefined ? input.username : current.username
+  const password = input.password && input.password.trim() !== '' ? input.password : current.password
+  const fromName = input.from_name || current.from_name || 'SIGYN'
+  const fromEmail = input.from_email || current.from_email || username
+
+  if (!host || !port || !username || !password) {
+    failures.push('SMTP: Host, Port, Username, dan Password wajib diisi')
+    throw new Error(`Test email gagal. ${failures.join(' | ')}`)
+  }
+
   try {
-    const config = await getRawConfig()
+    const transporter = createTransporter({ host, port, secure, username, password })
 
-    if (!config.is_active) {
-      console.warn('[Mailer] Pengiriman email dilewati karena SMTP dinonaktifkan di pengaturan.')
-      return { success: false, reason: 'SMTP is disabled' }
-    }
+    await transporter.verify()
 
-    if (!config.host || !config.username || !config.password) {
-      console.warn('[Mailer] Pengiriman email dilewati karena konfigurasi SMTP belum lengkap.')
-      return { success: false, reason: 'SMTP configuration is incomplete' }
-    }
-
-    const transporter = createTransporter({
-      host: config.host,
-      port: config.port,
-      secure: config.secure,
-      username: config.username,
-      password: config.password
+    const { html, text } = buildTestEmail({
+      provider: 'smtp',
+      fromName,
+      fromEmail,
+      details: [
+        { label: 'SMTP Host', value: host },
+        { label: 'Port', value: `${port} (${secure ? 'SSL/TLS' : 'STARTTLS/Plain'})` }
+      ]
     })
 
-    const fromName = config.from_name || 'SIGYN'
-    const fromEmail = config.from_email || config.username
+    const info = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: input.target_email,
+      subject,
+      html,
+      text
+    })
+
+    return {
+      success: true,
+      provider: 'smtp',
+      message: `Test email berhasil dikirim via SMTP ke ${input.target_email}`,
+      info: {
+        messageId: info.messageId,
+        accepted: info.accepted,
+        response: info.response
+      },
+      warning: failures.length > 0 ? failures.join(' | ') : undefined
+    }
+  } catch (error: any) {
+    failures.push(`SMTP: ${error.message || String(error)}`)
+    throw new Error(`Test email gagal. ${failures.join(' | ')}`)
+  }
+}
+
+function resolveSender(config: SmtpSetting, override?: string): string {
+  if (override) return override
+
+  const fromName = env.resendFromName || config.from_name || 'SIGYN'
+  const fromEmail = env.resendFromEmail || config.from_email || config.username
+
+  return `"${fromName}" <${fromEmail}>`
+}
+
+/**
+ * Send an email through Resend REST API.
+ */
+async function sendViaResend(params: {
+  from: string
+  to: string | string[]
+  subject: string
+  html?: string
+  text?: string
+}): Promise<string> {
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.resendApiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: params.from,
+      to: Array.isArray(params.to) ? params.to : [params.to],
+      subject: params.subject,
+      ...(params.html ? { html: params.html } : {}),
+      ...(params.text ? { text: params.text } : {}),
+      ...(env.resendReplyTo ? { reply_to: env.resendReplyTo } : {})
+    })
+  })
+
+  const data = (await response.json().catch(() => ({}))) as {
+    id?: string
+    message?: string
+    name?: string
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || data.name || `Resend API error (${response.status})`)
+  }
+
+  if (!data.id) {
+    throw new Error('Resend API tidak mengembalikan message id')
+  }
+
+  return data.id
+}
+
+/**
+ * Universal mailer function for sending transactional emails anywhere in SIGYN.
+ * Priority: Resend API, with SMTP as fallback.
+ */
+export async function sendEmail(
+  options: SendMailOptions
+): Promise<{ success: boolean; messageId?: string; reason?: string; provider?: MailProvider }> {
+  try {
+    const config = await getRawConfig()
 
     let targetRecipients: string | string[] = options.to
     let mailSubject = options.subject
@@ -287,8 +404,52 @@ export async function sendEmail(options: SendMailOptions): Promise<{ success: bo
       }
     }
 
+    const sender = resolveSender(config, options.from)
+
+    // Primary provider: Resend API
+    if (env.resendApiKey) {
+      const resendFromEmail = env.resendFromEmail || config.from_email || config.username
+
+      if (options.from || resendFromEmail) {
+        try {
+          const messageId = await sendViaResend({
+            from: sender,
+            to: targetRecipients,
+            subject: mailSubject,
+            html: mailHtml,
+            text: mailText
+          })
+
+          return { success: true, messageId, provider: 'resend' }
+        } catch (error: any) {
+          console.warn('[Mailer] Resend gagal, mencoba fallback ke SMTP:', error.message || error)
+        }
+      } else {
+        console.warn('[Mailer] Resend aktif tetapi alamat pengirim belum diset (RESEND_FROM_EMAIL). Fallback ke SMTP.')
+      }
+    }
+
+    // Fallback provider: SMTP
+    if (!config.is_active) {
+      console.warn('[Mailer] Pengiriman email via SMTP dilewati karena SMTP dinonaktifkan di pengaturan.')
+      return { success: false, reason: 'Resend failed and SMTP is disabled' }
+    }
+
+    if (!config.host || !config.username || !config.password) {
+      console.warn('[Mailer] Pengiriman email via SMTP dilewati karena konfigurasi SMTP belum lengkap.')
+      return { success: false, reason: 'Resend failed and SMTP configuration is incomplete' }
+    }
+
+    const transporter = createTransporter({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      username: config.username,
+      password: config.password
+    })
+
     const info = await transporter.sendMail({
-      from: options.from || `"${fromName}" <${fromEmail}>`,
+      from: sender,
       to: targetRecipients,
       subject: mailSubject,
       html: mailHtml,
@@ -297,7 +458,8 @@ export async function sendEmail(options: SendMailOptions): Promise<{ success: bo
 
     return {
       success: true,
-      messageId: info.messageId
+      messageId: info.messageId,
+      provider: 'smtp'
     }
   } catch (error: any) {
     console.error('[Mailer Error]:', error.message || error)

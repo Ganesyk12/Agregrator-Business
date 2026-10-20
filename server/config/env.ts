@@ -40,6 +40,10 @@ export const env = {
   r2Bucket: or('R2_BUCKET_NAME', 'R2_BUCKET'),
   r2PublicUrl: or('R2_PUBLIC_DOMAIN', 'R2_PUBLIC_URL'),
   mailDevTargetEmails: parseEmailList(process.env.MAIL_DEV_TARGET_EMAILS || process.env.DEV_MAIL_RECIPIENTS || ''),
+  resendApiKey: process.env.RESEND_API_KEY || '',
+  resendFromEmail: process.env.RESEND_FROM_EMAIL || '',
+  resendFromName: process.env.RESEND_FROM_NAME || '',
+  resendReplyTo: process.env.RESEND_REPLY_TO || '',
 }
 
 
