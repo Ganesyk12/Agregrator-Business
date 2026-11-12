@@ -130,44 +130,53 @@ onMounted(fetchVendorProfile)
       <!-- Vendor Hero -->
       <section class="vendor-hero">
         <div class="container">
+          <div class="vendor-back-row">
+            <button type="button" class="btn-back" @click="router.back()">
+              <i class="fa fa-arrow-left"></i> Back
+            </button>
+          </div>
           <div class="vendor-hero-inner">
             <div class="vendor-avatar-large">
               <img v-if="vendor.avatar_url" :src="vendor.avatar_url" :alt="vendor.business_name" />
               <span v-else class="avatar-text">{{ vendor.business_name?.charAt(0) || 'V' }}</span>
             </div>
             <div class="vendor-hero-info">
-              <h1 class="vendor-business-name">{{ vendor.business_name }}</h1>
-              <div class="vendor-badge" v-if="vendor.status === 'active' || vendor.status === 'verified'">
-                <span class="verified-badge">Verified</span>
+              <div class="vendor-hero-headline">
+                <h1 class="vendor-business-name">{{ vendor.business_name }}</h1>
+                <div class="vendor-badge" v-if="vendor.status === 'active' || vendor.status === 'verified'">
+                  <span class="verified-badge">Verified</span>
+                </div>
               </div>
-              <div class="vendor-meta">
-                <span class="meta-item">
-                  <strong>★</strong> {{ averageRating }} ({{ reviews.length }} reviews)
-                </span>
-                <span class="meta-sep">|</span>
-                <span class="meta-item">{{ vendorPortfolios.length }} Projects</span>
-                <span class="meta-sep">|</span>
-                <span class="meta-item">{{ vendor.years_exp || 0 }} Years Experience</span>
-              </div>
-              <p class="vendor-description" v-if="vendor.description">{{ vendor.description }}</p>
-              <p class="vendor-location" v-if="vendor.location">
-                📍 {{ vendor.location }}
-              </p>
-              <p class="vendor-instagram" v-if="vendor.instagram">
-                <a :href="vendor.instagram" target="_blank" rel="noopener noreferrer">
-                  📷 {{ vendor.instagram.replace('https://instagram.com/', '@') }}
-                </a>
-              </p>
-              <div class="price-range" v-if="!isBouquetVendor && vendorPackages.length > 0">
-                <span class="price-range-label">Price Range</span>
-                <span class="price-range-value">
-                  {{ formatPrice(Math.min(...vendorPackages.map(p => p.price))) }} 
-                  - {{ formatPrice(Math.max(...vendorPackages.map(p => p.price))) }}
-                </span>
-              </div>
-              <div class="price-range" v-if="isBouquetVendor && vendorProducts.length > 0">
-                <span class="price-range-label">Products</span>
-                <span class="price-range-value">{{ vendorProducts.length }} Items</span>
+              <div class="vendor-hero-details">
+                <div class="vendor-meta">
+                  <span class="meta-item">
+                    <strong>★</strong> {{ averageRating }} ({{ reviews.length }} reviews)
+                  </span>
+                  <span class="meta-sep">|</span>
+                  <span class="meta-item">{{ vendorPortfolios.length }} Projects</span>
+                  <span class="meta-sep">|</span>
+                  <span class="meta-item">{{ vendor.years_exp || 0 }} Years Experience</span>
+                </div>
+                <p class="vendor-description" v-if="vendor.description">{{ vendor.description }}</p>
+                <p class="vendor-location" v-if="vendor.location">
+                  📍 {{ vendor.location }}
+                </p>
+                <p class="vendor-instagram" v-if="vendor.instagram">
+                  <a :href="vendor.instagram" target="_blank" rel="noopener noreferrer">
+                    📷 {{ vendor.instagram.replace('https://instagram.com/', '@') }}
+                  </a>
+                </p>
+                <div class="price-range" v-if="!isBouquetVendor && vendorPackages.length > 0">
+                  <span class="price-range-label">Price Range</span>
+                  <span class="price-range-value">
+                    {{ formatPrice(Math.min(...vendorPackages.map(p => p.price))) }} 
+                    - {{ formatPrice(Math.max(...vendorPackages.map(p => p.price))) }}
+                  </span>
+                </div>
+                <div class="price-range" v-if="isBouquetVendor && vendorProducts.length > 0">
+                  <span class="price-range-label">Products</span>
+                  <span class="price-range-value">{{ vendorProducts.length }} Items</span>
+                </div>
               </div>
             </div>
           </div>
@@ -215,13 +224,13 @@ onMounted(fetchVendorProfile)
                     <h4 class="package-name">{{ pkg.name }}</h4>
                     <span class="package-price">{{ formatPrice(pkg.price) }}</span>
                   </div>
-                  <p class="package-desc" v-if="pkg.description">{{ pkg.description }}</p>
+                  <p class="package-desc">{{ pkg.description || '-' }}</p>
                   <div class="package-meta">
                     <span v-if="pkg.duration" class="package-duration">⏱ {{ pkg.duration }}</span>
                   </div>
-                  <div class="package-included" v-if="pkg.whats_included">
+                  <div class="package-included">
                     <strong>Includes:</strong>
-                    <p>{{ pkg.whats_included }}</p>
+                    <p>{{ pkg.whats_included || '-' }}</p>
                   </div>
                   <button class="btn-book-package" @click.stop="handleBookPackage(pkg)">
                     Book Now - {{ formatPrice(pkg.price) }}

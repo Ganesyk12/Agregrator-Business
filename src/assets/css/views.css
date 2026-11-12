@@ -1409,6 +1409,7 @@ textarea.form-control {
    -------------------------------------------------------------------------- */
 .vendor-profile { min-height: 100vh; background: #f8f9fa; }
 .vendor-hero { background: #fff; padding: 120px 0 40px; border-bottom: 1px solid #eee; }
+.vendor-back-row { margin-bottom: 24px; }
 .vendor-hero-inner { display: flex; gap: 40px; align-items: flex-start; }
 .vendor-avatar-large { width: 130px; height: 130px; border-radius: 50%; overflow: hidden; background: #222; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .vendor-avatar-large img { width: 100%; height: 100%; object-fit: cover; }
@@ -2977,6 +2978,55 @@ textarea.form-control {
 .product-gallery .gallery-main { width: 100%; border-radius: 16px; overflow: hidden; margin-bottom: 12px; background: #fff; border: 1px solid #e8e8ed; }
 .product-gallery .gallery-main img { width: 100%; height: 500px; object-fit: cover; display: block; }
 
+/* Compact the option sections inside the product info column so the
+   spacing between option groups (wrapping color, greeting card, etc.)
+   stays tight instead of inheriting the global 80px section padding. */
+.product-detail-page .product-info .section {
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.product-detail-page .product-info .section:last-child {
+  margin-bottom: 0;
+}
+
+.product-detail-page .product-info .section-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 10px;
+  letter-spacing: 0.01em;
+}
+
+.product-detail-page .product-info {
+  min-width: 0;
+}
+
+.product-detail-page .occasions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  max-width: 100%;
+  margin-top: 4px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--bs-body-color, #5a5a5a);
+}
+
+.product-detail-page .product-occasion {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 576px) {
+  .product-detail-page .product-info .section {
+    margin-bottom: 20px;
+  }
+}
+
 .variant-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .variant-btn { display: flex; flex-direction: column; align-items: center; padding: 10px 20px; border: 2px solid #e0e0e0; border-radius: 10px; background: #fff; cursor: pointer; transition: all 0.2s; font-family: 'Jost', sans-serif; }
 .variant-btn:hover { border-color: #ccc; }
@@ -3028,8 +3078,38 @@ textarea.form-control {
   border: 1px solid rgba(231, 76, 60, 0.15);
 }
 
-.btn-buy-now {
+.product-detail-page .action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.product-detail-page .btn-add-cart {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--bs-secondary, #B89C7B);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.product-detail-page .btn-add-cart:hover { background: #a88362; }
+.product-detail-page .btn-add-cart.added { background: #2ecc71; }
+
+.product-detail-page .btn-buy-now {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 14px 24px;
   border: none;
   border-radius: 999px;
@@ -3042,7 +3122,34 @@ textarea.form-control {
   transition: all 0.3s;
 }
 
-.btn-buy-now:hover { background: #a88362; }
+.product-detail-page .btn-buy-now:hover { background: #a88362; }
+
+.product-detail-page .btn-wishlist {
+  position: static;
+  top: auto;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 2px solid #e0e0e0;
+  border-radius: 50%;
+  background: #fff;
+  color: #888;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.product-detail-page .btn-wishlist:hover {
+  border-color: #e74c3c;
+  color: #e74c3c;
+  transform: none;
+}
+
+
 
 /* --------------------------------------------------------------------------
    19. CONTACT VIEW STYLES
@@ -3546,6 +3653,12 @@ textarea.form-control {
   color: #fff;
 }
 
+/* Vendor profile: keep package CTA pinned to the card bottom */
+.vendor-profile .package-card .btn-book-package {
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+
 /* Vendor hero: verified badge & meta row */
 .vendor-profile .vendor-badge {
   display: inline-block;
@@ -3605,6 +3718,24 @@ textarea.form-control {
   color: #d5d5d5;
 }
 
+/* Vendor hero: headline grouping (name + verified) */
+.vendor-hero-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.vendor-hero-headline .vendor-business-name {
+  margin: 0;
+}
+
+.vendor-hero-headline .vendor-badge {
+  display: inline-flex;
+  margin: 0;
+}
+
 /* --------------------------------------------------------------------------
    25. RESPONSIVE — DETAIL CARDS
    -------------------------------------------------------------------------- */
@@ -3625,5 +3756,107 @@ textarea.form-control {
 
   .portfolio-detail .vendor-name {
     font-size: 1.15rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   VENDOR PROFILE — MOBILE HERO
+   Avatar left, business name + verified right, details on their own row.
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .vendor-profile .vendor-hero {
+    padding: 96px 0 28px;
+  }
+
+  .vendor-profile .vendor-back-row {
+    margin-bottom: 20px;
+  }
+
+  .vendor-profile .vendor-hero-inner {
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr);
+    column-gap: 16px;
+    row-gap: 18px;
+    align-items: start;
+  }
+
+  .vendor-profile .vendor-avatar-large {
+    width: 80px;
+    height: 80px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .vendor-profile .avatar-text {
+    font-size: 2rem;
+  }
+
+  .vendor-profile .vendor-hero-info {
+    display: contents;
+  }
+
+  .vendor-profile .vendor-hero-headline {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    min-width: 0;
+    margin: 0;
+    gap: 6px 10px;
+  }
+
+  .vendor-profile .vendor-hero-headline .vendor-business-name {
+    font-size: 1.45rem;
+    line-height: 1.2;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .vendor-profile .vendor-hero-details {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-width: 0;
+  }
+
+  .vendor-profile .vendor-meta {
+    gap: 6px 10px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+  }
+
+  .vendor-profile .vendor-meta .meta-sep {
+    display: none;
+  }
+
+  .vendor-profile .vendor-description {
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .vendor-profile .vendor-location,
+  .vendor-profile .vendor-instagram {
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .vendor-profile .price-range {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 10px 16px;
+  }
+
+  .vendor-profile .price-range-label {
+    font-size: 0.7rem;
+  }
+
+  .vendor-profile .price-range-value {
+    font-size: 0.95rem;
+    text-align: right;
   }
 }

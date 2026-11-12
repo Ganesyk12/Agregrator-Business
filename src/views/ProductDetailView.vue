@@ -147,6 +147,15 @@ const greetingGroupName = computed(() => {
   return g?.name || ''
 })
 
+const productLabels = computed<string[]>(() => {
+  const raw = String(product.value?.labels || '')
+  return raw
+    .split(',')
+    .map((lbl: string) => lbl.trim())
+    .filter(Boolean)
+    .map((lbl: string) => lbl.charAt(0).toUpperCase() + lbl.slice(1))
+})
+
 function buildConfig() {
   const extras: any[] = []
   const addonIds: number[] = []
@@ -280,8 +289,8 @@ function buyNow() {
                       {{ product.vendor?.business_name }}
                     </router-link>
                   </div>
-                  <div v-if="product.labels" class="occasions-row">
-                    <span v-for="lbl in (product.labels || '').split(',').filter(Boolean)" :key="lbl" class="product-occasion">{{ lbl.trim().charAt(0).toUpperCase() + lbl.trim().slice(1) }}</span>
+                  <div v-if="productLabels.length" class="occasions-row">
+                    <span v-for="(lbl, idx) in productLabels" :key="lbl + idx" class="product-occasion">{{ lbl }}<span v-if="idx < productLabels.length - 1">,</span></span>
                   </div>
                 </div>
               </div>
@@ -403,9 +412,14 @@ function buyNow() {
               </div>
 
               <div class="action-buttons">
-                <button class="btn-add-cart" @click="addToCart" :class="{ added: addedToCart }">
+                <button
+                  class="btn-add-cart"
+                  @click="addToCart"
+                  :class="{ added: addedToCart }"
+                  :title="addedToCart ? 'Added to Cart' : 'Add to Cart'"
+                  :aria-label="addedToCart ? 'Added to Cart' : 'Add to Cart'"
+                >
                   <i :class="addedToCart ? 'fa fa-check' : 'fa fa-shopping-cart'"></i>
-                  {{ addedToCart ? 'Added to Cart' : 'Add to Cart' }}
                 </button>
                 <button class="btn-buy-now" @click="buyNow">Buy Now</button>
                 <button class="btn-wishlist"><i class="fa fa-heart-o"></i></button>
