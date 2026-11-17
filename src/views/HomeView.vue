@@ -48,6 +48,13 @@ function formatPrice(val: number) {
   return 'Rp ' + val.toLocaleString('id-ID')
 }
 
+function getLabels(value: string) {
+  return (value || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+}
+
 function onImgError(e: Event) {
   const img = e.target as HTMLImageElement
   if (img.dataset.fallbackApplied) return
@@ -120,7 +127,6 @@ function onCelebrationSelect(celebration: string | null) {
                     @error="onImgError"
                   />
                 </router-link>
-                <span v-if="product.labels" class="product-badge">{{ (product.labels.split(',')[0]).charAt(0).toUpperCase() + (product.labels.split(',')[0]).slice(1) }}</span>
                 <button class="btn-cart-add" @click="addToCart(product)" title="Add to cart">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>
@@ -129,6 +135,11 @@ function onCelebrationSelect(celebration: string | null) {
               </div>
               <div class="product-info-wrap">
                 <router-link :to="'/product/' + product.id_product" class="product-name">{{ product.name }}</router-link>
+                <div v-if="product.labels" class="product-occasion-pills">
+                  <span v-for="label in getLabels(product.labels)" :key="label" class="product-occasion-pill">
+                    {{ label }}
+                  </span>
+                </div>
                 <span class="product-vendor">{{ product.vendor?.business_name }}</span>
                 <div class="product-meta-row">
                   <span v-if="product.type_name" class="product-type-tag">{{ product.type_name }}</span>
@@ -149,5 +160,31 @@ function onCelebrationSelect(celebration: string | null) {
     <Footer />
   </div>
 </template>
+
+<style scoped>
+.product-occasion-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+
+.product-occasion-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid rgba(184, 156, 123, 0.35);
+  border-radius: 999px;
+  background: rgba(184, 156, 123, 0.12);
+  color: #8a6d4b;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+</style>
 
 

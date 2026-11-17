@@ -19,14 +19,14 @@
 
       <div class="nav-right">
         <router-link to="/wishlist" class="nav-icon-btn" title="Wishlist">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
           </svg>
           <span v-if="auth.wishlistCount > 0" class="nav-badge">{{ auth.wishlistCount }}</span>
         </router-link>
 
         <a href="#" class="nav-icon-btn" title="Cart" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
           </svg>
@@ -69,7 +69,7 @@
             <div class="mobile-header">
               <img :src="mainLogo" alt="Sigyn" class="mobile-logo" />
               <button class="mobile-close" @click="mobileOpen = false">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 6L6 18M6 6l12 12"/>
                 </svg>
               </button>
@@ -100,7 +100,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
-import mainLogo from '@/assets/kaira/images/logosigyn.png'
+import mainLogo from '@/assets/default/brand.png'
 
 const router = useRouter()
 const route = useRoute()
@@ -197,13 +197,13 @@ onUnmounted(() => {
 }
 
 .nav-logo {
-  height: 48px;
+  height: 56px;
   width: auto;
   transition: height 0.4s ease;
 }
 
 .nav-scrolled .nav-logo {
-  height: 42px;
+  height: 48px;
 }
 
 .nav-center {
@@ -523,7 +523,7 @@ onUnmounted(() => {
 }
 
 .mobile-logo {
-  height: 40px;
+  height: 46px;
 }
 
 .mobile-close {
@@ -675,11 +675,11 @@ onUnmounted(() => {
   }
 
   .nav-logo {
-    height: 40px;
+    height: 46px;
   }
 
   .nav-scrolled .nav-logo {
-    height: 36px;
+    height: 40px;
   }
 
   .nav-icon-btn {

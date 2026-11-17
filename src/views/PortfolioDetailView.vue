@@ -281,3 +281,88 @@ onMounted(fetchPortfolio)
     <Footer />
   </div>
 </template>
+
+<style scoped>
+.portfolio-detail .hero-section {
+  display: flex;
+  justify-content: center;
+  padding: 104px 24px 0;
+}
+
+.portfolio-detail .hero-image {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #f5f5f7;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.portfolio-detail .hero-image img {
+  display: block;
+  width: 100%;
+  height: clamp(240px, 42vw, 560px);
+  object-fit: cover;
+  object-position: center;
+  margin: 0 auto;
+}
+
+.portfolio-detail .gallery-section {
+  background: var(--bs-body-bg, #F7F4EF);
+  padding: 32px 0 40px;
+}
+
+.portfolio-detail .gallery-section .section-title {
+  margin-bottom: 20px;
+}
+
+/* Spacing between Project Info, Vendor Info, Reviews & Related sections */
+.portfolio-detail .detail-main {
+  gap: 24px;
+}
+
+.portfolio-detail .detail-main > .section {
+  padding: 0;
+}
+
+.portfolio-detail .detail-main > .section + .section {
+  padding-top: 24px;
+  border-top: 1px solid #ececf0;
+}
+
+.portfolio-detail .detail-main .section-title {
+  margin: 0 0 18px;
+}
+
+@media (max-width: 768px) {
+  .portfolio-detail .hero-section {
+    padding: 92px 16px 0;
+  }
+
+  .portfolio-detail .hero-image {
+    border-radius: 16px;
+  }
+
+  .portfolio-detail .hero-image img {
+    height: clamp(200px, 52vw, 320px);
+  }
+
+  .portfolio-detail .gallery-section {
+    padding: 24px 0 32px;
+  }
+
+  .portfolio-detail .detail-main {
+    gap: 20px;
+  }
+
+  .portfolio-detail .detail-main > .section + .section {
+    padding-top: 20px;
+  }
+
+  .portfolio-detail .detail-main .section-title {
+    font-size: 1.5rem;
+    margin-bottom: 14px;
+  }
+}
+</style>

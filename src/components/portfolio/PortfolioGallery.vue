@@ -83,7 +83,7 @@ function handleImageError(event: Event) {
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 16px;
 }
 .gallery-item {
   position: relative;

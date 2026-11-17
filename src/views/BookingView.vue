@@ -84,6 +84,8 @@ const currentStep = ref(1)
 const createdBooking = ref<any>(null)
 const selectedTermId = ref<number | null>(null)
 const selectedPaymentMethod = ref<string>('Bank Transfer')
+// QRIS / E-Wallet disembunyikan sementara untuk booking payment
+const showQrisPayment = false
 
 const currentPaymentAmount = computed(() => {
   if (!createdBooking.value) return 0
@@ -1104,6 +1106,7 @@ onUnmounted(() => {
               🏢 Bank Transfer
             </button>
             <button
+              v-if="showQrisPayment"
               class="method-tab"
               :class="{ active: selectedPaymentMethod === 'QRIS' }"
               @click="selectedPaymentMethod = 'QRIS'; selectedBank = ''; vaData = null"
@@ -1185,7 +1188,7 @@ onUnmounted(() => {
           </div>
 
           <!-- QRIS Section -->
-          <div v-else-if="selectedPaymentMethod === 'QRIS'" class="method-details-pane text-center">
+          <div v-else-if="showQrisPayment && selectedPaymentMethod === 'QRIS'" class="method-details-pane text-center">
             <p v-if="!qrisData && !qrisLoading">Click the button below to generate a QRIS code.</p>
 
             <div v-if="qrisLoading" class="va-loading">
@@ -1343,3 +1346,611 @@ onUnmounted(() => {
     />
   </div>
 </template>
+
+<style scoped>
+/* Step 3: Payment Confirmation card */
+.booking-page .success-layout {
+  max-width: 820px;
+  margin: 0 auto 80px;
+  padding-bottom: 8px;
+}
+
+.success-card {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e8e8ed;
+  border-radius: 20px;
+  padding: 48px 40px 40px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  text-align: center;
+  font-family: 'Jost', sans-serif;
+}
+
+.success-icon {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #e8f5ec;
+  color: #1f9d55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.success-title {
+  margin: 0 0 12px;
+  font-family: var(--heading-font, 'Marcellus', serif);
+  font-size: 2rem;
+  line-height: 1.25;
+  color: #1d1d1f;
+}
+
+.success-desc {
+  max-width: 560px;
+  margin: 0 auto 28px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #6e6e73;
+}
+
+/* Virtual Account transfer details */
+.va-confirm-card {
+  margin: 0 0 20px;
+  padding: 22px 24px;
+  text-align: left;
+  background: #faf9f7;
+  border: 1px dashed #d9cfc0;
+  border-radius: 14px;
+}
+
+.va-confirm-card h4 {
+  margin: 0 0 10px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6e6e73;
+}
+
+.va-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee9e1;
+  font-size: 0.95rem;
+}
+
+.va-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.va-row > span {
+  color: #86868b;
+  flex-shrink: 0;
+}
+
+.va-row strong {
+  color: #1d1d1f;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.va-number-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.va-number {
+  letter-spacing: 0.06em;
+  font-size: 1rem;
+}
+
+.va-confirm-card .btn-copy {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.highlight-text {
+  color: #1f9d55;
+}
+
+/* Booking invoice summary */
+.success-details-box {
+  margin: 0 0 28px;
+  padding: 22px 24px;
+  text-align: left;
+  background: #f7f7f9;
+  border: 1px solid #ececf0;
+  border-radius: 14px;
+}
+
+.success-details-box h4 {
+  margin: 0 0 10px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6e6e73;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ececf0;
+  font-size: 0.95rem;
+}
+
+.detail-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.detail-row > span {
+  color: #86868b;
+  flex-shrink: 0;
+}
+
+.detail-row strong {
+  color: #1d1d1f;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.status-badge-paid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border: 1px solid #bfe4cb;
+  border-radius: 999px;
+  background: #e8f5ec;
+  color: #1f9d55;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Actions */
+.success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.success-actions a {
+  min-width: 180px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn-primary-success {
+  background: #1d1d1f;
+  border: 1px solid #1d1d1f;
+  color: #fff;
+}
+
+.btn-primary-success:hover {
+  background: #000;
+  color: #fff;
+}
+
+.btn-secondary-success {
+  background: #fff;
+  border: 1px solid #1d1d1f;
+  color: #1d1d1f;
+}
+
+.btn-secondary-success:hover {
+  background: #1d1d1f;
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .booking-page .success-layout {
+    margin-bottom: 48px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .success-card {
+    padding: 36px 20px 28px;
+    border-radius: 16px;
+  }
+
+  .success-title {
+    font-size: 1.5rem;
+  }
+
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    font-size: 1.85rem;
+  }
+
+  .va-confirm-card,
+  .success-details-box {
+    padding: 18px 16px;
+  }
+
+  .va-row,
+  .detail-row {
+    font-size: 0.9rem;
+  }
+
+  .success-actions a {
+    width: 100%;
+  }
+}
+
+/* Step 1: Booking Items vendor cards */
+.booking-page .booking-items .vendor-card {
+  padding: 18px 20px;
+  border: 1px solid #e8e8ed;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  cursor: default;
+}
+
+.booking-page .booking-items .vendor-card:hover {
+  transform: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+}
+
+.booking-page .booking-items .vendor-card-header {
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.booking-page .booking-items .vendor-cover {
+  width: 88px;
+  height: 88px;
+  border-radius: 14px;
+}
+
+.booking-page .booking-items .vendor-info {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.booking-page .booking-items .vendor-name {
+  margin: 0;
+  font-family: 'Jost', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #1d1d1f;
+}
+
+.booking-page .booking-items .vendor-category {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bs-secondary, #B89C7B);
+}
+
+.booking-page .booking-items .vendor-package {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: #5a5a5a;
+}
+
+.booking-page .booking-items .qty-badge,
+.booking-page .booking-items .product-id-badge {
+  margin-left: 0;
+  font-size: 0.72rem;
+}
+
+.booking-page .booking-items .vendor-meta {
+  justify-content: flex-start;
+  margin-top: 6px;
+}
+
+.booking-page .booking-items .vendor-price {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 0;
+  font-family: 'Jost', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1d1d1f;
+}
+
+.booking-page .booking-items .price-unit {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #86868b;
+}
+
+.booking-page .booking-items .vendor-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.booking-page .booking-items .btn-edit-details {
+  padding: 8px 12px;
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d1d1f;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.booking-page .booking-items .btn-edit-details:hover {
+  background: #1d1d1f;
+  border-color: #1d1d1f;
+  color: #fff;
+}
+
+.booking-page .booking-items .btn-remove {
+  font-size: 0.9rem;
+}
+
+.booking-page .booking-items .expand-icon {
+  font-size: 0.75rem;
+}
+
+/* Extras: full-width single column instead of half-width 2 columns */
+.booking-page .booking-items .vendor-extras {
+  margin-top: 16px;
+  padding: 16px 0 0;
+  border-top: 1px solid #f0f0f2;
+}
+
+.booking-page .booking-items .extras-title {
+  margin: 0 0 12px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1d1d1f;
+}
+
+.booking-page .booking-items .extras-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.booking-page .booking-items .extra-item {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.9rem;
+}
+
+.booking-page .booking-items .extra-icon {
+  font-size: 1.05rem;
+}
+
+.booking-page .booking-items .extra-name {
+  font-size: 0.9rem;
+}
+
+.booking-page .booking-items .extra-price {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #5a5a5a;
+}
+
+@media (max-width: 576px) {
+  .booking-page .booking-items .vendor-card {
+    padding: 14px;
+  }
+
+  .booking-page .booking-items .vendor-card-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .booking-page .booking-items .vendor-cover {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+  }
+
+  .booking-page .booking-items .vendor-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .booking-page .booking-items .vendor-name {
+    font-size: 1rem;
+  }
+}
+
+/* Step 1: Booking Summary sidebar */
+.booking-page .booking-sidebar .summary-card {
+  padding: 24px;
+  border-radius: 18px;
+}
+
+.booking-page .booking-sidebar .summary-title {
+  margin: 0 0 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f0f0f2;
+  font-family: var(--heading-font, 'Marcellus', serif);
+  font-size: 1.2rem;
+  line-height: 1.3;
+  color: #1d1d1f;
+}
+
+.booking-page .booking-sidebar .summary-items,
+.booking-page .booking-sidebar .summary-rows {
+  gap: 10px;
+}
+
+.booking-page .booking-sidebar .summary-row {
+  gap: 12px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.booking-page .booking-sidebar .summary-row span:first-child {
+  color: #86868b;
+}
+
+.booking-page .booking-sidebar .summary-row span:last-child {
+  font-weight: 600;
+  color: #1d1d1f;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.booking-page .booking-sidebar .summary-divider {
+  margin: 14px 0;
+}
+
+.booking-page .booking-sidebar .summary-divider.thick {
+  margin: 16px 0 14px;
+}
+
+.booking-page .booking-sidebar .summary-total {
+  margin-bottom: 18px;
+}
+
+.booking-page .booking-sidebar .summary-total > span:first-child {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.booking-page .booking-sidebar .summary-total .total-price {
+  font-family: 'Jost', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #1d1d1f;
+  white-space: nowrap;
+}
+
+.booking-page .booking-sidebar .summary-vendors {
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f2;
+}
+
+.booking-page .booking-sidebar .summary-vendors h4 {
+  margin: 0 0 4px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #86868b;
+}
+
+.booking-page .booking-sidebar .summary-vendor-row {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f2;
+}
+
+.booking-page .booking-sidebar .summary-vendor-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.booking-page .booking-sidebar .sv-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.booking-page .booking-sidebar .sv-name {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #1d1d1f;
+  overflow-wrap: anywhere;
+}
+
+.booking-page .booking-sidebar .sv-cat {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--bs-secondary, #B89C7B);
+}
+
+.booking-page .booking-sidebar .sv-pkg {
+  margin-top: 2px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #86868b;
+  overflow-wrap: anywhere;
+}
+
+.booking-page .booking-sidebar .sv-pkg .qty-badge-sm,
+.booking-page .booking-sidebar .sv-pkg .product-id-badge-sm {
+  margin-left: 4px;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.booking-page .booking-sidebar .sv-price {
+  flex-shrink: 0;
+  padding-top: 1px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 992px) {
+  .booking-page .booking-sidebar .summary-card {
+    padding: 20px;
+  }
+}
+</style>

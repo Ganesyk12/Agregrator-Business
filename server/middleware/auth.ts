@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
+import jwt from 'jsonwebtoken'
 import { verifyToken, type JwtPayload } from '../config/jwt'
 import { createError } from './error-handler'
 
@@ -21,7 +22,14 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
     const payload = verifyToken(token)
     req.user = payload
     next()
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.status) return next(err)
+    if (err instanceof jwt.TokenExpiredError || err instanceof jwt.NotBeforeError) {
+      return next(createError(401, 'Session expired. Please sign in again.'))
+    }
+    if (err instanceof jwt.JsonWebTokenError) {
+      return next(createError(401, 'Invalid authentication token'))
+    }
     next(err)
   }
 }

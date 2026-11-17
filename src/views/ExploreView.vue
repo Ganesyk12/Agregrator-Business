@@ -166,6 +166,13 @@ function getGridClass(height: string) {
   return 'grid-medium'
 }
 
+function getOccasions(value: string) {
+  return (value || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+}
+
 function onImgError(e: Event) {
   const img = e.target as HTMLImageElement
   if (img.dataset.fallbackApplied) return
@@ -335,7 +342,6 @@ function goToInspiration(id: number | string) {
               <img :src="item.image" :alt="item.caption" loading="lazy" @error="onImgError" />
               <div class="card-image-overlay"></div>
               <div class="card-tags">
-                <span class="tag occasion-tag">{{ item.occasion }}</span>
                 <span class="tag style-tag">{{ item.style }}</span>
               </div>
               <button
@@ -353,6 +359,11 @@ function goToInspiration(id: number | string) {
             </div>
             <div class="card-body">
               <p class="card-caption">{{ item.caption }}</p>
+              <div v-if="item.occasion" class="card-occasion-pills">
+                <span v-for="occasion in getOccasions(item.occasion)" :key="occasion" class="occasion-pill">
+                  {{ occasion }}
+                </span>
+              </div>
               <div class="card-footer-info">
                 <span class="card-budget">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -379,3 +390,33 @@ function goToInspiration(id: number | string) {
     <Footer />
   </div>
 </template>
+
+<style scoped>
+.inspiration-card .card-caption {
+  margin-bottom: 8px;
+}
+
+.card-occasion-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.occasion-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid rgba(184, 156, 123, 0.35);
+  border-radius: 999px;
+  background: rgba(184, 156, 123, 0.12);
+  color: #8a6d4b;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+</style>

@@ -64,6 +64,13 @@ function getGridClass(height: string) {
   return 'grid-medium'
 }
 
+function getOccasions(value: string) {
+  return (value || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+}
+
 function onImgError(e: Event) {
   const img = e.target as HTMLImageElement
   if (img.dataset.fallbackApplied) return
@@ -76,8 +83,8 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 function toggleSave(id: number) {
-  const idx = inspirations.value.findIndex(i => i.id === id)
-  if (idx !== -1) inspirations.value[idx].saved = !inspirations.value[idx].saved
+  const item = inspirations.value.find(i => i.id === id)
+  if (item) item.saved = !item.saved
 }
 
 function goToInspiration(id: number) {
@@ -115,7 +122,6 @@ function goToInspiration(id: number) {
             <div class="card-image-overlay"></div>
 
             <div class="card-tags">
-              <span class="tag occasion-tag">{{ item.occasion }}</span>
               <span class="tag style-tag">{{ item.style }}</span>
             </div>
 
@@ -134,24 +140,31 @@ function goToInspiration(id: number) {
             </button>
           </div>
 
+          <div class="card-meta-tags">
+            <span v-if="item.budget" class="meta-tag budget-tag">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h6a2 2 0 0 1 0 4H8"/>
+              </svg>
+              {{ item.budget }}
+            </span>
+            <router-link
+              :to="`/inspiration/${item.id}`"
+              class="meta-tag link-tag"
+              @click.stop
+            >
+              View Details
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </router-link>
+          </div>
+
           <div class="card-body">
             <p class="card-caption">{{ item.caption }}</p>
-            <div class="card-footer-info">
-              <span class="card-budget" v-if="item.budget">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h6a2 2 0 0 1 0 4H8"/>
-                </svg>
-                {{ item.budget }}
+            <div v-if="item.occasion" class="card-occasion-pills">
+              <span v-for="occasion in getOccasions(item.occasion)" :key="occasion" class="occasion-pill">
+                {{ occasion }}
               </span>
-              <router-link
-                :to="`/inspiration/${item.id}`"
-                class="card-link"
-              >
-                View Details
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </router-link>
             </div>
           </div>
         </div>
@@ -210,7 +223,7 @@ function goToInspiration(id: number) {
 .inspiration-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 10px;
+  align-items: start;
   gap: 20px;
 }
 
@@ -227,18 +240,6 @@ function goToInspiration(id: number) {
 .inspiration-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 16px 48px rgba(0,0,0,0.12);
-}
-
-.grid-tall {
-  grid-row-end: span 16;
-}
-
-.grid-medium {
-  grid-row-end: span 12;
-}
-
-.grid-short {
-  grid-row-end: span 10;
 }
 
 .card-image {
@@ -294,12 +295,6 @@ function goToInspiration(id: number) {
   text-transform: uppercase;
 }
 
-.occasion-tag {
-  background: rgba(184, 156, 123, 0.9);
-  color: #fff;
-  backdrop-filter: blur(4px);
-}
-
 .style-tag {
   background: rgba(255, 255, 255, 0.85);
   color: var(--bs-black, #2a2a2a);
@@ -344,15 +339,55 @@ function goToInspiration(id: number) {
   color: #fff;
 }
 
+.card-meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 18px 0;
+}
+
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.budget-tag {
+  border: 1px solid #e6ddcf;
+  background: #f5f1ea;
+  color: #6e5b43;
+}
+
+.link-tag {
+  background: #1d1d1f;
+  color: #fff;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.link-tag:hover {
+  background: var(--bs-secondary, #B89C7B);
+  color: #fff;
+}
+
 .card-body {
-  padding: 16px 18px 18px;
+  padding: 14px 18px 18px;
 }
 
 .card-caption {
   font-family: var(--bs-body-font-family, 'Jost', sans-serif);
   font-size: 0.9rem;
   color: var(--bs-black, #2a2a2a);
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   line-height: 1.4;
   font-weight: 500;
   display: -webkit-box;
@@ -361,38 +396,28 @@ function goToInspiration(id: number) {
   overflow: hidden;
 }
 
-.card-footer-info {
+.card-occasion-pills {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
 }
 
-.card-budget {
+.occasion-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid rgba(184, 156, 123, 0.35);
+  border-radius: 999px;
+  background: rgba(184, 156, 123, 0.12);
+  color: #8a6d4b;
   font-family: var(--bs-body-font-family, 'Jost', sans-serif);
-  font-size: 0.75rem;
-  color: var(--bs-body-color, #5a5a5a);
-  font-weight: 500;
-}
-
-.card-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--bs-body-font-family, 'Jost', sans-serif);
-  font-size: 0.8rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  color: var(--bs-secondary, #B89C7B);
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.card-link:hover {
-  gap: 8px;
-  color: var(--bs-black, #2a2a2a);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .btn-explore-more {
@@ -440,14 +465,12 @@ function goToInspiration(id: number) {
     font-size: 1.6rem;
   }
 
-  .grid-tall,
-  .grid-medium,
-  .grid-short {
-    grid-row-end: span 10;
-  }
-
   .card-body {
     padding: 12px 14px 14px;
+  }
+
+  .card-meta-tags {
+    padding: 10px 14px 0;
   }
 }
 </style>

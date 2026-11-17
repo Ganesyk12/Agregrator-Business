@@ -279,7 +279,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
+  <div class="booking-history-wrapper">
     <Navbar class="no-print" />
     <SearchPopup class="no-print" />
     <CartOffcanvas class="no-print" />
@@ -293,7 +293,7 @@ onMounted(async () => {
 
       <div v-else-if="historyList.length === 0" class="text-center py-5">
         <p class="text-muted">No transactions found.</p>
-        <a href="/services" class="btn btn-dark mt-2">Browse Services</a>
+        <a href="/explore" class="btn btn-dark mt-2">Browse Services</a>
       </div>
 
       <div v-else class="table-responsive">
@@ -671,3 +671,17 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.booking-history-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.booking-history-page {
+  flex: 1 0 auto;
+  width: 100%;
+}
+</style>

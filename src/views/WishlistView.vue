@@ -85,7 +85,7 @@ onMounted(async () => {
 
         <div v-else-if="favorites.length === 0" class="loading-state">
           <p>You haven't saved any packages yet.</p>
-          <a href="/services" class="btn-browse">Browse Services</a>
+          <a href="/explore" class="btn-browse">Browse Services</a>
         </div>
 
         <div v-else class="row g-4">

@@ -890,29 +890,35 @@ async function handleSimulatePayment(orderId: string) {
         </div>
 
         <!-- STEP 3: Confirmation / Success State -->
-        <div v-else-if="currentStep === 3 && createdOrder" class="order-success-card">
-          <div class="success-icon">&#10003;</div>
-          <h2>Order &amp; Payment Confirmed!</h2>
-          <p class="order-success-desc">Thank you! Your payment has been received and your product order is now confirmed for fulfillment.</p>
-          
-          <div class="order-info-pill">
-            <div class="info-item">
-              <span class="info-label">Order Number</span>
-              <strong class="info-value">#{{ createdOrder.order_number || createdOrder.id_order }}</strong>
+        <div v-else-if="currentStep === 3 && createdOrder" class="order-success-wrap">
+          <div class="order-success-card">
+            <div class="success-icon" aria-hidden="true">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
             </div>
-            <div class="info-item">
-              <span class="info-label">Payment Status</span>
-              <span class="badge bg-success">PAID</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Total Paid</span>
-              <strong class="info-value text-success">{{ formatPrice(createdOrder.grand_total || createdOrder.total_price) }}</strong>
-            </div>
-          </div>
+            <h2>Order &amp; Payment Confirmed!</h2>
+            <p class="order-success-desc">Thank you! Your payment has been received and your product order is now confirmed for fulfillment.</p>
 
-          <div class="mt-4 d-flex justify-content-center gap-3">
-            <router-link to="/" class="btn btn-outline-dark px-4 py-2">Back to Home</router-link>
-            <router-link to="/booking-history" class="btn btn-dark px-4 py-2">View Order History</router-link>
+            <div class="order-info-pill">
+              <div class="info-item">
+                <span class="info-label">Order Number</span>
+                <strong class="info-value">#{{ createdOrder.order_number || createdOrder.id_order }}</strong>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Payment Status</span>
+                <span class="status-badge-paid">PAID</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Total Paid</span>
+                <strong class="info-value info-value-accent">{{ formatPrice(createdOrder.grand_total || createdOrder.total_price) }}</strong>
+              </div>
+            </div>
+
+            <div class="success-actions">
+              <router-link to="/" class="btn btn-outline-dark">Back to Home</router-link>
+              <router-link to="/booking-history" class="btn btn-dark">View Order History</router-link>
+            </div>
           </div>
         </div>
       </div>
@@ -921,3 +927,154 @@ async function handleSimulatePayment(orderId: string) {
     <Footer />
   </div>
 </template>
+
+<style scoped>
+.order-success-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 64px;
+}
+
+.order-success-card {
+  width: 100%;
+  max-width: 720px;
+  background: #fff;
+  border: 1px solid #e8e8ed;
+  border-radius: 20px;
+  padding: 48px 40px 40px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  text-align: center;
+  font-family: 'Jost', sans-serif;
+}
+
+.success-icon {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #e8f5ec;
+  color: #1f9d55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: initial;
+}
+
+.order-success-card h2 {
+  margin: 0 0 12px;
+  font-family: var(--heading-font, 'Marcellus', serif);
+  font-size: 2rem;
+  line-height: 1.25;
+  color: #1d1d1f;
+}
+
+.order-success-desc {
+  max-width: 520px;
+  margin: 0 auto 32px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #6e6e73;
+}
+
+.order-info-pill {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: #f7f7f9;
+  border: 1px solid #ececf0;
+  border-radius: 14px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.order-info-pill .info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border-right: 1px solid #ececf0;
+  min-width: 0;
+}
+
+.order-info-pill .info-item:last-child {
+  border-right: none;
+}
+
+.order-info-pill .info-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #86868b;
+}
+
+.order-info-pill .info-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  overflow-wrap: anywhere;
+}
+
+.order-info-pill .info-value-accent {
+  color: #1f9d55;
+}
+
+.status-badge-paid {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border: 1px solid #bfe4cb;
+  border-radius: 999px;
+  background: #e8f5ec;
+  color: #1f9d55;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.success-actions .btn {
+  min-width: 180px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .order-success-card {
+    padding: 36px 20px 28px;
+    border-radius: 16px;
+  }
+
+  .order-success-card h2 {
+    font-size: 1.5rem;
+  }
+
+  .order-info-pill {
+    grid-template-columns: 1fr;
+  }
+
+  .order-info-pill .info-item {
+    border-right: none;
+    border-bottom: 1px solid #ececf0;
+  }
+
+  .order-info-pill .info-item:last-child {
+    border-bottom: none;
+  }
+
+  .success-actions .btn {
+    width: 100%;
+  }
+}
+</style>

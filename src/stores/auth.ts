@@ -114,7 +114,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function authFetch(url: string, options: RequestInit = {}) {
-    return fetch(url, { ...options, headers: { ...authHeaders(), ...options.headers } })
+    const res = await fetch(url, { ...options, headers: { ...authHeaders(), ...options.headers } })
+    if (res.status === 401 && token.value) {
+      logout()
+    }
+    return res
   }
 
   return {

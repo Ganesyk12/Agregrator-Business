@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 import Navbar from '@/components/layout/Navbar.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
@@ -10,6 +12,8 @@ import defaultImage from '@/assets/default/nothing.png'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
+const cart = useCartStore()
 
 function onImgError(e: Event) {
   const img = e.target as HTMLImageElement
@@ -25,6 +29,8 @@ const reviews = ref<any[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const activeTab = ref<'services' | 'portfolio' | 'reviews'>('services')
+const addingId = ref<number | null>(null)
+const addedId = ref<number | null>(null)
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -104,6 +110,27 @@ function handleBookPackage(pkg: any) {
 
 function goToProduct(id: number) {
   router.push(`/product/${id}`)
+}
+
+async function addToCart(product: any) {
+  if (!auth.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  if (addingId.value !== null) return
+  const id = product.id_product
+  addingId.value = id
+  try {
+    const ok = await cart.addProduct(id, 1)
+    if (ok) {
+      addedId.value = id
+      setTimeout(() => {
+        if (addedId.value === id) addedId.value = null
+      }, 2000)
+    }
+  } finally {
+    addingId.value = null
+  }
 }
 
 onMounted(fetchVendorProfile)
@@ -262,7 +289,14 @@ onMounted(fetchVendorProfile)
                 </div>
                 <span class="product-price">{{ formatPrice(product.price) }}</span>
                 <div class="product-actions">
-                  <button class="btn-add-cart" @click.stop><i class="fa fa-shopping-cart"></i> Add to Cart</button>
+                  <button
+                    class="btn-add-cart"
+                    :disabled="addingId === product.id_product"
+                    @click.stop="addToCart(product)"
+                  >
+                    <i class="fa fa-shopping-cart"></i>
+                    {{ addedId === product.id_product ? 'Added!' : 'Add to Cart' }}
+                  </button>
                   <router-link :to="`/product/${product.id_product}`" class="btn-view">View Detail</router-link>
                 </div>
               </div>
