@@ -42,6 +42,7 @@ onMounted(async () => {
     const p = json.data
     if (p) {
       const price = p.package?.price || 0
+      const vendorAvatar = p.vendor?.avatar_url || defaultImage
       inspiration.value = {
         id: p.id_portfolio,
         image: p.cover_url || defaultImage,
@@ -56,9 +57,9 @@ onMounted(async () => {
         saved: false,
         height: 'medium',
         vendorRefs: {
-          photography: p.vendor?.category === 'Photography' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: defaultImage } : undefined,
-          mua: p.vendor?.category === 'Makeup Artist' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: defaultImage } : undefined,
-          bouquet: p.vendor?.category === 'Bouquet Flowers' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: defaultImage } : undefined,
+          photography: p.vendor?.category === 'Photography' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: vendorAvatar } : undefined,
+          mua: p.vendor?.category === 'Makeup Artist' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: vendorAvatar } : undefined,
+          bouquet: p.vendor?.category === 'Bouquet Flowers' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: vendorAvatar } : undefined,
         }
       }
     }
@@ -167,7 +168,7 @@ function formatPrice(price: number): string {
             <div class="related-vendors">
               <div v-if="inspiration.vendorRefs.photography" class="vendor-card" @click="goToVendor(inspiration.vendorRefs.photography.id)">
                 <div class="vendor-image">
-                  <img :src="inspiration.vendorRefs.photography.image" :alt="inspiration.vendorRefs.photography.name" />
+                  <img :src="inspiration.vendorRefs.photography.image" :alt="inspiration.vendorRefs.photography.name" @error="onImgError" />
                   <div class="vendor-badge">Photography</div>
                 </div>
                 <div class="vendor-info">
@@ -178,7 +179,7 @@ function formatPrice(price: number): string {
 
               <div v-if="inspiration.vendorRefs.mua" class="vendor-card" @click="goToVendor(inspiration.vendorRefs.mua.id)">
                 <div class="vendor-image">
-                  <img :src="inspiration.vendorRefs.mua.image" :alt="inspiration.vendorRefs.mua.name" />
+                  <img :src="inspiration.vendorRefs.mua.image" :alt="inspiration.vendorRefs.mua.name" @error="onImgError" />
                   <div class="vendor-badge">Makeup Artist</div>
                 </div>
                 <div class="vendor-info">
@@ -189,7 +190,7 @@ function formatPrice(price: number): string {
 
               <div v-if="inspiration.vendorRefs.bouquet" class="vendor-card" @click="goToVendor(inspiration.vendorRefs.bouquet.id)">
                 <div class="vendor-image">
-                  <img :src="inspiration.vendorRefs.bouquet.image" :alt="inspiration.vendorRefs.bouquet.name" />
+                  <img :src="inspiration.vendorRefs.bouquet.image" :alt="inspiration.vendorRefs.bouquet.name" @error="onImgError" />
                   <div class="vendor-badge">Bouquet Flowers</div>
                 </div>
                 <div class="vendor-info">

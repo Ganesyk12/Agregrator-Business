@@ -47,8 +47,8 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     let vendorInfo = null
     if (isVendor) {
       const prisma = (await import('../../db')).default
-      const vendor = await prisma.vendor.findUnique({
-        where: { id_user: user.id_user },
+      const vendor = await prisma.vendor.findFirst({
+        where: { id_user: user.id_user, status: { not: 'deleted' } },
         select: {
           id_vendor: true,
           vendor_code: true,
@@ -57,6 +57,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
           vendor_type: true,
           avatar_url: true,
         },
+        orderBy: { date_created: 'asc' },
       })
       if (vendor) {
         vendorInfo = {

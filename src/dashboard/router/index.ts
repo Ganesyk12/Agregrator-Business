@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory('/dashboard/'),
@@ -174,7 +175,7 @@ const adminRoutes = new Set([
   'vendors', 'categories', 'users', 'roles', 'user-roles', 'company-info', 'smtp-settings',
 ])
 
-router.beforeEach((to, _, next) => {
+router.beforeEach(async (to, _, next) => {
   const token = localStorage.getItem('sigyn_token')
   const user = localStorage.getItem('sigyn_user')
   const isAuthenticated = !!token && token !== 'undefined' && token !== 'null'
@@ -190,6 +191,13 @@ router.beforeEach((to, _, next) => {
   } else if (isVendor && !isAdmin && to.name && adminRoutes.has(to.name as string)) {
     next({ name: 'dashboard' })
   } else {
+    // Resolve the active store before the page mounts so every view
+    // loads data for the currently selected vendor.
+    if (isVendor) {
+      try {
+        await useAuthStore().fetchMyVendors()
+      } catch { /* ignore */ }
+    }
     next()
   }
 })

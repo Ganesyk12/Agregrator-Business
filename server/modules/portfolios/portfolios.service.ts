@@ -2,7 +2,7 @@ import prisma from '../../db'
 import type { Portfolio } from './portfolios.types'
 
 const includeRelations = {
-  vendor: { select: { id_vendor: true, business_name: true, category: true, location: true, description: true, status: true, _count: { select: { portfolios: true, reviews: true } } } },
+  vendor: { select: { id_vendor: true, business_name: true, category: true, location: true, description: true, status: true, avatar_url: true, _count: { select: { portfolios: true, reviews: true } } } },
   package: { select: { name: true, price: true } },
   category: { select: { category_name: true } },
 }
@@ -29,7 +29,7 @@ export async function findById(id: number): Promise<Portfolio | null> {
       ...includeRelations,
       images: { orderBy: { sort_order: 'asc' } },
       vendor: {
-        select: { id_vendor: true, business_name: true, category: true, location: true, description: true, status: true, years_exp: true, _count: { select: { portfolios: true, reviews: true } } },
+        select: { id_vendor: true, business_name: true, category: true, location: true, description: true, status: true, years_exp: true, avatar_url: true, _count: { select: { portfolios: true, reviews: true } } },
       },
     },
   }) as unknown as Portfolio | null
@@ -169,6 +169,26 @@ export async function getVendorPackages(vendorId: number) {
   return prisma.package.findMany({
     where: { id_vendor: vendorId, status: 'active' },
     orderBy: { price: 'asc' },
+    include: {
+      vendor: {
+        select: {
+          id_vendor: true,
+          business_name: true,
+          category: true,
+          location: true,
+          description: true,
+          status: true,
+          years_exp: true,
+          _count: { select: { portfolios: true, reviews: true } },
+        },
+      },
+      category: { select: { category_name: true } },
+      extras: {
+        where: { status: 'active' },
+        select: { id_extra: true, name: true, price: true, icon: true, description: true },
+        orderBy: { id_extra: 'asc' },
+      },
+    },
   })
 }
 

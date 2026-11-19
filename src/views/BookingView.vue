@@ -112,7 +112,17 @@ function copyToClipboard(text: string) {
 }
 
 const bookedVendors = ref<BookedVendor[]>([])
-const vendorExtrasCache = ref<Record<number, ExtraItem[]>>({})
+const vendorExtrasCache = ref<Record<string, ExtraItem[]>>({})
+
+function extraKey(v: { id_package?: number; id_product?: number; id_vendor: number }) {
+  if (v.id_package) return `pkg-${v.id_package}`
+  if (v.id_product) return `prod-${v.id_product}`
+  return `vendor-${v.id_vendor}`
+}
+
+function extrasFor(v: { id_package?: number; id_product?: number; id_vendor: number }): ExtraItem[] {
+  return vendorExtrasCache.value[extraKey(v)] || []
+}
 
 function formatPrice(v: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v)
@@ -200,15 +210,6 @@ onMounted(async () => {
             expanded: false,
           })
         }
-        if (vendorData.vendor.extras?.length) {
-          vendorExtrasCache.value[vendorData.vendor.id_vendor] = vendorData.vendor.extras.map((e: any) => ({
-            id: String(e.id_extra || e.id),
-            name: e.name,
-            price: e.price,
-            icon: e.icon || '',
-            selected: false,
-          }))
-        }
       }
     } catch {
       if (!event.value.type) {
@@ -253,7 +254,8 @@ onMounted(async () => {
       for (const item of items) {
         const pkg = item.package
         if (!pkg || bookedVendors.value.some(v => v.id_package === pkg.id_package)) continue
-        bookedVendors.value.push({
+        const extras = normalizeExtras(pkg.extras)
+        const booking: BookedVendor = {
           id_vendor: pkg.vendor?.id_vendor || 0,
           id_package: pkg.id_package,
           package_name: pkg.name,
@@ -263,13 +265,27 @@ onMounted(async () => {
           description: pkg.description || '',
           cover_url: '',
           rating: 0,
-          selectedExtras: [],
+          selectedExtras: extras.filter((e) => e.selected),
           expanded: false,
-        })
+        }
+        bookedVendors.value.push(booking)
+        if (extras.length > 0) {
+          vendorExtrasCache.value[extraKey(booking)] = extras
+        }
       }
     } catch (_) { /* fallback */ }
   }
 })
+
+function normalizeExtras(list: any[]): ExtraItem[] {
+  return (list || []).map((e: any) => ({
+    id: String(e.id_extra || e.id),
+    name: e.name,
+    price: Number(e.price) || 0,
+    icon: e.icon || '',
+    selected: 'selected' in e ? !!e.selected : false,
+  }))
+}
 
 function addPackageToBooking(p: PackageItem & { quantity?: number }) {
   const isProduct = 'id_product' in p && (p as any).id_product
@@ -277,31 +293,26 @@ function addPackageToBooking(p: PackageItem & { quantity?: number }) {
   
   if (bookedVendors.value.some((b) => isProduct ? b.id_product === matchId : b.id_package === matchId)) return
   
-  const extras = ((p as any).extras || []).map((e: any) => ({
-    id: String(e.id_extra || e.id),
-    name: e.name,
-    price: e.price,
-    icon: e.icon || '',
-    selected: 'selected' in e ? !!e.selected : false,
-  }))
-  bookedVendors.value.push({
-    id_vendor: p.vendor.id_vendor,
+  const extras = normalizeExtras((p as any).extras)
+  const booking: BookedVendor = {
+    id_vendor: p.vendor?.id_vendor || 0,
     id_package: isProduct ? undefined : p.id_package,
     id_product: isProduct ? (p as any).id_product : undefined,
     package_name: p.name,
-    business_name: p.vendor.business_name,
-    category: p.category.category_name,
+    business_name: p.vendor?.business_name || 'Vendor',
+    category: p.category?.category_name || p.vendor?.category || 'Services',
     starting_price: p.price,
-    description: p.vendor.description || p.description || '',
+    description: p.vendor?.description || p.description || '',
     cover_url: '',
     rating: 0,
     selectedExtras: extras.filter((e: any) => e.selected),
     expanded: false,
     quantity: p.quantity || 1,
     rawConfig: (p as any).rawConfig
-  })
+  }
+  bookedVendors.value.push(booking)
   if (extras.length > 0) {
-    vendorExtrasCache.value[p.vendor.id_vendor] = extras
+    vendorExtrasCache.value[extraKey(booking)] = extras
   }
 }
 
@@ -311,11 +322,13 @@ function toggleVendorExpand(id: number, idPackage?: number, idProduct?: number) 
     if (idProduct) return b.id_product === idProduct
     return b.id_vendor === id
   })
-  if (v) v.expanded = !v.expanded
+  if (!v) return
+  if (extrasFor(v).length === 0) return
+  v.expanded = !v.expanded
 }
 
-function toggleExtra(vendorId: number, extraId: string) {
-  const extras = vendorExtrasCache.value[vendorId]
+function toggleExtra(key: string, extraId: string) {
+  const extras = vendorExtrasCache.value[key]
   if (!extras) return
   const ex = extras.find((e) => e.id === extraId)
   if (ex) ex.selected = !ex.selected
@@ -324,19 +337,23 @@ function toggleExtra(vendorId: number, extraId: string) {
 function removeVendor(id: number, idPackage?: number, idProduct?: number) {
   if (idPackage) {
     const idx = bookedVendors.value.findIndex((b) => b.id_package === idPackage)
-    if (idx !== -1) bookedVendors.value.splice(idx, 1)
+    const item = idx !== -1 ? bookedVendors.value[idx] : undefined
+    if (item) {
+      delete vendorExtrasCache.value[extraKey(item)]
+      bookedVendors.value.splice(idx, 1)
+    }
   } else if (idProduct) {
     const idx = bookedVendors.value.findIndex((b) => b.id_product === idProduct)
-    if (idx !== -1) bookedVendors.value.splice(idx, 1)
+    const item = idx !== -1 ? bookedVendors.value[idx] : undefined
+    if (item) {
+      delete vendorExtrasCache.value[extraKey(item)]
+      bookedVendors.value.splice(idx, 1)
+    }
   } else {
+    const removed = bookedVendors.value.filter((b) => b.id_vendor === id)
+    removed.forEach((b) => delete vendorExtrasCache.value[extraKey(b)])
     bookedVendors.value = bookedVendors.value.filter((b) => b.id_vendor !== id)
   }
-  const stillHasVendor = bookedVendors.value.some((b) => b.id_vendor === id)
-  if (!stillHasVendor) delete vendorExtrasCache.value[id]
-}
-
-function viewPortfolio(id: number) {
-  window.open(`/portfolio/${id}`, '_blank')
 }
 
 function openAddModal() {
@@ -371,26 +388,23 @@ function handleCloseModal() {
 
 function handleEditPackage(p: any) {
   const idx = bookedVendors.value.findIndex(v => v.id_product === p.id_product)
-  if (idx !== -1) {
-    bookedVendors.value[idx] = {
-      ...bookedVendors.value[idx],
+  const item = idx !== -1 ? bookedVendors.value[idx] : undefined
+  if (item) {
+    const updated: BookedVendor = {
+      ...item,
       package_name: p.name,
       starting_price: p.price,
       quantity: p.quantity,
       selectedExtras: p.extras || [],
       rawConfig: p.rawConfig
     }
-    
+    bookedVendors.value[idx] = updated
+    const key = extraKey(updated)
+
     if (p.extras && p.extras.length > 0) {
-      vendorExtrasCache.value[p.vendor.id_vendor] = p.extras.map((e: any) => ({
-        id: String(e.id),
-        name: e.name,
-        price: e.price,
-        icon: e.icon || '',
-        selected: true
-      }))
+      vendorExtrasCache.value[key] = normalizeExtras(p.extras).map((e) => ({ ...e, selected: true }))
     } else {
-      delete vendorExtrasCache.value[p.vendor.id_vendor]
+      delete vendorExtrasCache.value[key]
     }
   }
   showAddModal.value = false
@@ -399,9 +413,15 @@ function handleEditPackage(p: any) {
 
 const subtotal = computed(() => {
   return bookedVendors.value.reduce((sum, v) => {
-    const extras = vendorExtrasCache.value[v.id_vendor] || []
+    const extras = extrasFor(v)
     const extrasTotal = extras.filter((e) => e.selected).reduce((s, e) => s + e.price, 0)
     return sum + (v.starting_price * (v.quantity || 1)) + extrasTotal
+  }, 0)
+})
+
+const totalExtrasPrice = computed(() => {
+  return bookedVendors.value.reduce((sum, v) => {
+    return sum + extrasFor(v).filter((e) => e.selected).reduce((s, e) => s + e.price, 0)
   }, 0)
 })
 
@@ -409,7 +429,7 @@ const serviceFee = computed(() => Math.round(subtotal.value * 0.05))
 const grandTotal = computed(() => subtotal.value + serviceFee.value)
 
 const totalExtrasCount = computed(() => {
-  return Object.values(vendorExtrasCache.value).reduce((sum, arr) => sum + arr.filter((e) => e.selected).length, 0)
+  return bookedVendors.value.reduce((sum, v) => sum + extrasFor(v).filter((e) => e.selected).length, 0)
 })
 
 async function handleProceedToPayment() {
@@ -473,11 +493,14 @@ async function handleProceedToPayment() {
               valueName: val
             }))
           : []
-        const extrasList = v.selectedExtras.map(e => ({
-          id: Number(e.id),
-          name: e.name,
-          price: e.price
-        }))
+        const cachedExtras = extrasFor(v)
+        const extrasList = (cachedExtras.length ? cachedExtras : v.selectedExtras)
+          .filter(e => (cachedExtras.length ? e.selected : true))
+          .map(e => ({
+            id: Number(e.id),
+            name: e.name,
+            price: e.price
+          }))
 
         return {
           id_product: v.id_product!,
@@ -489,6 +512,15 @@ async function handleProceedToPayment() {
         }
       })
       
+    const packagesPayload = bookedVendors.value
+      .filter(v => v.id_package !== undefined)
+      .map(v => ({
+        id_package: v.id_package!,
+        extras: extrasFor(v)
+          .filter(e => e.selected)
+          .map(e => ({ id: Number(e.id), name: e.name, price: e.price }))
+      }))
+
     const payload = {
       id_user: auth.user?.id_user,
       guest_info: !auth.isLoggedIn ? {
@@ -497,6 +529,7 @@ async function handleProceedToPayment() {
         phone: customer.value.phone
       } : undefined,
       package_ids: packageIds,
+      packages: packagesPayload,
       products: productsPayload,
       event_date: new Date(event.value.date).toISOString(),
       event_location: `${location.value.venue || ''}, ${location.value.address || ''}, ${location.value.city || ''}`,
@@ -942,16 +975,16 @@ onUnmounted(() => {
                 <div class="vendor-actions">
                   <button v-if="vendor.id_product" class="btn-edit-details" @click.stop="openEditModal(vendor)">Edit Details</button>
                   <button class="btn-remove" @click.stop="removeVendor(vendor.id_vendor, vendor.id_package, vendor.id_product)" title="Remove">✕</button>
-                  <span class="expand-icon">{{ vendor.expanded ? '▲' : '▼' }}</span>
+                  <span v-if="extrasFor(vendor).length" class="expand-icon">{{ vendor.expanded ? '▲' : '▼' }}</span>
                 </div>
               </div>
 
               <Transition name="expand">
-                <div v-if="vendor.expanded" class="vendor-extras">
+                <div v-if="vendor.expanded && extrasFor(vendor).length" class="vendor-extras">
                   <h4 class="extras-title">Additional Extras</h4>
                   <div class="extras-grid">
                     <label
-                      v-for="extra in (vendorExtrasCache[vendor.id_vendor] || [])"
+                      v-for="extra in extrasFor(vendor)"
                       :key="extra.id"
                       class="extra-item"
                       :class="{ selected: extra.selected }"
@@ -959,16 +992,15 @@ onUnmounted(() => {
                       <input
                         type="checkbox"
                         :checked="extra.selected"
-                        @change="toggleExtra(vendor.id_vendor, extra.id)"
+                        @change="toggleExtra(extraKey(vendor), extra.id)"
                         hidden
                       />
-                      <span class="extra-icon">{{ extra.icon }}</span>
+                      <span class="extra-icon">{{ extra.icon || '✦' }}</span>
                       <span class="extra-name">{{ extra.name }}</span>
                       <span class="extra-price">{{ formatPrice(extra.price) }}</span>
                       <span class="extra-check">✓</span>
                     </label>
                   </div>
-                  <button class="btn-view-portfolio" @click="viewPortfolio(vendor.id_vendor)">View Portfolio →</button>
                 </div>
               </Transition>
             </div>
@@ -1022,7 +1054,7 @@ onUnmounted(() => {
             </div>
             <div class="summary-row" v-if="totalExtrasCount > 0">
               <span>Extras ({{ totalExtrasCount }})</span>
-              <span>{{ formatPrice(Object.values(vendorExtrasCache).flat().filter(e => e.selected).reduce((s, e) => s + e.price, 0)) }}</span>
+              <span>{{ formatPrice(totalExtrasPrice) }}</span>
             </div>
           </div>
 

@@ -207,13 +207,7 @@ export async function getVendorInfo(req: Request, res: Response, next: NextFunct
     const packages = await portfolioService.getVendorPackages(vendorId)
     const availability = await portfolioService.getVendorAvailability(vendorId)
     const vendorData = attachExtras(vendor)
-    const extras = packages.length > 0
-      ? await prisma.packageExtra.findMany({
-          where: { id_package: packages[0].id_package, status: 'active' },
-          select: { id_extra: true, name: true, price: true, icon: true },
-        })
-      : []
-    res.json({ data: { vendor: { ...vendorData, extras }, reviews, packages, availability } })
+    res.json({ data: { vendor: vendorData, reviews, packages, availability } })
   } catch (err) {
     next(err)
   }

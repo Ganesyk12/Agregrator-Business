@@ -45,7 +45,7 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_user, guest_info, package_ids, products, event_date, event_location, total_price, dp_amount, notes } = req.body
+    const { id_user, guest_info, package_ids, packages, products, event_date, event_location, total_price, dp_amount, notes } = req.body
     
     let userId = req.user?.id_user || (id_user ? Number(id_user) : null)
 
@@ -80,6 +80,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
     const booking = await bookingService.create({
       id_user: Number(userId),
       package_ids: (package_ids as number[]).map(Number),
+      packages: packages ? (packages as any[]) : undefined,
       products: products ? (products as any[]) : undefined,
       event_date: new Date(event_date),
       event_location: event_location || null,

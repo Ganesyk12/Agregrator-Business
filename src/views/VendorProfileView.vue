@@ -259,6 +259,16 @@ onMounted(fetchVendorProfile)
                     <strong>Includes:</strong>
                     <p>{{ pkg.whats_included || '-' }}</p>
                   </div>
+                  <div v-if="pkg.extras?.length" class="package-extras">
+                    <strong>Additional Extras:</strong>
+                    <div class="package-extras-list">
+                      <span v-for="extra in pkg.extras" :key="extra.id_extra" class="package-extra-chip">
+                        <span v-if="extra.icon" class="package-extra-icon">{{ extra.icon }}</span>
+                        <span class="package-extra-name">{{ extra.name }}</span>
+                        <span class="package-extra-price">+ {{ formatPrice(extra.price) }}</span>
+                      </span>
+                    </div>
+                  </div>
                   <button class="btn-book-package" @click.stop="handleBookPackage(pkg)">
                     Book Now - {{ formatPrice(pkg.price) }}
                   </button>
@@ -347,3 +357,68 @@ onMounted(fetchVendorProfile)
     <Footer />
   </div>
 </template>
+
+<style scoped>
+.package-extras {
+  width: 100%;
+  margin-top: 4px;
+  margin-bottom: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  text-align: left;
+}
+
+.package-extras > strong {
+  display: block;
+  margin-bottom: 8px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #86868b;
+}
+
+.package-extras-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.package-extra-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid #eee6d8;
+  border-radius: 10px;
+  background: #f7f3ec;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #5a4a36;
+}
+
+.package-extra-icon {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+}
+
+.package-extra-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+.package-extra-price {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-weight: 700;
+  color: #8a6d4b;
+  white-space: nowrap;
+}
+</style>

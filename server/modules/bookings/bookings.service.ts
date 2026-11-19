@@ -13,6 +13,7 @@ const include = {
           vendor: { select: { id_vendor: true, business_name: true } },
         },
       },
+      extras: true,
     },
   },
   orders: {
@@ -127,13 +128,18 @@ function generateBookingNumber(): string {
 export async function create(
   data: BookingCreateInput & { user_created?: string; user_modified?: string }
 ): Promise<Booking> {
-  const { package_ids, products, ...rest } = data
+  const { package_ids, packages, products, ...rest } = data
 
   // 1. Fetch product details to resolve their vendors
   const productIds = (products || []).map(p => p.id_product)
   const dbProducts = productIds.length > 0 
     ? await prisma.product.findMany({ where: { id_product: { in: productIds } } })
     : []
+
+  const packageExtrasById: Record<number, { id: number; name: string; price: number }[]> = {}
+  for (const p of (packages || [])) {
+    packageExtrasById[p.id_package] = p.extras || []
+  }
 
   // 2. Group products by vendor
   const productsByVendor: Record<number, any[]> = {}
@@ -161,10 +167,23 @@ export async function create(
       user_created: data.user_created ?? 'SYSTEM',
       user_modified: data.user_modified ?? 'SYSTEM',
       booking_packages: {
-        create: package_ids.map((id_package) => ({
-          id_package,
-          user_created: data.user_created ?? 'SYSTEM',
-        })),
+        create: package_ids.map((id_package) => {
+          const extras = packageExtrasById[id_package] || []
+          return {
+            id_package,
+            user_created: data.user_created ?? 'SYSTEM',
+            extras: extras.length
+              ? {
+                  create: extras.map((e) => ({
+                    id_extra: Number(e.id),
+                    name: e.name,
+                    price: Number(e.price) || 0,
+                    user_created: data.user_created ?? 'SYSTEM',
+                  })),
+                }
+              : undefined,
+          }
+        }),
       },
       orders: {
         create: Object.entries(productsByVendor).map(([vendorIdStr, items]) => {

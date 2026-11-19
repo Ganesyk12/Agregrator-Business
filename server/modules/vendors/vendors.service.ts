@@ -25,11 +25,34 @@ export async function findById(id: number): Promise<Vendor | null> {
   }) as unknown as Vendor | null
 }
 
-export async function findByUserId(userId: number): Promise<Vendor | null> {
+export async function findByUserId(userId: number, vendorId?: number): Promise<Vendor | null> {
+  if (vendorId) {
+    return prisma.vendor.findFirst({
+      where: { id_vendor: vendorId, id_user: userId, status: { not: 'deleted' } },
+      select: vendorSelect,
+    }) as unknown as Vendor | null
+  }
+
   return prisma.vendor.findFirst({
     where: { id_user: userId, status: { not: 'deleted' } },
     select: vendorSelect,
+    orderBy: { date_created: 'asc' },
   }) as unknown as Vendor | null
+}
+
+export async function findAllByUserId(userId: number): Promise<Array<Pick<Vendor, 'id_vendor' | 'vendor_code' | 'business_name' | 'category' | 'vendor_type' | 'status'>>> {
+  return prisma.vendor.findMany({
+    where: { id_user: userId, status: { not: 'deleted' } },
+    select: {
+      id_vendor: true,
+      vendor_code: true,
+      business_name: true,
+      category: true,
+      vendor_type: true,
+      status: true,
+    },
+    orderBy: { date_created: 'asc' },
+  })
 }
 
 export async function create(

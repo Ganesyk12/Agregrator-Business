@@ -1,5 +1,13 @@
 node_modules
 dist
 .git
+.gitignore
 .env
+.env.*
 *.md
+summary.txt
+src
+tests
+coverage
+.vscode
+tmp*

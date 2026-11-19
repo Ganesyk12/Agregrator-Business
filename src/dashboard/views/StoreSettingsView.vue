@@ -17,10 +17,11 @@ const form = ref({
 })
 
 const loading = ref(true)
+const vendorQuery = () => (auth.vendorId ? `?vendorId=${auth.vendorId}` : '')
 
 onMounted(async () => {
   try {
-    const res = await auth.authFetch('/api/vendors/me')
+    const res = await auth.authFetch(`/api/vendors/me${vendorQuery()}`)
     if (res.ok) {
       const json = await res.json()
       const v = json.data
@@ -51,7 +52,7 @@ async function handleAvatarUpload(e: Event) {
 
 async function save() {
   try {
-    const res = await auth.authFetch('/api/vendors/me', {
+    const res = await auth.authFetch(`/api/vendors/me${vendorQuery()}`, {
       method: 'PATCH',
       body: JSON.stringify({
         business_name: form.value.business_name,

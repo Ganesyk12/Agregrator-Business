@@ -113,7 +113,7 @@ async function handleSave(data: UserRoleForm) {
     }
   } else if (modalMode.value === 'edit' && selectedUserRole.value) {
     try {
-      const res = await fetch(`${apiUrl}/api/user-roles/email/${selectedUserRole.value.email}`, {
+      const res = await fetch(`${apiUrl}/api/user-roles/email/${encodeURIComponent(selectedUserRole.value.email)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -133,7 +133,7 @@ async function handleSave(data: UserRoleForm) {
       console.error('Error updating user roles:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to update user roles'
+        title: (err as Error).message || 'Failed to update user roles'
       })
     }
   }
@@ -153,7 +153,7 @@ async function handleDelete(ur: any) {
 
   if (result.isConfirmed) {
     try {
-      const res = await fetch(`${apiUrl}/api/user-roles/email/${ur.email}`, {
+      const res = await fetch(`${apiUrl}/api/user-roles/email/${encodeURIComponent(ur.email)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role_codes: [] })
@@ -171,7 +171,7 @@ async function handleDelete(ur: any) {
       console.error('Error deleting user roles:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete user roles'
+        title: (err as Error).message || 'Failed to delete user roles'
       })
     }
   }

@@ -94,7 +94,9 @@ export async function syncByEmail(req: Request, res: Response, next: NextFunctio
     }
 
     const user = await userService.findByEmail(email)
-    if (!user) {
+    // Allow clearing roles for users that were soft-deleted, but still require
+    // an active user when assigning roles.
+    if (!user && role_codes.length > 0) {
       throw createError(404, 'User not found')
     }
 

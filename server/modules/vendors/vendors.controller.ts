@@ -7,7 +7,8 @@ import '../../middleware/auth'
 
 export async function getMe(req: Request, res: Response, next: NextFunction) {
   try {
-    const vendor = await vendorService.findByUserId(req.user!.id_user)
+    const vendorId = req.query.vendorId ? Number(req.query.vendorId) : undefined
+    const vendor = await vendorService.findByUserId(req.user!.id_user, vendorId)
     if (!vendor) {
       res.status(404).json({ error: { message: 'Vendor profile not found' } })
       return
@@ -18,9 +19,19 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export async function getMine(req: Request, res: Response, next: NextFunction) {
+  try {
+    const vendors = await vendorService.findAllByUserId(req.user!.id_user)
+    res.json({ data: vendors })
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function updateMe(req: Request, res: Response, next: NextFunction) {
   try {
-    const vendor = await vendorService.findByUserId(req.user!.id_user)
+    const vendorId = req.query.vendorId ? Number(req.query.vendorId) : undefined
+    const vendor = await vendorService.findByUserId(req.user!.id_user, vendorId)
     if (!vendor) {
       throw createError(404, 'Vendor profile not found')
     }
@@ -69,10 +80,13 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id_user, business_name, description, category, location } = req.body
+    const { id_user, business_name, description, category, location, years_exp } = req.body
 
     if (!id_user) {
       throw createError(400, 'id_user is required')
+    }
+    if (!business_name || !category) {
+      throw createError(400, 'business_name and category are required')
     }
 
     // Check if user exists
@@ -81,14 +95,6 @@ export async function create(req: Request, res: Response, next: NextFunction) {
     })
     if (!user) {
       throw createError(404, 'User not found')
-    }
-
-    // Check if user is already a vendor
-    const existingVendor = await prisma.vendor.findUnique({
-      where: { id_user: Number(id_user) }
-    })
-    if (existingVendor) {
-      throw createError(409, 'This user is already linked to another vendor')
     }
 
     // Assign vendor role to the user if they don't already have it
@@ -104,12 +110,17 @@ export async function create(req: Request, res: Response, next: NextFunction) {
       await userRoleService.create({ email: user.email, role_code: 'eUser-Vendor' })
     }
 
-    const vendor = await vendorService.create({
-      id_user: Number(id_user),
+    const payload = {
       business_name,
       description: description ?? null,
       category,
       location: location ?? null,
+      years_exp: years_exp === undefined || years_exp === null || years_exp === '' ? 0 : Number(years_exp),
+    }
+
+    const vendor = await vendorService.create({
+      id_user: Number(id_user),
+      ...payload,
     })
 
     res.status(201).json({ data: vendor })

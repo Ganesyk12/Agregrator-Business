@@ -56,6 +56,18 @@ const isVendor = computed(() => userRoles.value.includes('eUser-Vendor'))
 const isProductVendor = computed(() => auth.isProductVendor)
 const isFinance = computed(() => userRoles.value.includes('eUser-Finance'))
 
+const switchingVendor = ref(false)
+const vendorOptions = computed(() => (isVendor.value ? auth.vendors : []))
+const showVendorSwitcher = computed(() => vendorOptions.value.length > 1)
+
+async function onVendorChange(event: Event) {
+  const vendorIdToSwitch = Number((event.target as HTMLSelectElement).value)
+  if (!vendorIdToSwitch || vendorIdToSwitch === auth.user?.vendor_id || switchingVendor.value) return
+  switchingVendor.value = true
+  await auth.switchVendor(vendorIdToSwitch)
+  window.location.reload()
+}
+
 function getVendorItems(): MenuItem[] {
   const items: MenuItem[] = []
   if (isSuperAdmin.value) {
@@ -213,7 +225,7 @@ watch(() => route.path, () => {
 <template>
   <nav class="pcoded-navbar" :class="{ 'navbar-collapsed': sidebarCollapsed, 'mob-open': mobileOpen }">
     <div class="navbar-wrapper">
-      
+
       <!-- Top profile block -->
       <!-- <div class="main-menu-header-wrap">
         <div class="main-menu-header">
@@ -235,8 +247,27 @@ watch(() => route.path, () => {
         </div>
       </div> -->
 
+      <!-- Active store switcher -->
+      <div v-if="showVendorSwitcher" class="store-switcher">
+        <label class="store-switcher-label" for="store-switcher-select">
+          <i class="fa fa-briefcase"></i> Active store
+        </label>
+        <select
+          id="store-switcher-select"
+          class="store-switcher-select"
+          :value="auth.user?.vendor_id"
+          :disabled="switchingVendor"
+          @change="onVendorChange"
+        >
+          <option v-for="v in vendorOptions" :key="v.id_vendor" :value="v.id_vendor">
+            {{ v.business_name }}
+          </option>
+        </select>
+        <span v-if="switchingVendor" class="store-switcher-loading">Switching…</span>
+      </div>
+
       <!-- Navigation links content (Scrollable container) -->
-      <div class="navbar-content scroll-div">
+      <div class="navbar-content scroll-div" :class="{ 'has-store-switcher': showVendorSwitcher }">
         <ul class="nav pcoded-inner-navbar">
           <li class="nav-item pcoded-menu-caption">
             <label>Navigation</label>
@@ -304,6 +335,66 @@ watch(() => route.path, () => {
   height: calc(100vh - 120px) !important;
   position: relative;
   overflow-y: auto !important;
+}
+
+.navbar-content.has-store-switcher {
+  height: calc(100vh - 200px) !important;
+}
+
+/* Store switcher */
+.store-switcher {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.store-switcher-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a9b7d0;
+}
+
+.store-switcher-select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.store-switcher-select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.store-switcher-select option {
+  color: #1d1d1f;
+}
+
+.store-switcher-select:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.store-switcher-loading {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #a9b7d0;
+}
+
+/* Hide switcher when the sidebar is collapsed to icons only */
+.pcoded-navbar.navbar-collapsed .store-switcher {
+  display: none;
 }
 
 /* Native modern scrollbar styling */

@@ -107,7 +107,7 @@ async function handleSave(data: VendorForm) {
       console.error('Error creating vendor:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to create vendor'
+        title: err instanceof Error ? err.message : 'Failed to create vendor'
       })
     }
   } else if (modalMode.value === 'edit' && selectedVendor.value) {
@@ -136,7 +136,7 @@ async function handleSave(data: VendorForm) {
       console.error('Error updating vendor:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to update vendor'
+        title: err instanceof Error ? err.message : 'Failed to update vendor'
       })
     }
   }
@@ -172,7 +172,7 @@ async function handleDelete(id: number) {
       console.error('Error deleting vendor:', err)
       Toast.fire({
         icon: 'error',
-        title: 'Failed to delete vendor'
+        title: err instanceof Error ? err.message : 'Failed to delete vendor'
       })
     }
   }

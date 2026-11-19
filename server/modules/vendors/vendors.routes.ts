@@ -5,6 +5,7 @@ import * as vendorCtrl from './vendors.controller'
 const router = Router()
 
 router.get('/', vendorCtrl.getAll)
+router.get('/mine', authenticate, vendorCtrl.getMine)
 router.get('/me', authenticate, vendorCtrl.getMe)
 router.patch('/me', authenticate, vendorCtrl.updateMe)
 router.get('/:id', vendorCtrl.getById)

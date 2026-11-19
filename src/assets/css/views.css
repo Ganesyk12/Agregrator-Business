@@ -2544,19 +2544,6 @@ textarea.form-control {
 }
 .extra-item.selected .extra-check { opacity: 1; }
 
-.btn-view-portfolio {
-  margin-top: 12px;
-  background: none;
-  border: none;
-  color: #1d1d1f;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 .add-service-section {
   text-align: center;
   border-style: dashed;

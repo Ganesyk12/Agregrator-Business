@@ -6,6 +6,11 @@ const packageInclude = {
     select: {
       id_package: true, name: true, price: true, description: true, duration: true,
       vendor: { select: { id_vendor: true, business_name: true } },
+      extras: {
+        where: { status: 'active' },
+        select: { id_extra: true, name: true, price: true, icon: true, description: true },
+        orderBy: { id_extra: 'asc' as const },
+      },
     },
   },
 } as const

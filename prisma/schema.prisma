@@ -35,7 +35,7 @@ model User {
   user_created  String?
   user_modified String?
 
-  vendor     Vendor?
+  vendors    Vendor[]
   bookings   Booking[] @relation("CustomerBookings")
   reviews    Review[]
   orders     Order[]
@@ -65,7 +65,7 @@ model User_Role {
 
 model Vendor {
   id_vendor     Int      @id @default(autoincrement())
-  id_user       Int      @unique
+  id_user       Int
   vendor_code   String   @unique @default(uuid())
   business_name String
   description   String?
@@ -92,6 +92,7 @@ model Vendor {
 
   reviews      Review[]
 
+  @@index([id_user])
   @@index([status])
 }
 
