@@ -50,6 +50,11 @@ const activeIndex = ref(0)
 const mouseX = ref(0)
 const mouseY = ref(0)
 const heroRef = ref<HTMLElement | null>(null)
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200)
+
+function updateWindowWidth() {
+  windowWidth.value = window.innerWidth
+}
 let intervalId: ReturnType<typeof setInterval> | null = null
 let pollId: ReturnType<typeof setInterval> | null = null
 let ctx: gsap.Context | null = null
@@ -93,7 +98,10 @@ const allCards = computed(() => {
 function cardStyle(offset: number) {
   const abs = Math.abs(offset)
   const scale = offset === 0 ? 1.2 : abs === 1 ? 0.85 : 0.65
-  const gap = 160
+  // Keep the card gap proportional to the (responsive) card width so the
+  // blurred side cards peek in the same way on every screen size.
+  const cardWidth = windowWidth.value <= 767 ? 180 : windowWidth.value <= 1199 ? 200 : 240
+  const gap = Math.round(cardWidth * 0.667)
   const x = offset * gap
   const y = abs * 10
   const rotateY = -offset * 8
@@ -127,6 +135,9 @@ function displayCategory(cat: { category_name?: string } | null | undefined, ven
 }
 
 onMounted(async () => {
+  updateWindowWidth()
+  window.addEventListener('resize', updateWindowWidth)
+
   // GSAP intro animation for text and gradient spheres
   ctx = gsap.context(() => {
     gsap.from('.hero-tagline', {
@@ -214,6 +225,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', updateWindowWidth)
   if (intervalId) clearInterval(intervalId)
   if (pollId) clearInterval(pollId)
   if (ctx) ctx.revert()
@@ -664,11 +676,11 @@ function onImgError(e: Event) {
   }
 
   .cards-viewport {
-    height: 440px;
+    height: 480px;
   }
 
   .hero-right {
-    min-height: 420px;
+    min-height: 460px;
   }
 }
 
@@ -710,11 +722,11 @@ function onImgError(e: Event) {
   }
 
   .cards-viewport {
-    height: 420px;
+    height: 480px;
   }
 
   .hero-right {
-    min-height: 400px;
+    min-height: 460px;
   }
 
   .card-wrapper[data-offset="2"],
@@ -725,7 +737,7 @@ function onImgError(e: Event) {
 
 @media (max-width: 767px) {
   .hero-layout {
-    padding: 80px 24px 40px;
+    padding: 80px 24px 56px;
   }
 
   .hero-headline {
@@ -754,16 +766,11 @@ function onImgError(e: Event) {
   }
 
   .cards-viewport {
-    height: 380px;
+    height: 460px;
   }
 
   .hero-right {
-    min-height: 360px;
-  }
-
-  .card-wrapper[data-offset="1"],
-  .card-wrapper[data-offset="-1"] {
-    display: none;
+    min-height: 440px;
   }
 }
 </style>

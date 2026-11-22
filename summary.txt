@@ -1,0 +1,18 @@
+AboutView Topbar Text Light Update
+
+Changes to AboutView.vue:
+
+1. Hero Overlay Background
+   - Changed from black rgba(0,0,0,0.5) to beige rgba(247, 244, 239, 0.7)
+   - Creates lighter, softer overlay matching page background
+
+2. Hero Title & Description
+   - Title: Changed from text-white to #2a2a2a (dark charcoal)
+   - Description: Changed from text-white-50 to #5a5a5a (medium gray)
+   - Text becomes visible against light overlay instead of white
+
+3. Visibility
+   - Text now has good contrast against the light beige overlay
+   - More readable and less stark compared to white text on image
+
+Result: Top bar/search text (Hero section) now uses light/neutral colors for better visibility and consistency with page styling.

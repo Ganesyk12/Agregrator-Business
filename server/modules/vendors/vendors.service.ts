@@ -14,7 +14,7 @@ export async function findAll(): Promise<Vendor[]> {
   return prisma.vendor.findMany({
     where: { status: { not: 'deleted' } },
     select: vendorSelect,
-    orderBy: { date_created: 'desc' },
+    orderBy: { business_name: 'asc' },
   }) as unknown as Vendor[]
 }
 

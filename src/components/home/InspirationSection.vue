@@ -221,19 +221,28 @@ function goToInspiration(id: number) {
 }
 
 .inspiration-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  align-items: start;
-  gap: 20px;
+  /* Pinterest-style masonry. `display: block` overrides the global
+     views.css `display: grid` so the multi-column layout actually applies.
+     4 columns on desktop, 2 on tablet/mobile. Card height variety
+     (tall/medium/short) still drives the dynamic whitespace. */
+  display: block;
+  column-count: 4;
+  column-gap: 20px;
 }
 
 .inspiration-card {
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 20px;
+  vertical-align: top;
   border-radius: 16px;
   overflow: hidden;
   background: #fff;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   cursor: pointer;
   break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 
@@ -443,7 +452,7 @@ function goToInspiration(id: number) {
 
 @media (max-width: 992px) {
   .inspiration-grid {
-    grid-template-columns: repeat(2, 1fr);
+    column-count: 2;
   }
 
   .section-title {
@@ -457,8 +466,12 @@ function goToInspiration(id: number) {
   }
 
   .inspiration-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    column-count: 2;
+    column-gap: 16px;
+  }
+
+  .inspiration-card {
+    margin-bottom: 16px;
   }
 
   .section-title {

@@ -63,6 +63,9 @@ const celebrations: Celebration[] = [
 
 <template>
   <section class="celebration-section">
+    <div class="celebration-bg">
+      <div class="gradient-sphere sphere-purple" />
+    </div>
     <div class="container">
       <div class="section-header text-center" data-aos="fade-up">
         <span class="section-label">Discover</span>
@@ -122,8 +125,37 @@ const celebrations: Celebration[] = [
 <style scoped>
 .celebration-section {
   padding: 100px 0;
-  background: var(--bs-body-bg, #F7F4EF);
+  background: #fff;
   position: relative;
+  overflow: hidden;
+}
+
+/* Mirrors the hero's purple sphere (sphere-2) so the flow stays seamless */
+.celebration-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.gradient-sphere {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.3;
+}
+
+.sphere-purple {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #8b5cf6, #a78bfa);
+  top: -100px;
+  left: -100px;
+}
+
+.celebration-section .container {
+  position: relative;
+  z-index: 1;
 }
 
 .section-header {
