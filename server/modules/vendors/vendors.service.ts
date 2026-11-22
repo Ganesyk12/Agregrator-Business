@@ -3,7 +3,7 @@ import type { Vendor } from './vendors.types'
 
 const vendorSelect = {
   id_vendor: true, id_user: true, vendor_code: true, business_name: true,
-  description: true, category: true, location: true, years_exp: true,
+  description: true, id_category: true, category: true, location: true, years_exp: true,
   avatar_url: true, instagram: true, vendor_type: true,
   status: true, verified_at: true, date_created: true, date_modified: true,
   user_created: true, user_modified: true,
@@ -40,13 +40,14 @@ export async function findByUserId(userId: number, vendorId?: number): Promise<V
   }) as unknown as Vendor | null
 }
 
-export async function findAllByUserId(userId: number): Promise<Array<Pick<Vendor, 'id_vendor' | 'vendor_code' | 'business_name' | 'category' | 'vendor_type' | 'status'>>> {
+export async function findAllByUserId(userId: number): Promise<Array<Pick<Vendor, 'id_vendor' | 'vendor_code' | 'business_name' | 'id_category' | 'category' | 'vendor_type' | 'status'>>> {
   return prisma.vendor.findMany({
     where: { id_user: userId, status: { not: 'deleted' } },
     select: {
       id_vendor: true,
       vendor_code: true,
       business_name: true,
+      id_category: true,
       category: true,
       vendor_type: true,
       status: true,
@@ -56,10 +57,10 @@ export async function findAllByUserId(userId: number): Promise<Array<Pick<Vendor
 }
 
 export async function create(
-  data: Pick<Vendor, 'id_user' | 'business_name' | 'category' | 'description' | 'location'> &
+  data: Pick<Vendor, 'id_user' | 'id_category' | 'business_name' | 'description' | 'location'> &
     Partial<Pick<Vendor, 'years_exp' | 'user_created' | 'user_modified'>>
 ): Promise<Vendor> {
-  const vendorType = data.category === 'Bouquet Flowers' ? 'PRODUCT' : 'SERVICE'
+  const vendorType = data.id_category === 3 ? 'PRODUCT' : 'SERVICE'
   const payload = {
     ...data,
     vendor_type: vendorType,
@@ -75,7 +76,7 @@ export async function create(
 
 export async function update(
   id: number,
-  data: Partial<Pick<Vendor, 'business_name' | 'category' | 'description' | 'location' | 'years_exp' | 'avatar_url' | 'instagram' | 'status' | 'user_modified'>>
+  data: Partial<Pick<Vendor, 'business_name' | 'description' | 'location' | 'years_exp' | 'avatar_url' | 'instagram' | 'status' | 'user_modified' | 'id_category'>>
 ): Promise<Vendor | null> {
   const existing = await prisma.vendor.findFirst({
     where: { id_vendor: id, status: { not: 'deleted' } },

@@ -23,9 +23,18 @@ const selectedSort = ref('popular')
 const categories = [
   { id: 'all', name: 'All', icon: 'M4 6h16M4 12h16M4 18h16' },
   { id: 'Photography', name: 'Photography', icon: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
-  { id: 'Makeup Artist', name: 'Makeup Artist', icon: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z M12 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z' },
+  // The DB category_name is "MUA"; keep the friendlier UI label.
+  { id: 'MUA', name: 'Makeup Artist', icon: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z M12 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z' },
   { id: 'Bouquet Flowers', name: 'Bouquet Flowers', icon: 'M12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M12 7v14 M9 10.5c-2.5 0-4.5 1.5-4.5 4 0 1 .5 2 1.5 2.5L12 20l6-3c1-.5 1.5-1.5 1.5-2.5 0-2.5-2-4-4.5-4 M7 14c-1.5 0-3 1-3 3 M17 14c1.5 0 3 1 3 3' }
 ]
+
+// Vendor.category is a Category relation object now; fall back to a plain
+// string for older payloads.
+function categoryName(vendor: any): string {
+  const cat = vendor?.category
+  if (!cat) return ''
+  return typeof cat === 'string' ? cat : (cat.category_name || '')
+}
 
 const sortOptions = [
   { id: 'popular', name: 'Popular' },
@@ -66,7 +75,7 @@ onMounted(async () => {
         return {
           id: v.id_vendor,
           name: v.business_name,
-          category: v.category,
+          category: categoryName(v),
           location: v.location || '',
           rating: 0,
           reviews: 0,
@@ -83,13 +92,13 @@ onMounted(async () => {
         id: p.id_portfolio,
         image: p.cover_url || defaultImage,
         occasion: p.label || p.title || 'Creative',
-        style: p.vendor?.category || 'Creative',
+        style: categoryName(p.vendor) || 'Creative',
         caption: p.title || p.description || '',
         budget: p.package?.price ? `Rp ${p.package.price.toLocaleString('id-ID')}` : '',
         saved: false,
         height: 'medium' as const,
         vendor: p.vendor?.business_name || '',
-        category: p.vendor?.category || '',
+        category: categoryName(p.vendor) || '',
         source: 'portfolio' as const
       }))
 

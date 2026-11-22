@@ -16,6 +16,14 @@ interface GalleryItem {
 const images = ref<GalleryItem[]>([])
 const loading = ref(true)
 
+// Vendor.category is a Category relation object now; fall back to a plain
+// string for older payloads.
+function categoryName(vendor: any): string {
+  const cat = vendor?.category
+  if (!cat) return ''
+  return typeof cat === 'string' ? cat : (cat.category_name || '')
+}
+
 onMounted(async () => {
   try {
     const res = await fetch('/api/portfolios')
@@ -23,7 +31,7 @@ onMounted(async () => {
     if (res.ok) {
       const allPortfolios = json.data || []
       images.value = allPortfolios
-        .filter((p: any) => p.vendor?.category === 'Photography')
+        .filter((p: any) => categoryName(p.vendor) === 'Photography')
         .map((p: any) => ({
           url: p.cover_url || defaultImage,
           id_portfolio: p.id_portfolio,

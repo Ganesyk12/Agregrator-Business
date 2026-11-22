@@ -10,19 +10,28 @@ interface PortfolioItem {
   id_portfolio: number
   cover_url: string
   title: string
-  category: string
+  category: any
   description: string | null
   vendor?: {
     id_vendor: number
     business_name: string
-    category: string
+    category: any
     location: string | null
     starting_price: number
   }
 }
 
 interface Category {
+  id_category?: number
   name: string
+  category_name?: string
+}
+
+// Category may be a relation object or a plain string; return its name.
+function categoryName(value: any): string {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.category_name || value.name || ''
 }
 
 const portfolios = ref<PortfolioItem[]>([])
@@ -34,7 +43,10 @@ const searchQuery = ref('')
 const filteredPortfolios = computed(() => {
   let result = portfolios.value
   if (activeCategory.value !== 'all') {
-    result = result.filter(p => p.category === activeCategory.value)
+    result = result.filter(p =>
+      categoryName(p.category) === activeCategory.value ||
+      categoryName(p.vendor?.category) === activeCategory.value
+    )
   }
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()
@@ -140,7 +152,7 @@ onMounted(async () => {
                   :alt="item.title"
                   class="card-img-top"
                 >
-                <span class="category-badge">{{ item.category }}</span>
+                <span class="category-badge">{{ categoryName(item.category) || categoryName(item.vendor?.category) }}</span>
               </div>
               <div class="card-body">
                 <h5 class="card-title text-uppercase mb-1">{{ item.vendor?.business_name || item.title }}</h5>

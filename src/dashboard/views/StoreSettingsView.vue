@@ -69,7 +69,7 @@ async function save() {
     if (v) {
       auth.setVendorInfo({
         vendor_id: v.id_vendor,
-        vendor_category: v.category,
+        vendor_category: v.category?.category_name ?? v.category ?? '',
         vendor_name: v.business_name,
         vendor_type: v.vendor_type,
         vendor_avatar: v.avatar_url,

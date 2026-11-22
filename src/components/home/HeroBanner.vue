@@ -129,9 +129,11 @@ function formatPrice(price?: number): string {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price)
 }
 
-function displayCategory(cat: { category_name?: string } | null | undefined, vendorCat: string): string {
-  if (cat?.category_name) return cat.category_name
-  return vendorCat || 'Kreatif'
+function displayCategory(portfolioCat: any, vendorCat: any): string {
+  if (portfolioCat?.category_name) return portfolioCat.category_name
+  if (vendorCat?.category_name) return vendorCat.category_name
+  if (typeof vendorCat === 'string' && vendorCat) return vendorCat
+  return 'Kreatif'
 }
 
 onMounted(async () => {

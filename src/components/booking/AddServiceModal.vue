@@ -33,6 +33,14 @@ const emit = defineEmits<{
   edit: [pkg: any]
 }>()
 
+// Vendor.category is a Category relation object now; fall back to a plain
+// string for older payloads.
+function categoryName(vendor: any): string {
+  const cat = vendor?.category
+  if (!cat) return ''
+  return typeof cat === 'string' ? cat : (cat.category_name || '')
+}
+
 watch(() => props.visible, async (newVal) => {
   if (newVal && props.editProduct) {
     const ep = props.editProduct
@@ -126,7 +134,7 @@ async function selectCategory(cat: string) {
       const json = await res.json()
       if (res.ok && json.data) {
         const allProducts = json.data || []
-        const categoryProducts = allProducts.filter((p: any) => p.vendor?.category === 'Bouquet Flowers')
+        const categoryProducts = allProducts.filter((p: any) => categoryName(p.vendor) === 'Bouquet Flowers')
         packages.value = categoryProducts.map((p: any) => ({
           id_package: p.id_product, // unique fallback key
           id_product: p.id_product, // product id directly
@@ -138,7 +146,7 @@ async function selectCategory(cat: string) {
           vendor: {
             id_vendor: p.vendor?.id_vendor || 0,
             business_name: p.vendor?.business_name || 'Vendor',
-            category: p.vendor?.category || 'Bouquet Flowers',
+            category: categoryName(p.vendor) || 'Bouquet Flowers',
             location: p.vendor?.location || '',
             description: '',
             status: 'active',
@@ -372,7 +380,7 @@ function confirmAddProduct() {
     vendor: {
       id_vendor: p.vendor?.id_vendor || 0,
       business_name: p.vendor?.business_name || 'Vendor',
-      category: p.vendor?.category || 'Bouquet Flowers',
+      category: categoryName(p.vendor) || 'Bouquet Flowers',
       location: p.vendor?.location || '',
       description: '',
       status: 'active',

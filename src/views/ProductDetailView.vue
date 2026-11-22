@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
@@ -147,6 +147,19 @@ const greetingGroupName = computed(() => {
   return g?.name || ''
 })
 
+// The greeting message field should only appear for a card option that is not
+// the "Without Greeting Card" choice.
+const greetingCardSelected = computed(() => {
+  const groupName = greetingGroupName.value
+  if (!groupName) return false
+  const valueName = selectedOptions.value[groupName] || ''
+  return !!valueName && !valueName.toLowerCase().includes('without')
+})
+
+watch(greetingCardSelected, (enabled) => {
+  if (!enabled) greetingMessage.value = ''
+})
+
 const productLabels = computed<string[]>(() => {
   const raw = String(product.value?.labels || '')
   return raw
@@ -193,8 +206,8 @@ function buildConfig() {
     variantName: isNewProduct.value ? '' : variant?.name || '',
     sizeName: selectedSize.value,
     options,
-    greetingCard,
-    greetingMessage: greetingMessage.value,
+    greetingCard: greetingCardSelected.value ? greetingCard : '',
+    greetingMessage: greetingCardSelected.value ? greetingMessage.value : '',
     extras,
     addonIds,
     quantity: quantity.value,
@@ -348,7 +361,7 @@ function buyNow() {
                 </div>
 
                 <!-- Greeting Message -->
-                <div v-if="greetingGroupName && selectedOptions[greetingGroupName]" class="section">
+                <div v-if="greetingCardSelected" class="section">
                   <h3 class="section-title">Greeting Message</h3>
                   <textarea
                     v-model="greetingMessage"

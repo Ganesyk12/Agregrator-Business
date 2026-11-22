@@ -166,7 +166,7 @@ onMounted(async () => {
       const json = await res.json()
       if (res.ok && json.data) {
         const vendorData = json.data
-        const vendorCat = vendorData.vendor?.category
+        const vendorCat = categoryName(vendorData.vendor)
         if (vendorCat && !event.value.type) {
           event.value.type = categoryToEventType[vendorCat] || ''
         }
@@ -185,7 +185,7 @@ onMounted(async () => {
               id_package: Number(pkgId),
               package_name: pkgName || 'Package',
               business_name: vendorData.vendor.business_name,
-              category: vendorData.vendor.category,
+              category: categoryName(vendorData.vendor),
               starting_price: Number(pkgPrice) || 0,
               description: vendorData.vendor.description || '',
               cover_url: '',
@@ -201,7 +201,7 @@ onMounted(async () => {
           bookedVendors.value.push({
             id_vendor: vendorData.vendor.id_vendor,
             business_name: vendorData.vendor.business_name,
-            category: vendorData.vendor.category,
+            category: categoryName(vendorData.vendor),
             starting_price: minPrice,
             description: vendorData.vendor.description || '',
             cover_url: '',
@@ -287,6 +287,14 @@ function normalizeExtras(list: any[]): ExtraItem[] {
   }))
 }
 
+// Vendor.category is a Category relation object now; fall back to a plain
+// string for older payloads.
+function categoryName(vendor: any): string {
+  const cat = vendor?.category
+  if (!cat) return ''
+  return typeof cat === 'string' ? cat : (cat.category_name || '')
+}
+
 function addPackageToBooking(p: PackageItem & { quantity?: number }) {
   const isProduct = 'id_product' in p && (p as any).id_product
   const matchId = isProduct ? (p as any).id_product : p.id_package
@@ -300,7 +308,7 @@ function addPackageToBooking(p: PackageItem & { quantity?: number }) {
     id_product: isProduct ? (p as any).id_product : undefined,
     package_name: p.name,
     business_name: p.vendor?.business_name || 'Vendor',
-    category: p.category?.category_name || p.vendor?.category || 'Services',
+    category: p.category?.category_name || categoryName(p.vendor) || 'Services',
     starting_price: p.price,
     description: p.vendor?.description || p.description || '',
     cover_url: '',

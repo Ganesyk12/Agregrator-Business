@@ -17,6 +17,14 @@ const products = ref<any[]>([])
 const images = ref<GalleryItem[]>([])
 const loading = ref(true)
 
+// Vendor.category is a Category relation object now; fall back to a plain
+// string for older payloads.
+function categoryName(vendor: any): string {
+  const cat = vendor?.category
+  if (!cat) return ''
+  return typeof cat === 'string' ? cat : (cat.category_name || '')
+}
+
 onMounted(async () => {
   try {
     const res = await fetch('/api/products')
@@ -24,7 +32,7 @@ onMounted(async () => {
     if (res.ok) {
       products.value = (json.data || []).filter(
         (p: any) =>
-          p.status === 'active' && p.vendor?.category === 'Bouquet Flowers'
+          p.status === 'active' && categoryName(p.vendor) === 'Bouquet Flowers'
       )
       images.value = products.value.map((p: any) => ({
         url: p.images?.[0]?.image_url || defaultImage,

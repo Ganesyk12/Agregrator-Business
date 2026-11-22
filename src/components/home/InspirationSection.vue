@@ -25,6 +25,14 @@ const props = defineProps<{
 const inspirations = ref<Inspiration[]>([])
 const loading = ref(true)
 
+// Vendor.category is a Category relation object now; fall back to a plain
+// string for older payloads.
+function categoryName(vendor: any): string {
+  const cat = vendor?.category
+  if (!cat) return ''
+  return typeof cat === 'string' ? cat : (cat.category_name || '')
+}
+
 async function fetchInspirations() {
   loading.value = true
   try {
@@ -32,21 +40,25 @@ async function fetchInspirations() {
     const res = await fetch(`/api/portfolios${params}`)
     const json = await res.json()
     const items = json.data || []
-    inspirations.value = items.map((p: any) => ({
-      id: p.id_portfolio,
-      image: p.cover_url || defaultImage,
-      occasion: p.label || p.title || 'Creative',
-      style: p.vendor?.category || 'Creative',
-      caption: p.title || p.description || '',
-      budget: p.package?.price ? `Rp ${p.package.price.toLocaleString('id-ID')}` : '',
-      saved: false,
-      height: (['tall', 'medium', 'short'] as const)[Math.floor(Math.random() * 3)],
-      vendorRefs: {
-        photography: p.vendor?.category === 'Photography' ? p.vendor.business_name : undefined,
-        mua: p.vendor?.category === 'Makeup Artist' ? p.vendor.business_name : undefined,
-        bouquet: p.vendor?.category === 'Bouquet Flowers' ? p.vendor.business_name : undefined,
+    inspirations.value = items.map((p: any) => {
+      const category = categoryName(p.vendor)
+      return {
+        id: p.id_portfolio,
+        image: p.cover_url || defaultImage,
+        occasion: p.label || p.title || 'Creative',
+        style: category || 'Creative',
+        caption: p.title || p.description || '',
+        budget: p.package?.price ? `Rp ${p.package.price.toLocaleString('id-ID')}` : '',
+        saved: false,
+        height: (['tall', 'medium', 'short'] as const)[Math.floor(Math.random() * 3)],
+        vendorRefs: {
+          photography: category === 'Photography' ? p.vendor.business_name : undefined,
+          // The DB uses "MUA"; accept the UI label too so both match.
+          mua: ['MUA', 'Makeup Artist'].includes(category) ? p.vendor.business_name : undefined,
+          bouquet: category === 'Bouquet Flowers' ? p.vendor.business_name : undefined,
+        }
       }
-    }))
+    })
   } catch {
     // API unavailable
   } finally {

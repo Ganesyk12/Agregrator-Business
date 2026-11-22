@@ -10,8 +10,10 @@ const form = ref({
   location: '',
   avatar_url: '',
   instagram: '',
+  id_category: null as number | null,
 })
 
+const availableCategories = ref<any[]>([])
 const loading = ref(true)
 const saving = ref(false)
 const success = ref(false)
@@ -21,6 +23,7 @@ const vendorQuery = () => (auth.vendorId ? `?vendorId=${auth.vendorId}` : '')
 
 onMounted(async () => {
   try {
+    // Fetch vendor data
     const res = await auth.authFetch(`/api/vendors/me${vendorQuery()}`)
     if (res.ok) {
       const json = await res.json()
@@ -32,9 +35,17 @@ onMounted(async () => {
           location: v.location || '',
           avatar_url: v.avatar_url || '',
           instagram: v.instagram || '',
+          id_category: v.id_category || null,
         }
         avatarPreview.value = v.avatar_url || ''
       }
+    }
+
+    // Fetch available categories
+    const catRes = await auth.authFetch('/api/portfolios/vendors/categories')
+    if (catRes.ok) {
+      const catJson = await catRes.json()
+      availableCategories.value = catJson.data || []
     }
   } catch { error.value = 'Failed to load profile' }
   finally { loading.value = false }
@@ -70,6 +81,7 @@ async function saveProfile() {
         location: form.value.location,
         avatar_url: form.value.avatar_url || null,
         instagram: form.value.instagram,
+        id_category: form.value.id_category,
       }),
     })
     if (!res.ok) {
@@ -80,7 +92,7 @@ async function saveProfile() {
     const v = json.data
     auth.setVendorInfo({
       vendor_id: v.id_vendor,
-      vendor_category: v.category,
+      vendor_category: v.category?.category_name ?? v.category ?? '',
       vendor_name: v.business_name,
       vendor_avatar: v.avatar_url,
     })
@@ -128,6 +140,17 @@ async function saveProfile() {
         <div class="form-group">
           <label>Business Name</label>
           <input v-model="form.business_name" type="text" class="form-control" required />
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+          <label>Category</label>
+          <select v-model="form.id_category" class="form-control" required>
+            <option :value="null">Select Category</option>
+            <option v-for="cat in availableCategories" :key="cat.id_category" :value="cat.id_category">
+              {{ cat.name }}
+            </option>
+          </select>
         </div>
 
         <!-- Instagram -->

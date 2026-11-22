@@ -172,8 +172,16 @@ export async function getVendors(_req: Request, res: Response, next: NextFunctio
 
 export async function getVendorsCategories(_req: Request, res: Response, next: NextFunction) {
   try {
-    const categories = await prisma.category.findMany({ select: { category_name: true }, where: { status: 'active' } })
-    const data = categories.map((c: any) => ({ name: c.category_name }))
+    const categories = await prisma.category.findMany({
+      select: { id_category: true, category_name: true },
+      where: { status: 'active' },
+      orderBy: { category_name: 'asc' },
+    })
+    const data = categories.map((c: any) => ({
+      id_category: c.id_category,
+      name: c.category_name,
+      category_name: c.category_name,
+    }))
     res.json({ data })
   } catch (err) {
     next(err)

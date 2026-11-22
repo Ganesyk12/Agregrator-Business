@@ -34,7 +34,15 @@ const addedId = ref<number | null>(null)
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
-const isBouquetVendor = computed(() => vendor.value?.category === 'Bouquet Flowers')
+// Vendor.category is a Category relation object now; fall back to a plain
+// string for older payloads.
+function categoryName(vendor: any): string {
+  const cat = vendor?.category
+  if (!cat) return ''
+  return typeof cat === 'string' ? cat : (cat.category_name || '')
+}
+
+const isBouquetVendor = computed(() => categoryName(vendor.value) === 'Bouquet Flowers')
 
 const averageRating = computed(() => {
   if (!reviews.value.length) return 0
@@ -63,7 +71,7 @@ async function fetchVendorProfile() {
     if (!vendorRes.ok) throw new Error(vendorJson.error?.message || 'Vendor not found')
     vendor.value = vendorJson.data
 
-    if (vendor.value?.category === 'Bouquet Flowers') {
+    if (categoryName(vendor.value) === 'Bouquet Flowers') {
       const prodRes = await fetch(`${apiUrl}/api/products/vendor/${id}`)
       if (prodRes.ok) {
         const prodJson = await prodRes.json()

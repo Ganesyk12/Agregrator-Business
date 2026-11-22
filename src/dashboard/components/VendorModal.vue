@@ -98,7 +98,7 @@ watch(() => props.visible, async (val) => {
         id_user: props.vendor.id_user || '',
         business_name: props.vendor.business_name,
         description: props.vendor.description || '',
-        category: props.vendor.category,
+        category: props.vendor.category?.category_name ?? props.vendor.category ?? '',
         location: props.vendor.location || '',
         years_exp: props.vendor.years_exp ?? 0,
       }
@@ -140,7 +140,7 @@ function save() {
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Category</label>
-                    <input class="form-control" :value="vendor.category" readonly />
+                    <input class="form-control" :value="vendor.category?.category_name ?? vendor.category" readonly />
                   </div>
                   <div class="form-group" style="text-align: left;">
                     <label class="control-label" style="font-weight: bold; display: block; text-align: left;">Location</label>

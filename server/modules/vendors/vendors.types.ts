@@ -1,10 +1,19 @@
+export interface VendorCategory {
+  id_category: number
+  category_name: string
+  slug?: string | null
+  icon?: string | null
+  status?: string
+}
+
 export interface Vendor {
   id_vendor: number
   id_user: number
   vendor_code: string
   business_name: string
   description: string | null
-  category: string
+  id_category: number | null
+  category: VendorCategory | null
   location: string | null
   years_exp: number
   avatar_url: string | null

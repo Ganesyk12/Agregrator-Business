@@ -20,7 +20,8 @@ interface Vendor {
   id_user: number
   business_name: string
   description: string
-  category: string
+  id_category?: number | null
+  category: string | { id_category: number; category_name: string } | null
   location: string
   years_exp: number
   status: string
@@ -32,6 +33,14 @@ interface Vendor {
     email: string
     full_name: string
   }
+}
+
+// Vendor.category is now a relation object; fall back to a plain string for
+// older payloads.
+function categoryLabel(v: Vendor | null | undefined): string {
+  const c = v?.category
+  if (!c) return ''
+  return typeof c === 'string' ? c : (c.category_name || '')
 }
 
 const modalVisible = ref(false)
@@ -226,7 +235,7 @@ const filtered = computed(() => {
     result = result.filter(v =>
       (v.business_name?.toLowerCase() || '').includes(q) ||
       (v.description?.toLowerCase() || '').includes(q) ||
-      (v.category?.toLowerCase() || '').includes(q) ||
+      categoryLabel(v).toLowerCase().includes(q) ||
       (v.location?.toLowerCase() || '').includes(q) ||
       (v.status?.toLowerCase() || '').includes(q)
     )
@@ -239,6 +248,9 @@ const filtered = computed(() => {
     if (col === 'owner_name') {
       va = (a.user?.full_name || '').toLowerCase()
       vb = (b.user?.full_name || '').toLowerCase()
+    } else if (col === 'category') {
+      va = categoryLabel(a).toLowerCase()
+      vb = categoryLabel(b).toLowerCase()
     } else {
       va = String(a[col] ?? '').toLowerCase()
       vb = String(b[col] ?? '').toLowerCase()
@@ -346,7 +358,7 @@ const pageNumbers = computed(() => {
             <td>{{ v.business_name }}</td>
             <td>{{ v.user ? `${v.user.full_name} (${v.user.email})` : v.id_user }}</td>
             <td>{{ v.description || '-' }}</td>
-            <td>{{ v.category }}</td>
+            <td>{{ categoryLabel(v) }}</td>
             <td>{{ v.location || '-' }}</td>
             <td>{{ v.verified_at ? new Date(v.verified_at).toLocaleDateString() : '-' }}</td>
             <td>

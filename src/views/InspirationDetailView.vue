@@ -34,6 +34,14 @@ const inspiration = ref<InspirationDetail | null>(null)
 const loading = ref(true)
 const activeGalleryImage = ref(0)
 
+// Vendor.category is a Category relation object now; fall back to a plain
+// string for older payloads.
+function categoryName(vendor: any): string {
+  const cat = vendor?.category
+  if (!cat) return ''
+  return typeof cat === 'string' ? cat : (cat.category_name || '')
+}
+
 onMounted(async () => {
   const id = Number(route.params.id)
   try {
@@ -43,12 +51,13 @@ onMounted(async () => {
     if (p) {
       const price = p.package?.price || 0
       const vendorAvatar = p.vendor?.avatar_url || defaultImage
+      const category = categoryName(p.vendor)
       inspiration.value = {
         id: p.id_portfolio,
         image: p.cover_url || defaultImage,
         gallery: (p.images || []).map((i: any) => i.image_url).filter(Boolean),
         occasion: p.label || p.title || 'Creative',
-        style: p.vendor?.category || 'Creative',
+        style: category || 'Creative',
         caption: p.title || '',
         description: p.description || '',
         budget: price ? `Rp ${price.toLocaleString('id-ID')}` : '',
@@ -57,9 +66,10 @@ onMounted(async () => {
         saved: false,
         height: 'medium',
         vendorRefs: {
-          photography: p.vendor?.category === 'Photography' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: vendorAvatar } : undefined,
-          mua: p.vendor?.category === 'Makeup Artist' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: vendorAvatar } : undefined,
-          bouquet: p.vendor?.category === 'Bouquet Flowers' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: vendorAvatar } : undefined,
+          photography: category === 'Photography' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: vendorAvatar } : undefined,
+          // The DB uses "MUA"; accept the UI label too so both match.
+          mua: ['MUA', 'Makeup Artist'].includes(category) ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: vendorAvatar } : undefined,
+          bouquet: category === 'Bouquet Flowers' ? { id: p.vendor.id_vendor, name: p.vendor.business_name, image: vendorAvatar } : undefined,
         }
       }
     }

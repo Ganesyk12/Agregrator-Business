@@ -11,21 +11,22 @@ interface VendorItem {
   verified: boolean
 }
 
+// Vendor.category is a Category relation object now; fall back to a plain
+// string for older payloads.
+function categoryName(vendor: any): string {
+  const cat = vendor?.category
+  if (!cat) return ''
+  return typeof cat === 'string' ? cat : (cat.category_name || '')
+}
+
 const allVendors = ref<VendorItem[]>([])
 const loading = ref(true)
 
 async function fetchData() {
   loading.value = true
   try {
-    const [portRes, vendorRes] = await Promise.all([
-      fetch('/api/portfolios'),
-      fetch('/api/vendors')
-    ])
-
-    const portData = await portRes.json()
+    const vendorRes = await fetch('/api/vendors')
     const vendorData = await vendorRes.json()
-
-    const portfolios = portData.data || []
     const vendors = vendorData.data || []
 
     const vendorMap = new Map<number, VendorItem>()
@@ -34,7 +35,7 @@ async function fetchData() {
       vendorMap.set(v.id_vendor, {
         id_vendor: v.id_vendor,
         business_name: v.business_name || v.nama_vendor || 'Unknown',
-        category: v.category || 'Other',
+        category: categoryName(v) || 'Other',
         location: v.location || v.kota || '',
         logo_url: v.avatar_url || v.logo_url || v.logo || '',
         verified: true

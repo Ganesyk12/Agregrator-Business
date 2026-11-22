@@ -418,6 +418,9 @@ async function main() {
   let userCounter = 2
   const createdVendors: any[] = []
 
+  const vendorCategories = await prisma.category.findMany()
+  const categoryIdByName = new Map(vendorCategories.map(c => [c.category_name, c.id_category]))
+
   for (const vs of vendorSeed) {
     // Create user
     const user = await prisma.user.create({
@@ -448,7 +451,8 @@ async function main() {
         vendor_code: `VND-${String(userCounter).padStart(3, '0')}`,
         business_name: vs.business_name,
         description: vs.description,
-        category: vs.category,
+        id_category: categoryIdByName.get(vs.category) ?? null,
+        vendor_type: vs.category === 'Bouquet Flowers' ? 'PRODUCT' : 'SERVICE',
         location: vs.location,
         years_exp: vs.years_exp,
         avatar_url: vs.avatar,
@@ -458,7 +462,7 @@ async function main() {
       },
     })
 
-    createdVendors.push({ ...vendor, avatar: vs.avatar, cover: vs.cover, instagram: vs.instagram })
+    createdVendors.push({ ...vendor, categoryName: vs.category, avatar: vs.avatar, cover: vs.cover, instagram: vs.instagram })
     userCounter++
     console.log(`  ✓ ${vs.business_name} (${vs.category})`)
   }
@@ -651,7 +655,7 @@ async function main() {
 
   for (const pt of packageTemplates) {
     const vendor = createdVendors[pt.vendorIdx]
-    const cat = vendor.category === 'Photography' ? photoCat : muaCat
+    const cat = vendor.categoryName === 'Photography' ? photoCat : muaCat
 
     const pkg = await prisma.package.create({
       data: {
