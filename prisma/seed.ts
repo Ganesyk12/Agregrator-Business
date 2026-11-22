@@ -23,7 +23,8 @@ async function main() {
   await prisma.review.deleteMany()
   await prisma.userFavorite.deleteMany()
   await prisma.contactMessage.deleteMany()
-  await prisma.payment.deleteMany()
+  await prisma.bookingPayment.deleteMany()
+  await prisma.paymentTerm.deleteMany()
   await prisma.bookingPackageExtra.deleteMany()
   await prisma.bookingPackage.deleteMany()
   await prisma.rfpPayment.deleteMany()
@@ -104,7 +105,7 @@ async function main() {
   // ── Product Lookups ────────────────────────────────────────────────────
   console.log('Seeding product lookups…')
 
-  const occasions = await Promise.all(
+  await Promise.all(
     [
       { name: 'Wedding', slug: 'wedding', sort_order: 1 },
       { name: 'Graduation', slug: 'graduation', sort_order: 2 },
@@ -115,7 +116,7 @@ async function main() {
     ].map(o => prisma.productOccasion.upsert({ where: { slug: o.slug }, update: {}, create: o })),
   )
 
-  const types = await Promise.all(
+  await Promise.all(
     [
       { name: 'Flower Bouquet', slug: 'flower-bouquet', sort_order: 1 },
       { name: 'Money Bouquet', slug: 'money-bouquet', sort_order: 2 },
@@ -125,7 +126,7 @@ async function main() {
     ].map(t => prisma.productType.upsert({ where: { slug: t.slug }, update: {}, create: t })),
   )
 
-  const sizes = await Promise.all(
+  await Promise.all(
     [
       { name: 'Small', slug: 'small', sort_order: 1 },
       { name: 'Medium', slug: 'medium', sort_order: 2 },
@@ -138,7 +139,7 @@ async function main() {
   // ── Product Templates ────────────────────────────────────────────────
   console.log('Seeding product templates…')
 
-  const templates = await Promise.all(
+  await Promise.all(
     [
       {
         name: 'Flower Bouquet',
@@ -397,18 +398,6 @@ async function main() {
     'https://images.unsplash.com/photo-1567696153798-91191f9213b4?w=800&h=800&fit=crop',
     'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&h=800&fit=crop',
   ]
-
-  const celebrationLabels = ['wedding', 'graduation', 'birthday', 'engagement', 'anniversary', 'formal']
-
-  function getLabel(): string {
-    const count = Math.floor(Math.random() * 3) + 1
-    const shuffled = [...celebrationLabels].sort(() => Math.random() - 0.5)
-    return shuffled.slice(0, count).join(',')
-  }
-
-  function pick<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)]
-  }
 
   // ═══════════════════════════════════════════════════════════════════════
   //  CREATE VENDORS
@@ -709,10 +698,6 @@ async function main() {
     { title: 'Birthday Party Look — Keyla 21st', description: 'Riasan party dengan gliter dan bold lip untuk ulang tahun ke-21 di klub malam Jakarta.', cover: muaPortfolioPics[2], labels: 'birthday', pics: [muaPortfolioPics[2], muaPortfolioPics[7], muaPortfolioPics[9]] },
   ]
 
-  // Helper to map vendor index to portfolio items
-  const photoVendorIndices = [0, 1] // Lensa Abadi = idx0, Cahaya Senja = idx1
-  const muaVendorIndices = [2, 3]
-
   const portfolioMap: Array<{ vendorIdx: number; items: typeof photoPortfolioItems }> = [
     { vendorIdx: 0, items: photoPortfolioItems.slice(0, 3) },
     { vendorIdx: 1, items: photoPortfolioItems.slice(3, 6) },
@@ -756,7 +741,6 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════
   console.log('Seeding products…')
 
-  const bouquetVendorIndices = [4, 5] // Bloom Garden, Fresh Petals
   const bouquetTypes = await prisma.productType.findMany()
   const bouquetSizes = await prisma.productSize.findMany()
   const bouquetOccasions = await prisma.productOccasion.findMany()
@@ -967,8 +951,6 @@ async function main() {
       ],
     },
   ]
-
-  const productCategory = categories.find(c => c.category_name === 'Bouquet Flowers')!
 
   for (const pt of productTemplates) {
     const vendor = createdVendors[pt.vendorIdx]

@@ -192,7 +192,7 @@ export async function getPackagesByCategory(req: Request, res: Response, next: N
   try {
     const { categoryName } = req.params
     if (!categoryName) throw createError(400, 'Category name is required')
-    const packages = await portfolioService.getPackagesByCategory(categoryName)
+    const packages = await portfolioService.getPackagesByCategory(String(categoryName))
     const data = packages.map((p: any) => ({
       ...p,
       extras: p.extras || [],

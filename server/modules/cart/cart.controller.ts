@@ -31,7 +31,7 @@ export async function addItem(req: Request, res: Response, next: NextFunction) {
 export async function updateItem(req: Request, res: Response, next: NextFunction) {
   try {
     const { quantity } = req.body
-    const item = await cartService.updateItem(req.user!.id_user, Number(req.params.itemId), Number(quantity))
+    const item = await cartService.updateItemQuantity(req.user!.id_user, Number(req.params.itemId), Number(quantity))
     res.json({ data: item })
   } catch (err) {
     next(err)

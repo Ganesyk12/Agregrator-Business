@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useCartStore } from '@/stores/cart'
 import Navbar from '@/components/layout/Navbar.vue'
 import CartOffcanvas from '@/components/layout/CartOffcanvas.vue'
 import SearchPopup from '@/components/layout/SearchPopup.vue'
@@ -15,10 +12,6 @@ import VendorSectionView from '@/components/home/VendorSectionView.vue'
 import WhyChooseUs from '@/components/home/WhyChooseUs.vue'
 import HowItWorks from '@/components/home/HowItWorks.vue'
 import PartnerSection from '@/components/home/PartnerSection.vue'
-
-const router = useRouter()
-const auth = useAuthStore()
-const cart = useCartStore()
 
 const selectedCelebration = ref<string | null>(null)
 

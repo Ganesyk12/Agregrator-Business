@@ -5,19 +5,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import defaultImage from '@/assets/default/nothing.png'
 
-interface VendorItem {
-  id_vendor: number
-  business_name: string
-  category: string
-  location: string
-  cover_url: string
-  logo_url: string
-  rating: number
-  review_count: number
-  starting_price: number
-  verified: boolean
-}
-
 interface PortfolioItem {
   id: number
   image: string

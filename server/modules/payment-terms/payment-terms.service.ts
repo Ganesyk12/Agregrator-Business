@@ -117,8 +117,6 @@ export async function updateTermStatus(id_term: number): Promise<PaymentTerm | n
     newStatus = 'partial'
   }
 
-  const now = totalPaid >= term.amount ? new Date() : null
-
   await prisma.paymentTerm.update({
     where: { id_term },
     data: {

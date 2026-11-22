@@ -17,9 +17,8 @@ export async function getTermById(id_rfp_term: number): Promise<PaymentRequestTe
 export async function autoGenerateTerms(
   id_request: number,
   total_amount: number,
-  user?: string
-): Promise<PaymentRequestTerm[]> {
-  const existing = await prisma.paymentRequestTerm.findMany({ where: { id_request } })
+  _user?: string
+): Promise<PaymentRequestTerm[]> {  const existing = await prisma.paymentRequestTerm.findMany({ where: { id_request } })
   if (existing.length > 0) return existing as unknown as PaymentRequestTerm[]
 
   const term = await prisma.paymentRequestTerm.create({

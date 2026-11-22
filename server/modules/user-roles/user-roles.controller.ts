@@ -27,7 +27,7 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
 
 export async function getByEmail(req: Request, res: Response, next: NextFunction) {
   try {
-    const userRoles = await userRoleService.findByEmail(req.params.email)
+    const userRoles = await userRoleService.findByEmail(String(req.params.email))
     res.json({ data: userRoles.length === 0 ? null : userRoles })
   } catch (err) {
     next(err)
@@ -87,7 +87,7 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
 
 export async function syncByEmail(req: Request, res: Response, next: NextFunction) {
   try {
-    const { email } = req.params
+    const email = String(req.params.email)
     const { role_codes } = req.body
     if (!Array.isArray(role_codes)) {
       throw createError(400, 'role_codes must be an array')

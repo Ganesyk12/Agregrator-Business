@@ -189,7 +189,7 @@ function computeSnapshot(product: any, cfg: any, quantity: number) {
   }
 }
 
-export async function updateItemQuantity(userId: number, cartItemId: number, quantity: number) {
+export async function updateItemQuantity(_userId: number, cartItemId: number, quantity: number) {
   const item = await prisma.cartItem.findUnique({ where: { id_cart_item: cartItemId } })
   const hasProduct = !!item?.id_product
   const unitPrice = item?.unit_price ?? (hasProduct ? (await prisma.product.findUnique({ where: { id_product: item!.id_product! } }))?.price ?? 0 : 0)

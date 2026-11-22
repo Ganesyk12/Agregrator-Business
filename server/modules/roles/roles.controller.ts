@@ -13,7 +13,7 @@ export async function getAll(_req: Request, res: Response, next: NextFunction) {
 
 export async function getByCode(req: Request, res: Response, next: NextFunction) {
   try {
-    const role = await roleService.findByCode(req.params.code)
+    const role = await roleService.findByCode(String(req.params.code))
     if (!role) {
       res.status(404).json({ error: { message: 'Role not found' } })
       return
@@ -43,7 +43,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 
 export async function update(req: Request, res: Response, next: NextFunction) {
   try {
-    const role = await roleService.update(req.params.code, req.body)
+    const role = await roleService.update(String(req.params.code), req.body)
     if (!role) {
       res.status(404).json({ error: { message: 'Role not found' } })
       return
@@ -56,7 +56,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
 
 export async function remove(req: Request, res: Response, next: NextFunction) {
   try {
-    const deleted = await roleService.remove(req.params.code)
+    const deleted = await roleService.remove(String(req.params.code))
     if (!deleted) {
       res.status(404).json({ error: { message: 'Role not found' } })
       return

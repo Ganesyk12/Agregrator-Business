@@ -20,13 +20,42 @@ const searchQuery = ref('')
 const selectedCategory = ref<string | null>(null)
 const selectedSort = ref('popular')
 
-const categories = [
-  { id: 'all', name: 'All', icon: 'M4 6h16M4 12h16M4 18h16' },
-  { id: 'Photography', name: 'Photography', icon: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
-  // The DB category_name is "MUA"; keep the friendlier UI label.
-  { id: 'MUA', name: 'Makeup Artist', icon: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z M12 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z' },
-  { id: 'Bouquet Flowers', name: 'Bouquet Flowers', icon: 'M12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M12 7v14 M9 10.5c-2.5 0-4.5 1.5-4.5 4 0 1 .5 2 1.5 2.5L12 20l6-3c1-.5 1.5-1.5 1.5-2.5 0-2.5-2-4-4.5-4 M7 14c-1.5 0-3 1-3 3 M17 14c1.5 0 3 1 3 3' }
-]
+const ALL_ICON = 'M4 6h16M4 12h16M4 18h16'
+const categoryIcons: Record<string, string> = {
+  Photography: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  MUA: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z M12 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  'Bouquet Flowers': 'M12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M12 7v14 M9 10.5c-2.5 0-4.5 1.5-4.5 4 0 1 .5 2 1.5 2.5L12 20l6-3c1-.5 1.5-1.5 1.5-2.5 0-2.5-2-4-4.5-4 M7 14c-1.5 0-3 1-3 3 M17 14c1.5 0 3 1 3 3',
+}
+const DEFAULT_CATEGORY_ICON = 'M12 2l2.4 7.4H22l-6 4.6 2.3 7-6.3-4.6L5.7 21l2.3-7-6-4.6h7.6z'
+// DB stores "MUA"; the UI shows the friendlier label.
+const categoryLabels: Record<string, string> = { MUA: 'Makeup Artist' }
+
+interface CategoryChip {
+  id: string
+  name: string
+  icon: string
+}
+
+function buildCategoryChips(rawCategories: any[]): CategoryChip[] {
+  const chips: CategoryChip[] = [{ id: 'all', name: 'All', icon: ALL_ICON }]
+  const seen = new Set<string>()
+  for (const cat of rawCategories) {
+    const id = cat?.category_name || cat?.name || ''
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    chips.push({
+      id,
+      name: categoryLabels[id] || id,
+      icon: categoryIcons[id] || DEFAULT_CATEGORY_ICON,
+    })
+  }
+  return chips
+}
+
+// Start with the known defaults so filters still work while/if the API fails.
+const categories = ref<CategoryChip[]>(
+  buildCategoryChips(['Photography', 'MUA', 'Bouquet Flowers'].map(category_name => ({ category_name })))
+)
 
 // Vendor.category is a Category relation object now; fall back to a plain
 // string for older payloads.
@@ -49,20 +78,27 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const [venRes, porRes, prodRes, pkgRes] = await Promise.all([
+    const [venRes, porRes, prodRes, pkgRes, catRes] = await Promise.all([
       fetch('/api/vendors'),
       fetch('/api/portfolios'),
       fetch('/api/products'),
-      fetch('/api/packages')
+      fetch('/api/packages'),
+      fetch('/api/portfolios/vendors/categories')
     ])
     const venJson = await venRes.json()
     const porJson = await porRes.json()
     const prodJson = await prodRes.json()
     const pkgJson = await pkgRes.json()
+    const catJson = await catRes.json()
     const vendors = venJson.data || []
     const portfolios = porJson.data || []
     const products = prodJson.data || []
     const packages = pkgJson.data || []
+
+    const dbCategories = Array.isArray(catJson.data) ? catJson.data : []
+    if (dbCategories.length > 0) {
+      categories.value = buildCategoryChips(dbCategories)
+    }
 
     allVendors.value = vendors
       .filter((v: any) => v.status !== 'inactive')
